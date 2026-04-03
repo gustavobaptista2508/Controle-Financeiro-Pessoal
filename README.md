@@ -65,4 +65,4 @@ dotnet add package ClosedXML
 *   Geração de relatórios financeiros detalhados em PDF.
 
 ---
-**Autor:**
+**Autor:** Luiz Gustavo Carvalho Baptista
