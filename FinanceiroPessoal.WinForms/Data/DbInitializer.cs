@@ -23,12 +23,19 @@ namespace FinanceiroPessoal.WinForms.Data
             if (!context.Categorias.Any())
             {
                 context.Categorias.AddRange(
-                    new Categoria { Nome = "Moradia" },
-                    new Categoria { Nome = "Cartão" },
-                    new Categoria { Nome = "Financiamento" },
-                    new Categoria { Nome = "Alimentação" },
-                    new Categoria { Nome = "Saúde" },
-                    new Categoria { Nome = "Outros" }
+                    new Categoria { Nome = "Salário" },
+                new Categoria { Nome = "Comissão" },
+                new Categoria { Nome = "Recebimento" },
+                new Categoria { Nome = "Moradia" },
+                new Categoria { Nome = "Cartão" },
+                new Categoria { Nome = "Financiamento" },
+                new Categoria { Nome = "Alimentação" },
+                new Categoria { Nome = "Saúde" },
+                new Categoria { Nome = "Transporte" },
+                new Categoria { Nome = "Outros" },
+                new Categoria { Nome = "Lazer" },
+                new Categoria { Nome = "Educação" },
+                new Categoria { Nome = "Impostos" }
                 );
             }
 

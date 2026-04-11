@@ -1,4 +1,5 @@
-﻿using FinanceiroPessoal.WinForms.Services;
+﻿using FinanceiroPessoal.WinForms.Models;
+using FinanceiroPessoal.WinForms.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -26,29 +27,32 @@ namespace FinanceiroPessoal.WinForms
 
         private void CarregarGrid()
         {
-            var dados = _service.Filtrar(cmbFiltroPessoa.Text, cmbFiltroStatus.Text)
-            .Select(x => new
-            {
-                x.Id,
-                x.Descricao,
-                Valor = x.Valor.ToString("N2"),
-                Vencimento = x.DataVencimento.HasValue ? x.DataVencimento.Value.ToString("dd/MM/yyyy") : "",
-                x.Status,
-                Categoria = x.Categoria != null ? x.Categoria.Nome : "",
-                Conta = x.Conta != null ? x.Conta.Nome : "",
-                Pessoa = x.Pessoa != null ? x.Pessoa.Nome : "",
-                x.Competencia
-            })
-            .ToList();
+            var dados = _service.Filtrar(cmbFiltroPessoa.Text, cmbFiltroStatus.Text, cmbFiltroTipo.Text)
+                .Select(x => new
+                {
+                    x.Id,
+                    Tipo = x.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída",
+                    x.Descricao,
+                    Valor = x.Valor.ToString("N2"),
+                    Vencimento = x.DataVencimento.HasValue ? x.DataVencimento.Value.ToString("dd/MM/yyyy") : "",
+                    x.Status,
+                    Categoria = x.Categoria != null ? x.Categoria.Nome : "",
+                    Conta = x.Conta != null ? x.Conta.Nome : "",
+                    Pessoa = x.Pessoa != null ? x.Pessoa.Nome : "",
+                    x.Competencia
+                })
+                .ToList();
 
             dgvLancamentos.DataSource = dados;
 
             if (dgvLancamentos.Columns["Id"] != null)
                 dgvLancamentos.Columns["Id"].Width = 60;
 
+            if (dgvLancamentos.Columns["Tipo"] != null)
+                dgvLancamentos.Columns["Tipo"].Width = 90;
+
             if (dgvLancamentos.Columns["Descricao"] != null)
                 dgvLancamentos.Columns["Descricao"].Width = 250;
-
         }
 
         private void CarregarFiltros()
@@ -68,6 +72,12 @@ namespace FinanceiroPessoal.WinForms
             cmbFiltroStatus.Items.Add("Atrasado");
             cmbFiltroStatus.Items.Add("Parcial");
             cmbFiltroStatus.SelectedIndex = 0;
+
+            cmbFiltroTipo.Items.Clear();
+            cmbFiltroTipo.Items.Add("Todos");
+            cmbFiltroTipo.Items.Add("Entrada");
+            cmbFiltroTipo.Items.Add("Saída");
+            cmbFiltroTipo.SelectedIndex = 0;
         }
 
         private int? ObterIdSelecionado()

@@ -71,29 +71,29 @@ public class LancamentoService
         context.SaveChanges();
     }
 
-    public decimal ObterTotalPendente()
+    public decimal ObterTotalPendenteSaidas()
     {
         using var context = new FinanceiroDbContext();
 
         return context.Lancamentos
-            .Where(x => x.Status == "Pendente")
+            .Where(x => x.Tipo == TipoLancamento.Saida && x.Status == "Pendente")
             .Select(x => x.Valor)
             .DefaultIfEmpty(0)
             .Sum();
     }
 
-    public decimal ObterTotalPago()
+    public decimal ObterTotalPagoSaidas()
     {
         using var context = new FinanceiroDbContext();
 
         return context.Lancamentos
-            .Where(x => x.Status == "Pago")
+            .Where(x => x.Tipo == TipoLancamento.Saida && x.Status == "Pago")
             .Select(x => x.Valor)
             .DefaultIfEmpty(0)
             .Sum();
     }
 
-    public List<Lancamento> Filtrar(string? pessoa, string? status)
+    public List<Lancamento> Filtrar(string? pessoa, string? status, string? tipo)
     {
         using var context = new FinanceiroDbContext();
 
@@ -108,6 +108,14 @@ public class LancamentoService
 
         if (!string.IsNullOrWhiteSpace(status) && status != "Todos")
             query = query.Where(x => x.Status == status);
+
+        if (!string.IsNullOrWhiteSpace(tipo) && tipo != "Todos")
+        {
+            if (tipo == "Entrada")
+                query = query.Where(x => x.Tipo == TipoLancamento.Entrada);
+            else if (tipo == "Saída")
+                query = query.Where(x => x.Tipo == TipoLancamento.Saida);
+        }
 
         return query
             .OrderBy(x => x.DataVencimento)

@@ -34,12 +34,14 @@
             btnAtualizar = new Button();
             btnFiltrar = new Button();
             panel1 = new Panel();
+            btnEditar = new Button();
             lblFiltroPessoa = new Label();
             cmbFiltroPessoa = new ComboBox();
             lblFiltroStatus = new Label();
             dgvLancamentos = new DataGridView();
             cmbFiltroStatus = new ComboBox();
-            btnEditar = new Button();
+            cmbFiltroTipo = new ComboBox();
+            label1 = new Label();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvLancamentos).BeginInit();
             SuspendLayout();
@@ -108,6 +110,16 @@
             panel1.Size = new Size(800, 61);
             panel1.TabIndex = 6;
             // 
+            // btnEditar
+            // 
+            btnEditar.Location = new Point(112, 12);
+            btnEditar.Name = "btnEditar";
+            btnEditar.Size = new Size(94, 29);
+            btnEditar.TabIndex = 4;
+            btnEditar.Text = "Editar";
+            btnEditar.UseVisualStyleBackColor = true;
+            btnEditar.Click += btnEditar_Click;
+            // 
             // lblFiltroPessoa
             // 
             lblFiltroPessoa.AutoSize = true;
@@ -120,7 +132,7 @@
             // cmbFiltroPessoa
             // 
             cmbFiltroPessoa.FormattingEnabled = true;
-            cmbFiltroPessoa.Location = new Point(68, 68);
+            cmbFiltroPessoa.Location = new Point(73, 67);
             cmbFiltroPessoa.Name = "cmbFiltroPessoa";
             cmbFiltroPessoa.Size = new Size(151, 28);
             cmbFiltroPessoa.TabIndex = 8;
@@ -128,7 +140,7 @@
             // lblFiltroStatus
             // 
             lblFiltroStatus.AutoSize = true;
-            lblFiltroStatus.Location = new Point(225, 71);
+            lblFiltroStatus.Location = new Point(232, 71);
             lblFiltroStatus.Name = "lblFiltroStatus";
             lblFiltroStatus.Size = new Size(49, 20);
             lblFiltroStatus.TabIndex = 9;
@@ -146,26 +158,35 @@
             // cmbFiltroStatus
             // 
             cmbFiltroStatus.FormattingEnabled = true;
-            cmbFiltroStatus.Location = new Point(280, 68);
+            cmbFiltroStatus.Location = new Point(289, 67);
             cmbFiltroStatus.Name = "cmbFiltroStatus";
             cmbFiltroStatus.Size = new Size(151, 28);
             cmbFiltroStatus.TabIndex = 12;
             // 
-            // btnEditar
+            // cmbFiltroTipo
             // 
-            btnEditar.Location = new Point(112, 12);
-            btnEditar.Name = "btnEditar";
-            btnEditar.Size = new Size(94, 29);
-            btnEditar.TabIndex = 4;
-            btnEditar.Text = "Editar";
-            btnEditar.UseVisualStyleBackColor = true;
-            btnEditar.Click += btnEditar_Click;
+            cmbFiltroTipo.FormattingEnabled = true;
+            cmbFiltroTipo.Location = new Point(506, 67);
+            cmbFiltroTipo.Name = "cmbFiltroTipo";
+            cmbFiltroTipo.Size = new Size(151, 28);
+            cmbFiltroTipo.TabIndex = 13;
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(448, 71);
+            label1.Name = "label1";
+            label1.Size = new Size(42, 20);
+            label1.TabIndex = 14;
+            label1.Text = "Tipo:";
             // 
             // FrmLancamentos
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
+            Controls.Add(label1);
+            Controls.Add(cmbFiltroTipo);
             Controls.Add(cmbFiltroStatus);
             Controls.Add(dgvLancamentos);
             Controls.Add(lblFiltroStatus);
@@ -197,5 +218,7 @@
         private DataGridView dgvLancamentos;
         private ComboBox cmbFiltroStatus;
         private Button btnEditar;
+        private ComboBox cmbFiltroTipo;
+        private Label label1;
     }
 }
