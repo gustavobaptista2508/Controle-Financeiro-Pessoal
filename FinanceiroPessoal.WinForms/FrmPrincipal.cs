@@ -7,9 +7,115 @@ namespace FinanceiroPessoal.WinForms
     public partial class Form1 : Form
     {
         private readonly DashboardService _dashboardService = new();
+
+        private readonly Color _menuSidebar = Color.White;
+        private readonly Color _menuAtivo = Color.FromArgb(37, 99, 235);      // azul
+        private readonly Color _menuInativo = Color.White;                    // fundo normal
+        private readonly Color _menuHover = Color.FromArgb(239, 244, 255);    // hover
+        private readonly Color _textoAtivo = Color.White;
+        private readonly Color _textoInativo = Color.FromArgb(31, 41, 55);
         public Form1()
         {
             InitializeComponent();
+
+            btnLancamentos.Text = "☰  Lançamentos";
+            btnCategorias.Text = "◈  Categorias";
+            btnContas.Text = "◉  Contas";
+            btnSair.Text = "⏻  Sair";
+        }
+
+        private void AplicarBordasArredondadas()
+        {
+            UIHelpers.ApplyRoundedRegion(pnlCardPago, 18);
+            UIHelpers.ApplyRoundedRegion(pnlCardPendente, 18);
+            UIHelpers.ApplyRoundedRegion(pnlCardMes, 18);
+            UIHelpers.ApplyRoundedRegion(pnlCardSemana, 18);
+
+            UIHelpers.ApplyRoundedRegion(pnlTabela, 18);
+            UIHelpers.ApplyRoundedRegion(pnlAcoesRapidas, 18);
+            UIHelpers.ApplyRoundedRegion(pnlGrafico, 18);
+            UIHelpers.ApplyRoundedRegion(pnlResumo, 18);
+        }
+
+        private void EstilizarBotaoMenu(Button botao)
+        {
+            botao.FlatStyle = FlatStyle.Flat;
+            botao.FlatAppearance.BorderSize = 0;
+            botao.FlatAppearance.MouseOverBackColor = _menuHover;
+            botao.FlatAppearance.MouseDownBackColor = _menuHover;
+            botao.BackColor = _menuInativo;
+            botao.ForeColor = _textoInativo;
+            botao.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+            botao.TextAlign = ContentAlignment.MiddleLeft;
+            botao.Padding = new Padding(16, 0, 0, 0);
+            botao.Cursor = Cursors.Hand;
+            botao.Height = 46;
+            botao.UseVisualStyleBackColor = false;
+        }
+
+        private void MarcarBotaoAtivo(Button botaoAtivo)
+        {
+            var botoes = new List<Button>
+    {
+        btnLancamentos,
+        btnCategorias,
+        btnContas,
+        btnSair
+    };
+
+            foreach (var botao in botoes)
+            {
+                botao.BackColor = _menuInativo;
+                botao.ForeColor = _textoInativo;
+            }
+
+            botaoAtivo.BackColor = _menuAtivo;
+            botaoAtivo.ForeColor = _textoAtivo;
+        }
+
+        private void ConfigurarMenuLateral()
+        {
+            var botoes = new List<Button>
+    {
+        btnLancamentos,
+        btnCategorias,
+        btnContas,
+        btnSair
+    };
+
+            foreach (var botao in botoes)
+            {
+                botao.FlatStyle = FlatStyle.Flat;
+                botao.FlatAppearance.BorderSize = 0;
+                botao.FlatAppearance.MouseDownBackColor = _menuHover;
+                botao.FlatAppearance.MouseOverBackColor = _menuHover;
+                botao.BackColor = _menuSidebar;
+                botao.ForeColor = _textoInativo;
+                botao.TextAlign = ContentAlignment.MiddleLeft;
+                botao.Padding = new Padding(14, 0, 0, 0);
+                botao.Cursor = Cursors.Hand;
+                botao.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+            }
+        }
+
+        private void AtivarBotaoMenu(Button botaoAtivo)
+        {
+            var botoes = new List<Button>
+    {
+        btnLancamentos,
+        btnCategorias,
+        btnContas,
+        btnSair
+    };
+
+            foreach (var botao in botoes)
+            {
+                botao.BackColor = _menuSidebar;
+                botao.ForeColor = _textoInativo;
+            }
+
+            botaoAtivo.BackColor = _menuAtivo;
+            botaoAtivo.ForeColor = Color.White;
         }
 
         private void CarregarCompetencias()
@@ -51,16 +157,6 @@ namespace FinanceiroPessoal.WinForms
             dgvProximosVencimentos.RowHeadersVisible = false;
             dgvProximosVencimentos.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvProximosVencimentos.MultiSelect = false;
-            dgvProximosVencimentos.BackgroundColor = Color.White;
-            dgvProximosVencimentos.BorderStyle = BorderStyle.None;
-            dgvProximosVencimentos.EnableHeadersVisualStyles = false;
-            dgvProximosVencimentos.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 247, 250);
-            dgvProximosVencimentos.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(55, 65, 81);
-            dgvProximosVencimentos.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F);
-            dgvProximosVencimentos.DefaultCellStyle.Font = new Font("Segoe UI", 10F);
-            dgvProximosVencimentos.DefaultCellStyle.SelectionBackColor = Color.FromArgb(230, 240, 255);
-            dgvProximosVencimentos.DefaultCellStyle.SelectionForeColor = Color.FromArgb(31, 41, 55);
-            dgvProximosVencimentos.GridColor = Color.FromArgb(235, 238, 242);
 
             dgvResumoCategorias.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvResumoCategorias.ReadOnly = true;
@@ -70,16 +166,6 @@ namespace FinanceiroPessoal.WinForms
             dgvResumoCategorias.RowHeadersVisible = false;
             dgvResumoCategorias.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvResumoCategorias.MultiSelect = false;
-            dgvResumoCategorias.BackgroundColor = Color.White;
-            dgvResumoCategorias.BorderStyle = BorderStyle.None;
-            dgvResumoCategorias.EnableHeadersVisualStyles = false;
-            dgvResumoCategorias.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 247, 250);
-            dgvResumoCategorias.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(55, 65, 81);
-            dgvResumoCategorias.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F);
-            dgvResumoCategorias.DefaultCellStyle.Font = new Font("Segoe UI", 10F);
-            dgvResumoCategorias.DefaultCellStyle.SelectionBackColor = Color.FromArgb(230, 240, 255);
-            dgvResumoCategorias.DefaultCellStyle.SelectionForeColor = Color.FromArgb(31, 41, 55);
-            dgvResumoCategorias.GridColor = Color.FromArgb(235, 238, 242);
         }
 
         private void CarregarDashboard()
@@ -155,27 +241,26 @@ namespace FinanceiroPessoal.WinForms
 
         private void CarregarCards(DateTime referencia)
         {
-
             var resumo = _dashboardService.ObterResumo(referencia);
 
-            lblTotalPendenteValor.Text = resumo.TotalPendente.ToString("C2");
-            lblTotalPendenteQtd.Text = $"{resumo.QuantidadePendentes} lançamentos";
+            lblTotalEntradaValor.Text = resumo.TotalEntradas.ToString("C2");
+            lblTotalEntradaQtd.Text = $"{resumo.QuantidadeEntradas} lançamentos";
 
-            lblTotalPagoValor.Text = resumo.TotalPago.ToString("C2");
-            lblTotalPagoQtd.Text = $"{resumo.QuantidadePagos} lançamentos";
+            lblTotalSaidaValor.Text = resumo.TotalSaidas.ToString("C2");
+            lblTotalSaidaQtd.Text = $"{resumo.QuantidadeSaidas} lançamentos";
+
+            lblSaldoMesValor.Text = resumo.SaldoMes.ToString("C2");
+            lblSaldoMesQtd.Text = $"{resumo.TotalLancamentosMes} lançamentos no mês";
 
             lblSemanaValor.Text = resumo.TotalSemana.ToString("C2");
-            lblSemanaQtd.Text = $"{resumo.QuantidadeSemana} lançamentos";
-
-            lblMesValor.Text = resumo.TotalMes.ToString("C2");
-            lblMesQtd.Text = $"{resumo.QuantidadeMes} lançamentos";
+            lblSemanaQtd.Text = $"{resumo.QuantidadeSemana} vencimentos";
 
             lblResumoTotalLancamentos.Text = $"Total de Lançamentos: {resumo.TotalLancamentosMes}";
-            lblResumoTotalPago.Text = $"Total Pago: {resumo.TotalPago:C2}";
-            lblResumoTotalPendente.Text = $"Total Pendente: {resumo.TotalPendente:C2}";
+            lblResumoTotalPago.Text = $"Saídas Pagas: {resumo.TotalPago:C2}";
+            lblResumoTotalPendente.Text = $"Saídas Pendentes: {resumo.TotalPendente:C2}";
             lblResumoAtrasados.Text = $"Atrasados: {resumo.TotalAtrasados:C2}";
             lblResumoVencemHoje.Text = $"Vencem Hoje: {resumo.TotalVencemHoje:C2}";
-            lblResumoVencemSemana.Text = $"Vencem esta Semana: {resumo.TotalVencemSemanaResumo:C2}";
+            lblResumoVencemSemana.Text = $"Próximos 7 dias: {resumo.TotalSemana:C2}";
         }
 
         private void cmbCompetencia_Format(object sender, ListControlConvertEventArgs e)
@@ -186,6 +271,11 @@ namespace FinanceiroPessoal.WinForms
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            EstilizarBotaoMenu(btnLancamentos);
+            EstilizarBotaoMenu(btnCategorias);
+            EstilizarBotaoMenu(btnContas);
+            EstilizarBotaoMenu(btnSair);
+
             CarregarCompetencias();
             ConfigurarGrids();
             CarregarDashboard();
@@ -196,6 +286,59 @@ namespace FinanceiroPessoal.WinForms
             using var frm = new FrmLancamentos();
             frm.ShowDialog();
             CarregarDashboard();
+        }
+
+        private void btnLancamentos_Click(object sender, EventArgs e)
+        {
+            AtivarBotaoMenu(btnLancamentos);
+            using var frm = new FrmLancamentos();
+            frm.ShowDialog();
+
+            CarregarDashboard();
+            LimparSelecaoMenu();
+        }
+
+        private void LimparSelecaoMenu()
+        {
+            var botoes = new List<Button>
+    {
+        btnLancamentos,
+        btnCategorias,
+        btnContas,
+        btnSair
+    };
+
+            foreach (var botao in botoes)
+            {
+                botao.BackColor = _menuSidebar;
+                botao.ForeColor = _menuInativo;
+            }
+        }
+
+        private void btnCategorias_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnContas_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnSair_Click(object sender, EventArgs e)
+        {
+            AtivarBotaoMenu(btnSair);
+
+            var resultado = MessageBox.Show(
+                "Deseja realmente sair do sistema?",
+                "Sair",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (resultado == DialogResult.Yes)
+                Close();
+            else
+                LimparSelecaoMenu();
         }
     }
 }

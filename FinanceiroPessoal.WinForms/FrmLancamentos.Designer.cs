@@ -152,7 +152,7 @@
             dgvLancamentos.Location = new Point(12, 102);
             dgvLancamentos.Name = "dgvLancamentos";
             dgvLancamentos.RowHeadersWidth = 51;
-            dgvLancamentos.Size = new Size(776, 281);
+            dgvLancamentos.Size = new Size(776, 336);
             dgvLancamentos.TabIndex = 11;
             // 
             // cmbFiltroStatus
@@ -196,6 +196,7 @@
             Controls.Add(btnNovo);
             Controls.Add(panel1);
             Name = "FrmLancamentos";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "FrmLancamentos";
             Load += FrmLancamentos_Load;
             panel1.ResumeLayout(false);

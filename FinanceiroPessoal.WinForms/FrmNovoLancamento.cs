@@ -15,83 +15,131 @@ namespace FinanceiroPessoal.WinForms
     {
         private readonly LancamentoService _lancamentoService = new();
         private readonly CadastroAuxiliarService _cadastroAuxiliarService = new();
+        private bool _carregandoCombos = false;
         public FrmNovoLancamento()
         {
-            InitializeComponent();
+            try
+            {
+                InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Erro ao inicializar FrmNovoLancamento");
+                throw;
+            }
         }
 
         private void FrmNovoLancamento_Load(object sender, EventArgs e)
         {
             CarregagarCombos();
-            cmbStatus.SelectedIndex = 1;
         }
 
         private void CarregagarCombos()
         {
-            cmbTipo.Items.Clear();
-            cmbTipo.Items.Add("Entrada");
-            cmbTipo.Items.Add("Saída");
-            cmbTipo.SelectedIndex = 1;
+            try
+            {
+                _carregandoCombos = true;
+                cmbTipo.Items.Clear();
+                cmbTipo.Items.Add("Entrada");
+                cmbTipo.Items.Add("Saída");
+                cmbTipo.SelectedIndex = 1;
 
-            cmbStatus.Items.Clear();
-            cmbStatus.Items.Add("Pendente");
-            cmbStatus.Items.Add("Pago");
-            cmbStatus.Items.Add("Atrasado");
-            cmbStatus.Items.Add("Parcial");
-            cmbStatus.SelectedIndex = 0;
+                cmbStatus.Items.Clear();
+                cmbStatus.Items.Add("Pendente");
+                cmbStatus.Items.Add("Pago");
+                cmbStatus.Items.Add("Atrasado");
+                cmbStatus.Items.Add("Parcial");
+                cmbStatus.SelectedIndex = 0;
 
-            cmbCategoria.DataSource = _cadastroAuxiliarService.ObterCategorias();
-            cmbCategoria.DisplayMember = "Nome";
-            cmbCategoria.ValueMember = "Id";
-            cmbCategoria.SelectedIndex = -1;
+                cmbCategoria.DataSource = _cadastroAuxiliarService.ObterCategorias();
+                cmbCategoria.DisplayMember = "Nome";
+                cmbCategoria.ValueMember = "Id";
+                cmbCategoria.SelectedIndex = -1;
 
-            cmbConta.DataSource = _cadastroAuxiliarService.ObterContas();
-            cmbConta.DisplayMember = "Nome";
-            cmbConta.ValueMember = "Id";
-            cmbConta.SelectedIndex = -1;
+                cmbConta.DataSource = _cadastroAuxiliarService.ObterContas();
+                cmbConta.DisplayMember = "Nome";
+                cmbConta.ValueMember = "Id";
+                cmbConta.SelectedIndex = -1;
 
-            cmbPessoa.DataSource = _cadastroAuxiliarService.ObterPessoas();
-            cmbPessoa.DisplayMember = "Nome";
-            cmbPessoa.ValueMember = "Id";
-            cmbPessoa.SelectedIndex = -1;
+                cmbPessoa.DataSource = _cadastroAuxiliarService.ObterPessoas();
+                cmbPessoa.DisplayMember = "Nome";
+                cmbPessoa.ValueMember = "Id";
+                cmbPessoa.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Erro ao carregar combos em FrmNovoLancamento");
+            }
+            finally
+            {
+                _carregandoCombos = false;
+                AtualizarComportamentoTipo();
+            }
+
+        }
+
+        private void AtualizarComportamentoTipo()
+        {
+            if (cmbTipo.Items.Count == 0 || cmbStatus.Items.Count == 0)
+                return;
+
+            bool isEntrada = cmbTipo.Text == "Entrada";
+            cmbStatus.Enabled = !isEntrada;
+
+            if (isEntrada)
+            {
+                cmbStatus.SelectedItem = "Pago";
+            }
+            else
+            {
+                if (cmbStatus.SelectedIndex < 0)
+                    cmbStatus.SelectedIndex = 0;
+            }
         }
 
         private void btnSalvar_Click(object sender, EventArgs e)
         {
-            if (!ValidarFormulario())
-                return;
-
-            var tipo = cmbTipo.Text == "Entrada"
-                ? TipoLancamento.Entrada
-                : TipoLancamento.Saida;
-
-            var status = tipo == TipoLancamento.Entrada
-                ? "Pago"
-                : cmbStatus.Text;
-
-            var lancamento = new Lancamento
+            try
             {
-                Descricao = txtDescricao.Text.Trim(),
-                Valor = ParseDecimal(txtValor.Text),
-                DataVencimento = dtpVencimento.Value.Date,
-                Status = status,
-                Tipo = tipo,
-                CategoriaId = cmbCategoria.SelectedValue != null ? Convert.ToInt32(cmbCategoria.SelectedValue) : null,
-                ContaId = cmbConta.SelectedValue != null ? Convert.ToInt32(cmbConta.SelectedValue) : null,
-                PessoaId = cmbPessoa.SelectedValue != null ? Convert.ToInt32(cmbPessoa.SelectedValue) : null,
-                Observacoes = string.IsNullOrWhiteSpace(txtObservacoes.Text) ? null : txtObservacoes.Text.Trim(),
-                Competencia = txtCompetencia.Text.Trim()
-            };
+                if (!ValidarFormulario())
+                    return;
 
-            if (lancamento.Status == "Pago")
-                lancamento.DataPagamento = DateTime.Now;
+                var tipo = cmbTipo.Text == "Entrada"
+                    ? TipoLancamento.Entrada
+                    : TipoLancamento.Saida;
 
-            _lancamentoService.Adicionar(lancamento);
+                var status = tipo == TipoLancamento.Entrada
+                    ? "Pago"
+                    : cmbStatus.Text;
 
-            MessageBox.Show("Lançamento salvo com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                var lancamento = new Lancamento
+                {
+                    Descricao = txtDescricao.Text.Trim(),
+                    Valor = ParseDecimal(txtValor.Text),
+                    DataVencimento = dtpVencimento.Value.Date,
+                    Status = status,
+                    Tipo = tipo,
+                    CategoriaId = cmbCategoria.SelectedValue != null ? Convert.ToInt32(cmbCategoria.SelectedValue) : null,
+                    ContaId = cmbConta.SelectedValue != null ? Convert.ToInt32(cmbConta.SelectedValue) : null,
+                    PessoaId = cmbPessoa.SelectedValue != null ? Convert.ToInt32(cmbPessoa.SelectedValue) : null,
+                    Observacoes = string.IsNullOrWhiteSpace(txtObservacoes.Text) ? null : txtObservacoes.Text.Trim(),
+                    Competencia = txtCompetencia.Text.Trim()
+                };
 
-            DialogResult = DialogResult.OK;
-            Close();
+                if (lancamento.Status == "Pago")
+                    lancamento.DataPagamento = DateTime.Now;
+
+                _lancamentoService.Adicionar(lancamento);
+
+                MessageBox.Show("Lançamento salvo com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                DialogResult = DialogResult.OK;
+                Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Erro ao salvar lançamento");
+            }
         }
 
         private decimal ParseDecimal(string texto)
@@ -148,13 +196,9 @@ namespace FinanceiroPessoal.WinForms
 
         private void cmbTipo_SelectedIndexChanged(object sender, EventArgs e)
         {
-            bool isEntrada = cmbTipo.Text == "Entrada";
-            cmbStatus.Enabled = !isEntrada;
-
-            if (isEntrada)
-                cmbStatus.Text = "Pago";
-            else if (cmbStatus.SelectedIndex < 0)
-                cmbStatus.SelectedIndex = 0;
+            if (_carregandoCombos)
+                return;
+            AtualizarComportamentoTipo();
         }
     }
 }

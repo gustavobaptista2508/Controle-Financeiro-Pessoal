@@ -272,6 +272,7 @@
             Controls.Add(txtObservacoes);
             Controls.Add(txtDescricao);
             Name = "FrmNovoLancamento";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "FrmNovoLancamento";
             Load += FrmNovoLancamento_Load;
             ResumeLayout(false);
