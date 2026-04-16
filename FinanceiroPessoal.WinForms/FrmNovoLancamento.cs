@@ -89,9 +89,11 @@ namespace FinanceiroPessoal.WinForms
             if (isEntrada)
             {
                 cmbStatus.SelectedItem = "Pago";
+                txtValor.ForeColor = Color.Green; // Verde para entradas
             }
             else
             {
+                txtValor.ForeColor = Color.Red; // Vermelho para saídas
                 if (cmbStatus.SelectedIndex < 0)
                     cmbStatus.SelectedIndex = 0;
             }

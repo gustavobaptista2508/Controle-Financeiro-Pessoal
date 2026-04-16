@@ -32,11 +32,15 @@ namespace FinanceiroPessoal.WinForms.Services
                 .Where(x => x.Tipo == TipoLancamento.Saida)
                 .ToList();
 
-            var pendentes = saidasMes
+            var saidasPagasMes = saidasMes
+                .Where(x => x.Status == "Pago")
+                .ToList();
+
+            var pendentesMes = saidasMes
                 .Where(x => x.Status == "Pendente")
                 .ToList();
 
-            var pagos = saidasMes
+            var pagosMes = saidasMes
                 .Where(x => x.Status == "Pago")
                 .ToList();
 
@@ -62,22 +66,23 @@ namespace FinanceiroPessoal.WinForms.Services
 
             var totalEntradas = entradasMes.Sum(x => x.Valor);
             var totalSaidas = saidasMes.Sum(x => x.Valor);
+            var totalSaidasPagas = saidasPagasMes.Sum(x => x.Valor);
 
             return new DashboardResumo
             {
                 TotalEntradas = totalEntradas,
                 QuantidadeEntradas = entradasMes.Count,
 
-                TotalSaidas = totalSaidas,
-                QuantidadeSaidas = saidasMes.Count,
+                TotalSaidas = totalSaidasPagas,
+                QuantidadeSaidas = saidasPagasMes.Count,
 
-                SaldoMes = totalEntradas - totalSaidas,
+                SaldoMes = totalEntradas - totalSaidasPagas,
 
-                TotalPendente = pendentes.Sum(x => x.Valor),
-                QuantidadePendentes = pendentes.Count,
+                TotalPendente = pendentesMes.Sum(x => x.Valor),
+                QuantidadePendentes = pendentesMes.Count,
 
-                TotalPago = pagos.Sum(x => x.Valor),
-                QuantidadePagos = pagos.Count,
+                TotalPago = pagosMes.Sum(x => x.Valor),
+                QuantidadePagos = pagosMes.Count,
 
                 TotalSemana = vencemSemana.Sum(x => x.Valor),
                 QuantidadeSemana = vencemSemana.Count,
@@ -85,7 +90,7 @@ namespace FinanceiroPessoal.WinForms.Services
                 TotalLancamentosMes = lancamentosMes.Count,
                 TotalAtrasados = atrasados.Sum(x => x.Valor),
                 TotalVencemHoje = vencemHoje.Sum(x => x.Valor)
-            };
+            }; 
         }
 
         public List<ProximoVencimentoDto> ObterProximosVencimentos(int quantidade = 8)

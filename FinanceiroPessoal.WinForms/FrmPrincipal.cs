@@ -250,7 +250,7 @@ namespace FinanceiroPessoal.WinForms
             lblTotalSaidaQtd.Text = $"{resumo.QuantidadeSaidas} lançamentos";
 
             lblSaldoMesValor.Text = resumo.SaldoMes.ToString("C2");
-            lblSaldoMesQtd.Text = $"{resumo.TotalLancamentosMes} lançamentos no mês";
+            lblSaldoMesQtd.Text = $"{resumo.TotalLancamentosMes} lançamentos";
 
             lblSemanaValor.Text = resumo.TotalSemana.ToString("C2");
             lblSemanaQtd.Text = $"{resumo.QuantidadeSemana} vencimentos";

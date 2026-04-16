@@ -28,91 +28,33 @@
         /// </summary>
         private void InitializeComponent()
         {
-            txtDescricao = new TextBox();
-            txtObservacoes = new TextBox();
-            txtCompetencia = new TextBox();
-            cmbCategoria = new ComboBox();
-            cmbConta = new ComboBox();
-            cmbPessoa = new ComboBox();
-            cmbStatus = new ComboBox();
-            dtpVencimento = new DateTimePicker();
             btnSalvar = new Button();
             btnCancelar = new Button();
-            label1 = new Label();
-            label2 = new Label();
-            label3 = new Label();
-            label4 = new Label();
-            label5 = new Label();
-            label6 = new Label();
-            label7 = new Label();
-            label8 = new Label();
-            label9 = new Label();
-            txtValor = new TextBox();
-            label10 = new Label();
+            label11 = new Label();
+            lblTotalGeral = new Label();
+            lblTotalPendente = new Label();
+            lblTotalPago = new Label();
             cmbTipo = new ComboBox();
+            label10 = new Label();
+            txtValor = new TextBox();
+            label9 = new Label();
+            label8 = new Label();
+            label7 = new Label();
+            label6 = new Label();
+            label5 = new Label();
+            label4 = new Label();
+            label3 = new Label();
+            label2 = new Label();
+            label1 = new Label();
+            dtpVencimento = new DateTimePicker();
+            cmbStatus = new ComboBox();
+            cmbPessoa = new ComboBox();
+            cmbConta = new ComboBox();
+            cmbCategoria = new ComboBox();
+            txtCompetencia = new TextBox();
+            txtObservacoes = new TextBox();
+            txtDescricao = new TextBox();
             SuspendLayout();
-            // 
-            // txtDescricao
-            // 
-            txtDescricao.Location = new Point(108, 64);
-            txtDescricao.Name = "txtDescricao";
-            txtDescricao.Size = new Size(555, 27);
-            txtDescricao.TabIndex = 0;
-            // 
-            // txtObservacoes
-            // 
-            txtObservacoes.Location = new Point(108, 332);
-            txtObservacoes.Multiline = true;
-            txtObservacoes.Name = "txtObservacoes";
-            txtObservacoes.Size = new Size(555, 111);
-            txtObservacoes.TabIndex = 2;
-            // 
-            // txtCompetencia
-            // 
-            txtCompetencia.Location = new Point(108, 299);
-            txtCompetencia.Name = "txtCompetencia";
-            txtCompetencia.Size = new Size(555, 27);
-            txtCompetencia.TabIndex = 3;
-            // 
-            // cmbCategoria
-            // 
-            cmbCategoria.FormattingEnabled = true;
-            cmbCategoria.Location = new Point(108, 163);
-            cmbCategoria.Name = "cmbCategoria";
-            cmbCategoria.Size = new Size(555, 28);
-            cmbCategoria.TabIndex = 4;
-            // 
-            // cmbConta
-            // 
-            cmbConta.FormattingEnabled = true;
-            cmbConta.Location = new Point(108, 197);
-            cmbConta.Name = "cmbConta";
-            cmbConta.Size = new Size(555, 28);
-            cmbConta.TabIndex = 5;
-            // 
-            // cmbPessoa
-            // 
-            cmbPessoa.FormattingEnabled = true;
-            cmbPessoa.Location = new Point(108, 231);
-            cmbPessoa.Name = "cmbPessoa";
-            cmbPessoa.Size = new Size(555, 28);
-            cmbPessoa.TabIndex = 6;
-            // 
-            // cmbStatus
-            // 
-            cmbStatus.FormattingEnabled = true;
-            cmbStatus.Location = new Point(108, 265);
-            cmbStatus.Name = "cmbStatus";
-            cmbStatus.Size = new Size(151, 28);
-            cmbStatus.TabIndex = 7;
-            // 
-            // dtpVencimento
-            // 
-            dtpVencimento.Format = DateTimePickerFormat.Short;
-            dtpVencimento.Location = new Point(108, 130);
-            dtpVencimento.Name = "dtpVencimento";
-            dtpVencimento.Size = new Size(151, 27);
-            dtpVencimento.TabIndex = 8;
             // 
             // btnSalvar
             // 
@@ -120,7 +62,7 @@
             btnSalvar.FlatAppearance.BorderColor = Color.RoyalBlue;
             btnSalvar.FlatAppearance.BorderSize = 0;
             btnSalvar.ForeColor = SystemColors.ButtonHighlight;
-            btnSalvar.Location = new Point(469, 461);
+            btnSalvar.Location = new Point(296, 478);
             btnSalvar.Name = "btnSalvar";
             btnSalvar.Size = new Size(94, 29);
             btnSalvar.TabIndex = 9;
@@ -130,7 +72,7 @@
             // 
             // btnCancelar
             // 
-            btnCancelar.Location = new Point(569, 461);
+            btnCancelar.Location = new Point(394, 478);
             btnCancelar.Name = "btnCancelar";
             btnCancelar.Size = new Size(94, 29);
             btnCancelar.TabIndex = 10;
@@ -138,117 +80,222 @@
             btnCancelar.UseVisualStyleBackColor = true;
             btnCancelar.Click += btnCancelar_Click;
             // 
-            // label1
+            // label11
             // 
-            label1.AutoSize = true;
-            label1.Location = new Point(25, 67);
-            label1.Name = "label1";
-            label1.Size = new Size(77, 20);
-            label1.TabIndex = 11;
-            label1.Text = "Descrição:";
+            label11.AutoSize = true;
+            label11.Location = new Point(12, 128);
+            label11.Name = "label11";
+            label11.Size = new Size(46, 20);
+            label11.TabIndex = 80;
+            label11.Text = "Valor:";
             // 
-            // label2
+            // lblTotalGeral
             // 
-            label2.AutoSize = true;
-            label2.Location = new Point(56, 100);
-            label2.Name = "label2";
-            label2.Size = new Size(46, 20);
-            label2.TabIndex = 13;
-            label2.Text = "Valor:";
+            lblTotalGeral.AutoSize = true;
+            lblTotalGeral.Location = new Point(427, 513);
+            lblTotalGeral.Name = "lblTotalGeral";
+            lblTotalGeral.Size = new Size(58, 20);
+            lblTotalGeral.TabIndex = 79;
+            lblTotalGeral.Text = "label12";
             // 
-            // label3
+            // lblTotalPendente
             // 
-            label3.AutoSize = true;
-            label3.Location = new Point(12, 135);
-            label3.Name = "label3";
-            label3.Size = new Size(90, 20);
-            label3.TabIndex = 14;
-            label3.Text = "Vencimento:";
+            lblTotalPendente.AutoSize = true;
+            lblTotalPendente.Location = new Point(210, 513);
+            lblTotalPendente.Name = "lblTotalPendente";
+            lblTotalPendente.Size = new Size(58, 20);
+            lblTotalPendente.TabIndex = 78;
+            lblTotalPendente.Text = "label11";
             // 
-            // label4
+            // lblTotalPago
             // 
-            label4.AutoSize = true;
-            label4.Location = new Point(25, 166);
-            label4.Name = "label4";
-            label4.Size = new Size(77, 20);
-            label4.TabIndex = 15;
-            label4.Text = "Categoria:";
-            // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Location = new Point(51, 200);
-            label5.Name = "label5";
-            label5.Size = new Size(51, 20);
-            label5.TabIndex = 16;
-            label5.Text = "Conta:";
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Location = new Point(46, 234);
-            label6.Name = "label6";
-            label6.Size = new Size(56, 20);
-            label6.TabIndex = 17;
-            label6.Text = "Pessoa:";
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new Point(50, 268);
-            label7.Name = "label7";
-            label7.Size = new Size(52, 20);
-            label7.TabIndex = 18;
-            label7.Text = "Status:";
-            // 
-            // label8
-            // 
-            label8.AutoSize = true;
-            label8.Location = new Point(2, 302);
-            label8.Name = "label8";
-            label8.Size = new Size(100, 20);
-            label8.TabIndex = 19;
-            label8.Text = "Competência:";
-            // 
-            // label9
-            // 
-            label9.AutoSize = true;
-            label9.Location = new Point(6, 335);
-            label9.Name = "label9";
-            label9.Size = new Size(96, 20);
-            label9.TabIndex = 20;
-            label9.Text = "Observações:";
-            // 
-            // txtValor
-            // 
-            txtValor.Location = new Point(108, 97);
-            txtValor.Name = "txtValor";
-            txtValor.Size = new Size(151, 27);
-            txtValor.TabIndex = 21;
-            // 
-            // label10
-            // 
-            label10.AutoSize = true;
-            label10.Location = new Point(12, 33);
-            label10.Name = "label10";
-            label10.Size = new Size(93, 20);
-            label10.TabIndex = 22;
-            label10.Text = "Lançamento:";
+            lblTotalPago.AutoSize = true;
+            lblTotalPago.Location = new Point(12, 513);
+            lblTotalPago.Name = "lblTotalPago";
+            lblTotalPago.Size = new Size(58, 20);
+            lblTotalPago.TabIndex = 77;
+            lblTotalPago.Text = "label15";
             // 
             // cmbTipo
             // 
             cmbTipo.FormattingEnabled = true;
-            cmbTipo.Location = new Point(108, 30);
+            cmbTipo.Location = new Point(12, 35);
             cmbTipo.Name = "cmbTipo";
-            cmbTipo.Size = new Size(151, 28);
-            cmbTipo.TabIndex = 23;
-            cmbTipo.SelectedIndexChanged += cmbTipo_SelectedIndexChanged;
+            cmbTipo.Size = new Size(213, 28);
+            cmbTipo.TabIndex = 76;
+            // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(12, 12);
+            label10.Name = "label10";
+            label10.Size = new Size(42, 20);
+            label10.TabIndex = 75;
+            label10.Text = "Tipo:";
+            // 
+            // txtValor
+            // 
+            txtValor.Location = new Point(10, 151);
+            txtValor.Name = "txtValor";
+            txtValor.Size = new Size(215, 27);
+            txtValor.TabIndex = 74;
+            // 
+            // label9
+            // 
+            label9.AutoSize = true;
+            label9.Location = new Point(11, 319);
+            label9.Name = "label9";
+            label9.Size = new Size(96, 20);
+            label9.TabIndex = 73;
+            label9.Text = "Observações:";
+            // 
+            // label8
+            // 
+            label8.AutoSize = true;
+            label8.Location = new Point(10, 257);
+            label8.Name = "label8";
+            label8.Size = new Size(100, 20);
+            label8.TabIndex = 72;
+            label8.Text = "Competência:";
+            // 
+            // label7
+            // 
+            label7.AutoSize = true;
+            label7.Location = new Point(270, 12);
+            label7.Name = "label7";
+            label7.Size = new Size(52, 20);
+            label7.TabIndex = 71;
+            label7.Text = "Status:";
+            // 
+            // label6
+            // 
+            label6.AutoSize = true;
+            label6.Location = new Point(334, 191);
+            label6.Name = "label6";
+            label6.Size = new Size(56, 20);
+            label6.TabIndex = 70;
+            label6.Text = "Pessoa:";
+            // 
+            // label5
+            // 
+            label5.AutoSize = true;
+            label5.Location = new Point(174, 191);
+            label5.Name = "label5";
+            label5.Size = new Size(51, 20);
+            label5.TabIndex = 69;
+            label5.Text = "Conta:";
+            // 
+            // label4
+            // 
+            label4.AutoSize = true;
+            label4.Location = new Point(12, 191);
+            label4.Name = "label4";
+            label4.Size = new Size(77, 20);
+            label4.TabIndex = 68;
+            label4.Text = "Categoria:";
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(270, 128);
+            label3.Name = "label3";
+            label3.Size = new Size(90, 20);
+            label3.TabIndex = 67;
+            label3.Text = "Vencimento:";
+            // 
+            // label2
+            // 
+            label2.AutoSize = true;
+            label2.Location = new Point(12, 156);
+            label2.Name = "label2";
+            label2.Size = new Size(46, 20);
+            label2.TabIndex = 66;
+            label2.Text = "Valor:";
+            // 
+            // label1
+            // 
+            label1.AutoSize = true;
+            label1.Location = new Point(10, 66);
+            label1.Name = "label1";
+            label1.Size = new Size(77, 20);
+            label1.TabIndex = 65;
+            label1.Text = "Descrição:";
+            // 
+            // dtpVencimento
+            // 
+            dtpVencimento.Format = DateTimePickerFormat.Short;
+            dtpVencimento.Location = new Point(270, 151);
+            dtpVencimento.Name = "dtpVencimento";
+            dtpVencimento.Size = new Size(218, 27);
+            dtpVencimento.TabIndex = 62;
+            // 
+            // cmbStatus
+            // 
+            cmbStatus.FormattingEnabled = true;
+            cmbStatus.Location = new Point(270, 35);
+            cmbStatus.Name = "cmbStatus";
+            cmbStatus.Size = new Size(215, 28);
+            cmbStatus.TabIndex = 61;
+            // 
+            // cmbPessoa
+            // 
+            cmbPessoa.FormattingEnabled = true;
+            cmbPessoa.Location = new Point(334, 214);
+            cmbPessoa.Name = "cmbPessoa";
+            cmbPessoa.Size = new Size(154, 28);
+            cmbPessoa.TabIndex = 60;
+            cmbPessoa.Text = "<Selecione>";
+            // 
+            // cmbConta
+            // 
+            cmbConta.FormattingEnabled = true;
+            cmbConta.Location = new Point(174, 214);
+            cmbConta.Name = "cmbConta";
+            cmbConta.Size = new Size(154, 28);
+            cmbConta.TabIndex = 59;
+            cmbConta.Text = "<Selecione>";
+            // 
+            // cmbCategoria
+            // 
+            cmbCategoria.FormattingEnabled = true;
+            cmbCategoria.Location = new Point(12, 214);
+            cmbCategoria.Name = "cmbCategoria";
+            cmbCategoria.Size = new Size(154, 28);
+            cmbCategoria.TabIndex = 58;
+            cmbCategoria.Text = "<Selecione>";
+            // 
+            // txtCompetencia
+            // 
+            txtCompetencia.Location = new Point(12, 280);
+            txtCompetencia.Name = "txtCompetencia";
+            txtCompetencia.Size = new Size(476, 27);
+            txtCompetencia.TabIndex = 57;
+            // 
+            // txtObservacoes
+            // 
+            txtObservacoes.Location = new Point(12, 342);
+            txtObservacoes.Multiline = true;
+            txtObservacoes.Name = "txtObservacoes";
+            txtObservacoes.Size = new Size(476, 111);
+            txtObservacoes.TabIndex = 56;
+            // 
+            // txtDescricao
+            // 
+            txtDescricao.Location = new Point(11, 89);
+            txtDescricao.Name = "txtDescricao";
+            txtDescricao.Size = new Size(477, 27);
+            txtDescricao.TabIndex = 55;
             // 
             // FrmNovoLancamento
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(675, 501);
+            BackColor = Color.White;
+            ClientSize = new Size(501, 552);
+            Controls.Add(label11);
+            Controls.Add(lblTotalGeral);
+            Controls.Add(lblTotalPendente);
+            Controls.Add(lblTotalPago);
             Controls.Add(cmbTipo);
             Controls.Add(label10);
             Controls.Add(txtValor);
@@ -261,8 +308,6 @@
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(label1);
-            Controls.Add(btnCancelar);
-            Controls.Add(btnSalvar);
             Controls.Add(dtpVencimento);
             Controls.Add(cmbStatus);
             Controls.Add(cmbPessoa);
@@ -271,37 +316,43 @@
             Controls.Add(txtCompetencia);
             Controls.Add(txtObservacoes);
             Controls.Add(txtDescricao);
+            Controls.Add(btnCancelar);
+            Controls.Add(btnSalvar);
+            MaximizeBox = false;
             Name = "FrmNovoLancamento";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "FrmNovoLancamento";
+            Text = "Novo Lançamento";
             Load += FrmNovoLancamento_Load;
             ResumeLayout(false);
             PerformLayout();
         }
 
         #endregion
-
-        private TextBox txtDescricao;
-        private TextBox txtObservacoes;
-        private TextBox txtCompetencia;
-        private ComboBox cmbCategoria;
-        private ComboBox cmbConta;
-        private ComboBox cmbPessoa;
-        private ComboBox cmbStatus;
-        private DateTimePicker dtpVencimento;
         private Button btnSalvar;
         private Button btnCancelar;
-        private Label label1;
-        private Label label2;
-        private Label label3;
-        private Label label4;
-        private Label label5;
-        private Label label6;
-        private Label label7;
-        private Label label8;
-        private Label label9;
-        private TextBox txtValor;
-        private Label label10;
+        private Label label11;
+        private Label lblTotalGeral;
+        private Label lblTotalPendente;
+        private Label lblTotalPago;
         private ComboBox cmbTipo;
+        private Label label10;
+        private TextBox txtValor;
+        private Label label9;
+        private Label label8;
+        private Label label7;
+        private Label label6;
+        private Label label5;
+        private Label label4;
+        private Label label3;
+        private Label label2;
+        private Label label1;
+        private DateTimePicker dtpVencimento;
+        private ComboBox cmbStatus;
+        private ComboBox cmbPessoa;
+        private ComboBox cmbConta;
+        private ComboBox cmbCategoria;
+        private TextBox txtCompetencia;
+        private TextBox txtObservacoes;
+        private TextBox txtDescricao;
     }
 }

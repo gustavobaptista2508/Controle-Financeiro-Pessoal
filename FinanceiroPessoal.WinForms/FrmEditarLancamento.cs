@@ -91,44 +91,16 @@ namespace FinanceiroPessoal.WinForms
         {
             bool isEntrada = cmbTipo.Text == "Entrada";
             cmbStatus.Enabled = !isEntrada;
-
             if (isEntrada)
+            {
                 cmbStatus.Text = "Pago";
-        }
+                txtValor.ForeColor = Color.Green; // Verde para entradas
 
-        private void btnSalvar_Click(object sender, EventArgs e)
-        {
-            if (!ValidarFormulario())
-                return;
-
-            var lancamento = _lancamentoService.ObterPorId(_lancamentoId);
-            if (lancamento == null)
-                return;
-
-            var tipo = cmbTipo.Text == "Entrada"
-                ? TipoLancamento.Entrada
-                : TipoLancamento.Saida;
-
-            lancamento.Descricao = txtDescricao.Text.Trim();
-            lancamento.Valor = ParseDecimal(txtValor.Text);
-            lancamento.DataVencimento = dtpVencimento.Value.Date;
-            lancamento.Tipo = tipo;
-            lancamento.Status = tipo == TipoLancamento.Entrada ? "Pago" : cmbStatus.Text;
-            lancamento.CategoriaId = cmbCategoria.SelectedValue != null ? Convert.ToInt32(cmbCategoria.SelectedValue) : null;
-            lancamento.ContaId = cmbConta.SelectedValue != null ? Convert.ToInt32(cmbConta.SelectedValue) : null;
-            lancamento.PessoaId = cmbPessoa.SelectedValue != null ? Convert.ToInt32(cmbPessoa.SelectedValue) : null;
-            lancamento.Observacoes = string.IsNullOrWhiteSpace(txtObservacoes.Text) ? null : txtObservacoes.Text.Trim();
-            lancamento.Competencia = txtCompetencia.Text.Trim();
-
-            if (lancamento.Status == "Pago" && !lancamento.DataPagamento.HasValue)
-                lancamento.DataPagamento = DateTime.Now;
-
-            _lancamentoService.Atualizar(lancamento);
-
-            MessageBox.Show("Lançamento atualizado com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            DialogResult = DialogResult.OK;
-            Close();
+            }
+            else
+            {
+                txtValor.ForeColor = Color.Red; // Vermelho para saídas
+            }
         }
 
         private bool ValidarFormulario()
@@ -170,14 +142,49 @@ namespace FinanceiroPessoal.WinForms
             return decimal.Parse(texto, NumberStyles.Any, new CultureInfo("pt-BR"));
         }
 
-        private void btnCancelar_Click(object sender, EventArgs e)
-        {
-            Close();
-        }
-
         private void cmbTipo_SelectedIndexChanged(object sender, EventArgs e)
         {
             AtualizarComportamentoTipo();
+        }
+
+        private void btnSalvar_Click_1(object sender, EventArgs e)
+        {
+            if (!ValidarFormulario())
+                return;
+
+            var lancamento = _lancamentoService.ObterPorId(_lancamentoId);
+            if (lancamento == null)
+                return;
+
+            var tipo = cmbTipo.Text == "Entrada"
+                ? TipoLancamento.Entrada
+                : TipoLancamento.Saida;
+
+            lancamento.Descricao = txtDescricao.Text.Trim();
+            lancamento.Valor = ParseDecimal(txtValor.Text);
+            lancamento.DataVencimento = dtpVencimento.Value.Date;
+            lancamento.Tipo = tipo;
+            lancamento.Status = tipo == TipoLancamento.Entrada ? "Pago" : cmbStatus.Text;
+            lancamento.CategoriaId = cmbCategoria.SelectedValue != null ? Convert.ToInt32(cmbCategoria.SelectedValue) : null;
+            lancamento.ContaId = cmbConta.SelectedValue != null ? Convert.ToInt32(cmbConta.SelectedValue) : null;
+            lancamento.PessoaId = cmbPessoa.SelectedValue != null ? Convert.ToInt32(cmbPessoa.SelectedValue) : null;
+            lancamento.Observacoes = string.IsNullOrWhiteSpace(txtObservacoes.Text) ? null : txtObservacoes.Text.Trim();
+            lancamento.Competencia = txtCompetencia.Text.Trim();
+
+            if (lancamento.Status == "Pago" && !lancamento.DataPagamento.HasValue)
+                lancamento.DataPagamento = DateTime.Now;
+
+            _lancamentoService.Atualizar(lancamento);
+
+            MessageBox.Show("Lançamento atualizado com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+
+        private void btnCancelar_Click_1(object sender, EventArgs e)
+        {
+            Close();
         }
     }
 }
