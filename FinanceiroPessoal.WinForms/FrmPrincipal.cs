@@ -277,6 +277,8 @@ namespace FinanceiroPessoal.WinForms
             EstilizarBotaoMenu(btnSair);
 
             CarregarCompetencias();
+            ConfigurarMenuLateral();
+            AplicarBordasArredondadas();
             ConfigurarGrids();
             CarregarDashboard();
         }
@@ -291,6 +293,7 @@ namespace FinanceiroPessoal.WinForms
         private void btnLancamentos_Click(object sender, EventArgs e)
         {
             AtivarBotaoMenu(btnLancamentos);
+            MarcarBotaoAtivo(btnLancamentos);
             using var frm = new FrmLancamentos();
             frm.ShowDialog();
 
@@ -328,7 +331,7 @@ namespace FinanceiroPessoal.WinForms
         private void btnSair_Click(object sender, EventArgs e)
         {
             AtivarBotaoMenu(btnSair);
-
+            MarcarBotaoAtivo(btnSair);
             var resultado = MessageBox.Show(
                 "Deseja realmente sair do sistema?",
                 "Sair",

@@ -17,8 +17,7 @@ namespace FinanceiroPessoal.WinForms
         public FrmLancamentos()
         {
             InitializeComponent();
-
-            // ✅ CORREÇÃO 1: Vincula eventos ANTES de carregar dados
+            // Vincula eventos ANTES de carregar dados
             dgvLancamentos.CellPainting += dgvLancamentos_CellPainting;
             dgvLancamentos.CellFormatting += dgvLancamentos_CellFormatting;
 
