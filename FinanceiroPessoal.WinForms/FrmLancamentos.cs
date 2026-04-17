@@ -12,30 +12,41 @@ namespace FinanceiroPessoal.WinForms
 {
     public partial class FrmLancamentos : Form
     {
-        private readonly LancamentoService _service = new();
-        private readonly CadastroAuxiliarService _cadastroService = new();
+        private readonly LancamentoService _service;
+        private readonly CadastroAuxiliarService _cadastroService;
         public FrmLancamentos()
         {
+            var tipoBanco = TipoBanco.OnlineMySql; // ✅ Configuração centralizada
+            var lancamentoRepo = DatabaseFactory.CriarLancamentoRepository(tipoBanco);
+            var cadastroRepo = DatabaseFactory.CriarCadastroAuxiliarRepository(tipoBanco);
+            _service = new LancamentoService(lancamentoRepo);
+            _cadastroService = new CadastroAuxiliarService(cadastroRepo);
             InitializeComponent();
             // Vincula eventos ANTES de carregar dados
             dgvLancamentos.CellPainting += dgvLancamentos_CellPainting;
             dgvLancamentos.CellFormatting += dgvLancamentos_CellFormatting;
 
-            CarregarFiltros();
-            CarregarGrid();
+
         }
 
-        private void FrmLancamentos_Load(object sender, EventArgs e)
+        private async void FrmLancamentos_Load(object sender, EventArgs e)
         {
             dtpDataInicio.Value = DateTime.Now.AddMonths(-1);
             dtpDataFim.Value = DateTime.Now;
+            await CarregarFiltros();
+            await CarregarGrid();
         }
 
-        private void AtualizarDashboard()
+        private async Task AtualizarDashboard()
         {
             try
             {
-                var lancamentos = _service.Filtrar(cmbFiltroPessoa.Text, cmbFiltroStatus.Text, cmbFiltroTipo.Text, dtpDataInicio.Value, dtpDataFim.Value);
+                var lancamentos = await _service.Filtrar(
+                    cmbFiltroPessoa.Text,
+                    cmbFiltroStatus.Text,
+                    cmbFiltroTipo.Text,
+                    dtpDataInicio.Value,
+                    dtpDataFim.Value);
 
                 if (!lancamentos.Any())
                 {
@@ -43,42 +54,22 @@ namespace FinanceiroPessoal.WinForms
                     return;
                 }
 
-                // ✅ CORRETO: APENAS SAÍDAS para controle financeiro
-                var saidas = lancamentos.Where(x => x.Tipo == TipoLancamento.Saida).ToList();
-                var totalGeralSaidas = saidas.Sum(x => x.Valor);
-                var totalPagos = saidas.Where(x => x.Status == "Pago").Sum(x => x.Valor);
-                var totalPendentes = saidas.Where(x => x.Status == "Pendente").Sum(x => x.Valor);
-                var totalAtrasados = saidas.Where(x => x.Status == "Atrasado").Sum(x => x.Valor);
+                // ✅ NOVOS TOTALS OTIMIZADOS
+                var totalPendente = await _service.ObterTotalPendenteSaidas();
+                var totalPago = await _service.ObterTotalPagoSaidas();
 
-                var qtdPagos = saidas.Count(x => x.Status == "Pago");
-                var qtdPendentes = saidas.Count(x => x.Status == "Pendente");
-                var qtdAtrasados = saidas.Count(x => x.Status == "Atrasado");
+                var saldo = await _service.CalcularSaldoConta(
+                    cmbFiltroPessoa.Text, cmbFiltroStatus.Text, cmbFiltroTipo.Text,
+                    dtpDataInicio.Value, dtpDataFim.Value);
 
-                // ✅ Proteção divisão por zero
-                var porcentagemPagos = totalGeralSaidas > 0 ? (totalPagos / totalGeralSaidas * 100) : 0;
+                // Atualiza labels
+                lblTotalGeral.Text = $"💰 SAÍDAS: R$ {totalPendente + totalPago:N2}";
+                lblPagos.Text = $"🟢 PAGAS: R$ {totalPago:N2}";
+                lblPendentes.Text = $"🟡 PENDENTES: R$ {totalPendente:N2}";
+                lblSaldoConta.Text = $"💳 SALDO: R$ {saldo:N2}";
 
-                lblTotalGeral.Text = $"💰 SAÍDAS: R$ {totalGeralSaidas:N2}";
-                lblPagos.Text = $"🟢 PAGAS: R$ {totalPagos:N2} ({porcentagemPagos:F0}%) ({qtdPagos})";
-                lblPendentes.Text = $"🟡 PENDENTES: R$ {totalPendentes:N2} ({qtdPendentes})";
-                lblAtrasados.Text = $"🔴 ATRASADOS: R$ {totalAtrasados:N2} ({qtdAtrasados})";
-
-                // Cores por criticidade
-                lblAtrasados.BackColor = totalAtrasados > 500 ? Color.LightCoral : Color.LightGreen;
-
-                // ✅ NOVO: Saldo da Conta
-                var saldo = _service.CalcularSaldoConta(
-                    cmbFiltroPessoa.Text,
-                    cmbFiltroStatus.Text,
-                    cmbFiltroTipo.Text,
-                    dtpDataInicio?.Value,
-                    dtpDataFim?.Value
-                );
-
-                lblSaldoConta.Text = $"💳 SALDO CONTA: R$ {saldo:N2}";
+                // Cores
                 lblSaldoConta.ForeColor = saldo >= 0 ? Color.Green : Color.Red;
-                lblSaldoConta.BackColor = saldo >= 1000 ? Color.LightGreen :
-                                         saldo >= 0 ? Color.White :
-                                         Color.LightCoral;
             }
             catch (Exception ex)
             {
@@ -95,31 +86,45 @@ namespace FinanceiroPessoal.WinForms
             lblAtrasados.Text = "🔴 ATRASADOS: R$ 0,00";
         }
 
-        private void CarregarGrid()
+        private async Task CarregarGrid()
         {
-            var dados = _service.Filtrar(cmbFiltroPessoa.Text, cmbFiltroStatus.Text, cmbFiltroTipo.Text, dtpDataInicio.Value, dtpDataFim.Value)
-        .Select(x => new
-        {
-            x.Id,
-            Tipo = x.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída",
-            x.Descricao,
-            Valor = x.Valor.ToString("N2"),
-            Vencimento = x.DataVencimento.HasValue ? x.DataVencimento.Value.ToString("dd/MM/yyyy") : "",
-            StatusIcone = x.Status.ToString(),  // ✅ Garantir que é string
-            Categoria = x.Categoria?.Nome ?? "",
-            Conta = x.Conta?.Nome ?? "",
-            Pessoa = x.Pessoa?.Nome ?? "",
-            x.Competencia
-        })
-        .ToList();
+            try
+            {
+                var lancamentos = await _service.Filtrar(
+                    cmbFiltroPessoa.Text,
+                    cmbFiltroStatus.Text,
+                    cmbFiltroTipo.Text,
+                    dtpDataInicio.Value,
+                    dtpDataFim.Value);
+                var dados = lancamentos.Select(x => new
+                {
+                    x.Id,
+                    Tipo = x.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída",
+                    x.Descricao,
+                    Valor = x.Valor.ToString("N2"),
+                    Vencimento = x.DataVencimento.HasValue ? x.DataVencimento.Value.ToString("dd/MM/yyyy") : "",
+                    StatusIcone = x.Status.ToString(),  // ✅ Garantir que é string
+                    Categoria = x.Categoria?.Nome ?? "",
+                    Conta = x.Conta?.Nome ?? "",
+                    Pessoa = x.Pessoa?.Nome ?? "",
+                    x.Competencia
+                })
+                .ToList();
 
-            dgvLancamentos.DataSource = null;
-            dgvLancamentos.DataSource = dados;
-
-            ConfigurarColunas();
-            // ✅ Refresh para aplicar formatação
-            dgvLancamentos.Refresh();
-            AtualizarDashboard();
+                dgvLancamentos.DataSource = null;
+                dgvLancamentos.DataSource = dados;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao carregar lançamentos: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                ConfigurarColunas();
+                // ✅ Refresh para aplicar formatação
+                dgvLancamentos.Refresh();
+                AtualizarDashboard();
+            }
         }
 
         private void ConfigurarColunas()
@@ -148,29 +153,38 @@ namespace FinanceiroPessoal.WinForms
                 dgvLancamentos.Columns["Descricao"].Width = 250;
         }
 
-        private void CarregarFiltros()
+        private async Task CarregarFiltros()
         {
-            cmbFiltroPessoa.Items.Clear();
-            cmbFiltroPessoa.Items.Add("Todos");
+            try
+            {
+                var pessoas = await _cadastroService.ObterPessoas();
 
-            foreach (var pessoa in _cadastroService.ObterPessoas())
-                cmbFiltroPessoa.Items.Add(pessoa.Nome);
+                cmbFiltroPessoa.Items.Clear();
+                cmbFiltroPessoa.Items.Add("Todos");
 
-            cmbFiltroPessoa.SelectedIndex = 0;
+                foreach (var pessoa in pessoas)
+                    cmbFiltroPessoa.Items.Add(pessoa.Nome);
 
-            cmbFiltroStatus.Items.Clear();
-            cmbFiltroStatus.Items.Add("Todos");
-            cmbFiltroStatus.Items.Add("Pendente");
-            cmbFiltroStatus.Items.Add("Pago");
-            cmbFiltroStatus.Items.Add("Atrasado");
-            cmbFiltroStatus.Items.Add("Parcial");
-            cmbFiltroStatus.SelectedIndex = 0;
+                cmbFiltroPessoa.SelectedIndex = 0;
 
-            cmbFiltroTipo.Items.Clear();
-            cmbFiltroTipo.Items.Add("Todos");
-            cmbFiltroTipo.Items.Add("Entrada");
-            cmbFiltroTipo.Items.Add("Saída");
-            cmbFiltroTipo.SelectedIndex = 0;
+                cmbFiltroStatus.Items.Clear();
+                cmbFiltroStatus.Items.Add("Todos");
+                cmbFiltroStatus.Items.Add("Pendente");
+                cmbFiltroStatus.Items.Add("Pago");
+                cmbFiltroStatus.Items.Add("Atrasado");
+                cmbFiltroStatus.Items.Add("Parcial");
+                cmbFiltroStatus.SelectedIndex = 0;
+
+                cmbFiltroTipo.Items.Clear();
+                cmbFiltroTipo.Items.Add("Todos");
+                cmbFiltroTipo.Items.Add("Entrada");
+                cmbFiltroTipo.Items.Add("Saída");
+                cmbFiltroTipo.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao carregar filtros: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private int? ObterIdSelecionado()
@@ -181,14 +195,14 @@ namespace FinanceiroPessoal.WinForms
             return Convert.ToInt32(dgvLancamentos.CurrentRow.Cells["Id"].Value);
         }
 
-        private void btnNovo_Click(object sender, EventArgs e)
+        private async void btnNovo_Click(object sender, EventArgs e)
         {
             using var frm = new FrmNovoLancamento();
             if (frm.ShowDialog() == DialogResult.OK)
-                CarregarGrid();
+                await CarregarGrid();
         }
 
-        private void btnExcluir_Click(object sender, EventArgs e)
+        private async void btnExcluir_Click(object sender, EventArgs e)
         {
             var id = ObterIdSelecionado();
             if (id == null)
@@ -197,54 +211,48 @@ namespace FinanceiroPessoal.WinForms
                 return;
             }
 
-            var confirmar = MessageBox.Show(
-                "Deseja realmente excluir este lançamento?",
-                "Confirmação",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (confirmar != DialogResult.Yes)
-                return;
-
-            _service.Excluir(id.Value);
-            CarregarGrid();
+            if (MessageBox.Show("Deseja excluir?", "Confirmação", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                await _service.Excluir(id.Value); // ✅ Assumindo que existe
+                await CarregarGrid();
+            }
         }
 
-        private void btnMarcarPago_Click(object sender, EventArgs e)
+        private async void btnMarcarPago_Click(object sender, EventArgs e)
         {
             var id = ObterIdSelecionado();
             if (id == null)
             {
-                MessageBox.Show("Selecione um lançamento.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Selecione um lançamento.", "Aviso");
                 return;
             }
 
-            _service.MarcarComoPago(id.Value);
-            CarregarGrid();
+            await _service.MarcarComoPago(id.Value); // ✅ Assumindo que existe
+            await CarregarGrid();
         }
 
-        private void btnAtualizar_Click(object sender, EventArgs e)
+        private async void btnAtualizar_Click(object sender, EventArgs e)
         {
-            CarregarGrid();
+            await CarregarGrid();
         }
 
-        private void btnFiltrar_Click(object sender, EventArgs e)
+        private async void btnFiltrar_Click(object sender, EventArgs e)
         {
-            CarregarGrid();
+            await CarregarGrid();
         }
 
-        private void btnEditar_Click(object sender, EventArgs e)
+        private async void btnEditar_Click(object sender, EventArgs e)
         {
             var id = ObterIdSelecionado();
             if (id == null)
             {
-                MessageBox.Show("Selecione um lançamento.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Selecione um lançamento.", "Aviso");
                 return;
             }
 
             using var frm = new FrmEditarLancamento(id.Value);
             if (frm.ShowDialog() == DialogResult.OK)
-                CarregarGrid();
+                await CarregarGrid();
         }
 
         private void dgvLancamentos_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)

@@ -14,21 +14,35 @@ namespace FinanceiroPessoal.WinForms
     public partial class FrmEditarLancamento : Form
     {
         private readonly int _lancamentoId;
-        private readonly LancamentoService _lancamentoService = new();
-        private readonly CadastroAuxiliarService _cadastroAuxiliarService = new();
+        private readonly LancamentoService _lancamentoService;
+        private readonly CadastroAuxiliarService _cadastroAuxiliarService;
         public FrmEditarLancamento(int lancamentoId)
         {
-            _lancamentoId = lancamentoId;
-            InitializeComponent();
+            try
+            {
+                var tipoBanco = TipoBanco.LocalSqlite; // Mude para OnlineMySql se quiser
+                var lancamentoRepo = DatabaseFactory.CriarLancamentoRepository(tipoBanco);
+                var cadastroRepo = DatabaseFactory.CriarCadastroAuxiliarRepository(tipoBanco);
+
+                _lancamentoService = new LancamentoService(lancamentoRepo);
+                _cadastroAuxiliarService = new CadastroAuxiliarService(cadastroRepo);
+
+                InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.ToString(), "Erro ao inicializar");
+                throw;
+            }
         }
 
-        private void FrmEditarLancamento_Load(object sender, EventArgs e)
+        private async void FrmEditarLancamento_Load(object sender, EventArgs e)
         {
-            CarregarCombos();
-            CarregarDados();
+            await CarregarCombos();
+            await CarregarDados();
         }
 
-        private void CarregarCombos()
+        private async Task CarregarCombos()
         {
             cmbTipo.Items.Clear();
             cmbTipo.Items.Add("Entrada");
@@ -56,9 +70,9 @@ namespace FinanceiroPessoal.WinForms
             cmbPessoa.SelectedIndex = -1;
         }
 
-        private void CarregarDados()
+        private async Task CarregarDados()
         {
-            var lancamento = _lancamentoService.ObterPorId(_lancamentoId);
+            var lancamento = await _lancamentoService.ObterPorId(_lancamentoId);
 
             if (lancamento == null)
             {
@@ -147,12 +161,12 @@ namespace FinanceiroPessoal.WinForms
             AtualizarComportamentoTipo();
         }
 
-        private void btnSalvar_Click_1(object sender, EventArgs e)
+        private async void btnSalvar_Click_1(object sender, EventArgs e)
         {
             if (!ValidarFormulario())
                 return;
 
-            var lancamento = _lancamentoService.ObterPorId(_lancamentoId);
+            var lancamento = await _lancamentoService.ObterPorId(_lancamentoId);
             if (lancamento == null)
                 return;
 
@@ -174,7 +188,7 @@ namespace FinanceiroPessoal.WinForms
             if (lancamento.Status == "Pago" && !lancamento.DataPagamento.HasValue)
                 lancamento.DataPagamento = DateTime.Now;
 
-            _lancamentoService.Atualizar(lancamento);
+            await _lancamentoService.Atualizar(lancamento);
 
             MessageBox.Show("Lançamento atualizado com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 

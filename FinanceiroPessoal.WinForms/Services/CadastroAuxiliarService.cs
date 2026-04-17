@@ -1,25 +1,29 @@
 ﻿using FinanceiroPessoal.WinForms.Data;
 using FinanceiroPessoal.WinForms.Models;
+using FinanceiroPessoal.WinForms.Repositories;
 
 namespace FinanceiroPessoal.WinForms.Services;
 
 public class CadastroAuxiliarService
 {
-    public List<Categoria> ObterCategorias()
+    public readonly ICadastroAuxiliarRepository _repository;
+
+    public CadastroAuxiliarService(ICadastroAuxiliarRepository repository)
     {
-        using var context = new FinanceiroDbContext();
-        return context.Categorias.OrderBy(x => x.Nome).ToList();
+        _repository = repository;
+    }
+    public async Task<List<Categoria>> ObterCategorias()
+    {
+        return await _repository.ObterCategorias();
     }
 
-    public List<Conta> ObterContas()
+    public async Task<List<Conta>> ObterContas()
     {
-        using var context = new FinanceiroDbContext();
-        return context.Contas.OrderBy(x => x.Nome).ToList();
+        return await _repository.ObterContas();
     }
 
-    public List<Pessoa> ObterPessoas()
+    public async Task<List<Pessoa>> ObterPessoas()
     {
-        using var context = new FinanceiroDbContext();
-        return context.Pessoas.OrderBy(x => x.Nome).ToList();
+        return await _repository.ObterPessoas();
     }
 }

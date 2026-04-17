@@ -13,13 +13,20 @@ namespace FinanceiroPessoal.WinForms
 {
     public partial class FrmNovoLancamento : Form
     {
-        private readonly LancamentoService _lancamentoService = new();
-        private readonly CadastroAuxiliarService _cadastroAuxiliarService = new();
+        private readonly LancamentoService _lancamentoService;
+        private readonly CadastroAuxiliarService _cadastroAuxiliarService;
         private bool _carregandoCombos = false;
         public FrmNovoLancamento()
         {
             try
             {
+                var tipoBanco = TipoBanco.LocalSqlite; // Mude para OnlineMySql se quiser
+                var lancamentoRepo = DatabaseFactory.CriarLancamentoRepository(tipoBanco);
+                var cadastroRepo = DatabaseFactory.CriarCadastroAuxiliarRepository(tipoBanco);
+
+                _lancamentoService = new LancamentoService(lancamentoRepo);
+                _cadastroAuxiliarService = new CadastroAuxiliarService(cadastroRepo);
+
                 InitializeComponent();
             }
             catch (Exception ex)
@@ -29,12 +36,12 @@ namespace FinanceiroPessoal.WinForms
             }
         }
 
-        private void FrmNovoLancamento_Load(object sender, EventArgs e)
+        private async void FrmNovoLancamento_Load(object sender, EventArgs e)
         {
-            CarregagarCombos();
+            await CarregagarCombos();
         }
 
-        private void CarregagarCombos()
+        private async Task CarregagarCombos()
         {
             try
             {
@@ -51,17 +58,17 @@ namespace FinanceiroPessoal.WinForms
                 cmbStatus.Items.Add("Parcial");
                 cmbStatus.SelectedIndex = 0;
 
-                cmbCategoria.DataSource = _cadastroAuxiliarService.ObterCategorias();
+                cmbCategoria.DataSource = await _cadastroAuxiliarService.ObterCategorias();
                 cmbCategoria.DisplayMember = "Nome";
                 cmbCategoria.ValueMember = "Id";
                 cmbCategoria.SelectedIndex = -1;
 
-                cmbConta.DataSource = _cadastroAuxiliarService.ObterContas();
+                cmbConta.DataSource = await _cadastroAuxiliarService.ObterContas();
                 cmbConta.DisplayMember = "Nome";
                 cmbConta.ValueMember = "Id";
                 cmbConta.SelectedIndex = -1;
 
-                cmbPessoa.DataSource = _cadastroAuxiliarService.ObterPessoas();
+                cmbPessoa.DataSource = await _cadastroAuxiliarService.ObterPessoas();
                 cmbPessoa.DisplayMember = "Nome";
                 cmbPessoa.ValueMember = "Id";
                 cmbPessoa.SelectedIndex = -1;
@@ -99,7 +106,7 @@ namespace FinanceiroPessoal.WinForms
             }
         }
 
-        private void btnSalvar_Click(object sender, EventArgs e)
+        private async void btnSalvar_Click(object sender, EventArgs e)
         {
             try
             {
@@ -131,7 +138,7 @@ namespace FinanceiroPessoal.WinForms
                 if (lancamento.Status == "Pago")
                     lancamento.DataPagamento = DateTime.Now;
 
-                _lancamentoService.Adicionar(lancamento);
+                await _lancamentoService.Adicionar(lancamento);
 
                 MessageBox.Show("Lançamento salvo com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 

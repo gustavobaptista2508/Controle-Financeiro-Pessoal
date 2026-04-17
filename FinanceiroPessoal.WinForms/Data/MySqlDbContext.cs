@@ -9,7 +9,7 @@ namespace FinanceiroPessoal.WinForms.Data
     {
         private readonly string _connectionString;
 
-        public MySqlDbContext(string connectionString = "Server=gadobd.mysql.uhserver.com;Database=gadobd;Uid=gustavobaptista;Pwd=123;")
+        public MySqlDbContext(string connectionString = "Server=gadobd.mysql.uhserver.com;Database=gadobd;Uid=gustavobaptista;Pwd=Senh@102030;")
         {
             _connectionString = connectionString;
         }
