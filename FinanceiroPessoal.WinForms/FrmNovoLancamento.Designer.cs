@@ -54,6 +54,8 @@
             txtCompetencia = new TextBox();
             txtObservacoes = new TextBox();
             txtDescricao = new TextBox();
+            dudParcelas = new DomainUpDown();
+            label12 = new Label();
             SuspendLayout();
             // 
             // btnSalvar
@@ -92,27 +94,30 @@
             // lblTotalGeral
             // 
             lblTotalGeral.AutoSize = true;
-            lblTotalGeral.Location = new Point(427, 513);
+            lblTotalGeral.Font = new Font("Segoe UI", 7F);
+            lblTotalGeral.Location = new Point(364, 528);
             lblTotalGeral.Name = "lblTotalGeral";
-            lblTotalGeral.Size = new Size(58, 20);
+            lblTotalGeral.Size = new Size(44, 15);
             lblTotalGeral.TabIndex = 79;
             lblTotalGeral.Text = "label12";
             // 
             // lblTotalPendente
             // 
             lblTotalPendente.AutoSize = true;
-            lblTotalPendente.Location = new Point(210, 513);
+            lblTotalPendente.Font = new Font("Segoe UI", 7F);
+            lblTotalPendente.Location = new Point(187, 528);
             lblTotalPendente.Name = "lblTotalPendente";
-            lblTotalPendente.Size = new Size(58, 20);
+            lblTotalPendente.Size = new Size(44, 15);
             lblTotalPendente.TabIndex = 78;
             lblTotalPendente.Text = "label11";
             // 
             // lblTotalPago
             // 
             lblTotalPago.AutoSize = true;
-            lblTotalPago.Location = new Point(12, 513);
+            lblTotalPago.Font = new Font("Segoe UI", 7F);
+            lblTotalPago.Location = new Point(10, 528);
             lblTotalPago.Name = "lblTotalPago";
-            lblTotalPago.Size = new Size(58, 20);
+            lblTotalPago.Size = new Size(44, 15);
             lblTotalPago.TabIndex = 77;
             lblTotalPago.Text = "label15";
             // 
@@ -137,7 +142,7 @@
             // 
             txtValor.Location = new Point(10, 151);
             txtValor.Name = "txtValor";
-            txtValor.Size = new Size(215, 27);
+            txtValor.Size = new Size(156, 27);
             txtValor.TabIndex = 74;
             // 
             // label9
@@ -197,7 +202,7 @@
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(270, 128);
+            label3.Location = new Point(174, 128);
             label3.Name = "label3";
             label3.Size = new Size(90, 20);
             label3.TabIndex = 67;
@@ -224,9 +229,9 @@
             // dtpVencimento
             // 
             dtpVencimento.Format = DateTimePickerFormat.Short;
-            dtpVencimento.Location = new Point(270, 151);
+            dtpVencimento.Location = new Point(174, 151);
             dtpVencimento.Name = "dtpVencimento";
-            dtpVencimento.Size = new Size(218, 27);
+            dtpVencimento.Size = new Size(154, 27);
             dtpVencimento.TabIndex = 62;
             // 
             // cmbStatus
@@ -286,12 +291,90 @@
             txtDescricao.Size = new Size(477, 27);
             txtDescricao.TabIndex = 55;
             // 
+            // dudParcelas
+            // 
+            dudParcelas.Items.Add("2");
+            dudParcelas.Items.Add("3");
+            dudParcelas.Items.Add("4");
+            dudParcelas.Items.Add("5");
+            dudParcelas.Items.Add("6");
+            dudParcelas.Items.Add("7");
+            dudParcelas.Items.Add("8");
+            dudParcelas.Items.Add("9");
+            dudParcelas.Items.Add("10");
+            dudParcelas.Items.Add("11");
+            dudParcelas.Items.Add("12");
+            dudParcelas.Items.Add("13");
+            dudParcelas.Items.Add("14");
+            dudParcelas.Items.Add("15");
+            dudParcelas.Items.Add("16");
+            dudParcelas.Items.Add("17");
+            dudParcelas.Items.Add("18");
+            dudParcelas.Items.Add("19");
+            dudParcelas.Items.Add("20");
+            dudParcelas.Items.Add("21");
+            dudParcelas.Items.Add("22");
+            dudParcelas.Items.Add("23");
+            dudParcelas.Items.Add("24");
+            dudParcelas.Items.Add("25");
+            dudParcelas.Items.Add("26");
+            dudParcelas.Items.Add("27");
+            dudParcelas.Items.Add("28");
+            dudParcelas.Items.Add("29");
+            dudParcelas.Items.Add("30");
+            dudParcelas.Items.Add("31");
+            dudParcelas.Items.Add("32");
+            dudParcelas.Items.Add("33");
+            dudParcelas.Items.Add("34");
+            dudParcelas.Items.Add("35");
+            dudParcelas.Items.Add("36");
+            dudParcelas.Items.Add("37");
+            dudParcelas.Items.Add("38");
+            dudParcelas.Items.Add("39");
+            dudParcelas.Items.Add("40");
+            dudParcelas.Items.Add("41");
+            dudParcelas.Items.Add("42");
+            dudParcelas.Items.Add("43");
+            dudParcelas.Items.Add("44");
+            dudParcelas.Items.Add("45");
+            dudParcelas.Items.Add("46");
+            dudParcelas.Items.Add("47");
+            dudParcelas.Items.Add("48");
+            dudParcelas.Items.Add("49");
+            dudParcelas.Items.Add("50");
+            dudParcelas.Items.Add("51");
+            dudParcelas.Items.Add("52");
+            dudParcelas.Items.Add("53");
+            dudParcelas.Items.Add("54");
+            dudParcelas.Items.Add("55");
+            dudParcelas.Items.Add("56");
+            dudParcelas.Items.Add("57");
+            dudParcelas.Items.Add("58");
+            dudParcelas.Items.Add("59");
+            dudParcelas.Items.Add("60");
+            dudParcelas.Location = new Point(334, 149);
+            dudParcelas.Name = "dudParcelas";
+            dudParcelas.Size = new Size(150, 27);
+            dudParcelas.TabIndex = 81;
+            dudParcelas.Text = "1";
+            // 
+            // label12
+            // 
+            label12.AutoSize = true;
+            label12.Location = new Point(334, 128);
+            label12.Name = "label12";
+            label12.Size = new Size(65, 20);
+            label12.TabIndex = 82;
+            label12.Text = "Parcelas:";
+            // 
             // FrmNovoLancamento
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
             ClientSize = new Size(501, 552);
+            Controls.Add(label12);
+            Controls.Add(dudParcelas);
             Controls.Add(label11);
             Controls.Add(lblTotalGeral);
             Controls.Add(lblTotalPendente);
@@ -354,5 +437,7 @@
         private TextBox txtCompetencia;
         private TextBox txtObservacoes;
         private TextBox txtDescricao;
+        private DomainUpDown dudParcelas;
+        private Label label12;
     }
 }

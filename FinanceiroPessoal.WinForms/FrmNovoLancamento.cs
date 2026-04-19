@@ -39,6 +39,33 @@ namespace FinanceiroPessoal.WinForms
         private async void FrmNovoLancamento_Load(object sender, EventArgs e)
         {
             await CarregagarCombos();
+            await CarregarLabels();
+        }
+
+        private async Task CarregarLabels()
+        {
+            try
+            {
+                var totalPago = await _lancamentoService.ObterTotalPagoSaidas();
+                var totalPendente = await _lancamentoService.ObterTotalPendenteSaidas();
+                var geral = totalPago + totalPendente;
+
+                lblTotalPago.Text = $"Total Pago: R$ {totalPago:N2}";
+                lblTotalGeral.Text = $"Total Geral: R$ {geral:N2}";
+                lblTotalPendente.Text = $"Total Pendente: R$ {totalPendente:N2}";
+            }
+            catch (Exception ex)
+            {
+                ZerarLabels();
+                MessageBox.Show(ex.ToString(), "Erro ao carregar totais");
+            }
+        }
+
+        private void ZerarLabels()
+        {
+            lblTotalPago.Text = "Total Pago: R$ 0,00";
+            lblTotalGeral.Text = "Total Geral: R$ 0,00";
+            lblTotalPendente.Text = "Total Pendente: R$ 0,00";
         }
 
         private async Task CarregagarCombos()
@@ -112,6 +139,23 @@ namespace FinanceiroPessoal.WinForms
             {
                 if (!ValidarFormulario())
                     return;
+                int qtdParcelas = 1;
+                if (!string.IsNullOrEmpty(dudParcelas.Text) && int.TryParse(dudParcelas.Text, out qtdParcelas)) ;
+
+                string primeiraParcela = cmbStatus.Text;
+                DateTime competenicaAtual;
+                var competenciaTexto = txtCompetencia.Text.Trim();
+                if (!DateTime.TryParseExact(
+                    "01/" + competenciaTexto,
+                    "dd/MM/yyyy",
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out competenicaAtual))
+                {
+                    competenicaAtual = dtpVencimento.Value;
+                }
+
+                DateTime VencimentoBase = dtpVencimento.Value.Date;
 
                 var tipo = cmbTipo.Text == "Entrada"
                     ? TipoLancamento.Entrada
@@ -121,26 +165,26 @@ namespace FinanceiroPessoal.WinForms
                     ? "Pago"
                     : cmbStatus.Text;
 
-                var lancamento = new Lancamento
+                for (int i = 1; i <= qtdParcelas; i++)
                 {
-                    Descricao = txtDescricao.Text.Trim(),
-                    Valor = ParseDecimal(txtValor.Text),
-                    DataVencimento = dtpVencimento.Value.Date,
-                    Status = status,
-                    Tipo = tipo,
-                    CategoriaId = cmbCategoria.SelectedValue != null ? Convert.ToInt32(cmbCategoria.SelectedValue) : null,
-                    ContaId = cmbConta.SelectedValue != null ? Convert.ToInt32(cmbConta.SelectedValue) : null,
-                    PessoaId = cmbPessoa.SelectedValue != null ? Convert.ToInt32(cmbPessoa.SelectedValue) : null,
-                    Observacoes = string.IsNullOrWhiteSpace(txtObservacoes.Text) ? null : txtObservacoes.Text.Trim(),
-                    Competencia = txtCompetencia.Text.Trim()
-                };
+                    var lancamento = new Lancamento
+                    {
+                        Descricao = $"{txtDescricao.Text.Trim()} - Parcela {i} de {qtdParcelas}",
+                        Valor = ParseDecimal(txtValor.Text),
+                        DataVencimento = VencimentoBase.AddMonths(i - 1),
+                        Status = (i == 1) ? primeiraParcela : "Pendente",
+                        Tipo = tipo,
+                        CategoriaId = cmbCategoria.SelectedValue != null ? Convert.ToInt32(cmbCategoria.SelectedValue) : null,
+                        ContaId = cmbConta.SelectedValue != null ? Convert.ToInt32(cmbConta.SelectedValue) : null,
+                        PessoaId = cmbPessoa.SelectedValue != null ? Convert.ToInt32(cmbPessoa.SelectedValue) : null,
+                        Observacoes = string.IsNullOrWhiteSpace(txtObservacoes.Text) ? null : txtObservacoes.Text.Trim(),
+                        Competencia = competenicaAtual.AddMonths(i - 1).ToString("MM/yyyy"),
+                        DataPagamento = (i == 1 && primeiraParcela == "Pago") ? DateTime.Now : null
+                    };
+                    await _lancamentoService.Adicionar(lancamento);
+                }
 
-                if (lancamento.Status == "Pago")
-                    lancamento.DataPagamento = DateTime.Now;
-
-                await _lancamentoService.Adicionar(lancamento);
-
-                MessageBox.Show("Lançamento salvo com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Lançamento(s) salvo(s) com sucesso.", "Sucesso", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 DialogResult = DialogResult.OK;
                 Close();
