@@ -17,5 +17,11 @@ namespace FinanceiroPessoal.WinForms.Repositories
         Task<decimal> CalcularSaldoConta(string pessoa, string status, string tipo, DateTime? dataIni, DateTime? dataFim);
         Task<decimal> ObterTotalPendenteSaidas();
         Task<decimal> ObterTotalPagoSaidas();
+
+        Task<List<Lancamento>> ObterLancamentosPorPeriodoAsync(DateTime dataIni, DateTime dataFim);
+        Task<List<Lancamento>> ObterVencimentosSemanaAsync(DateTime dataIni, DateTime dataFim);
+        Task<List<Lancamento>> ObterAtrasadosAsync();
+        Task<List<Lancamento>> ObterVencemHojeAsync(DateTime dataReferencia);
+        Task<List<ProximoVencimentoDto>> ObterProximosVencimentosAsync(int quantidade);
     }
 }

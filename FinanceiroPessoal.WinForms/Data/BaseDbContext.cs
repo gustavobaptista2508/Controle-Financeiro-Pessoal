@@ -1,6 +1,5 @@
 ﻿using FinanceiroPessoal.WinForms.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Data.Entity;
 using DbContext = Microsoft.EntityFrameworkCore.DbContext;
 
 namespace FinanceiroPessoal.WinForms.Data

@@ -5,7 +5,7 @@ using System.Text;
 
 namespace FinanceiroPessoal.WinForms.Data
 {
-    public class MySqlDbContext: BaseDbContext
+    public class MySqlDbContext : FinanceiroDbContext
     {
         private readonly string _connectionString;
 
@@ -18,8 +18,7 @@ namespace FinanceiroPessoal.WinForms.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseMySql(_connectionString,
-                    new MySqlServerVersion(new Version(8, 0, 21))); // ✅ VERSÃO CORRETA
+                optionsBuilder.UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString));
             }
         }
     }

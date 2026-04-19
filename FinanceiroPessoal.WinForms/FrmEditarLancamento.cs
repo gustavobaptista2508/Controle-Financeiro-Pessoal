@@ -20,7 +20,8 @@ namespace FinanceiroPessoal.WinForms
         {
             try
             {
-                var tipoBanco = TipoBanco.LocalSqlite; // Mude para OnlineMySql se quiser
+                _lancamentoId = lancamentoId;
+                var tipoBanco = TipoBanco.OnlineMySql; // Mude para OnlineMySql se quiser
                 var lancamentoRepo = DatabaseFactory.CriarLancamentoRepository(tipoBanco);
                 var cadastroRepo = DatabaseFactory.CriarCadastroAuxiliarRepository(tipoBanco);
 
@@ -54,17 +55,17 @@ namespace FinanceiroPessoal.WinForms
             cmbStatus.Items.Add("Atrasado");
             cmbStatus.Items.Add("Parcial");
 
-            cmbCategoria.DataSource = _cadastroAuxiliarService.ObterCategorias();
+            cmbCategoria.DataSource = await _cadastroAuxiliarService.ObterCategorias();
             cmbCategoria.DisplayMember = "Nome";
             cmbCategoria.ValueMember = "Id";
             cmbCategoria.SelectedIndex = -1;
 
-            cmbConta.DataSource = _cadastroAuxiliarService.ObterContas();
+            cmbConta.DataSource = await _cadastroAuxiliarService.ObterContas();
             cmbConta.DisplayMember = "Nome";
             cmbConta.ValueMember = "Id";
             cmbConta.SelectedIndex = -1;
 
-            cmbPessoa.DataSource = _cadastroAuxiliarService.ObterPessoas();
+            cmbPessoa.DataSource = await _cadastroAuxiliarService.ObterPessoas();
             cmbPessoa.DisplayMember = "Nome";
             cmbPessoa.ValueMember = "Id";
             cmbPessoa.SelectedIndex = -1;

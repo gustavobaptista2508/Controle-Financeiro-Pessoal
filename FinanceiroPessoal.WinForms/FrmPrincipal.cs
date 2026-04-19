@@ -1,3 +1,4 @@
+using FinanceiroPessoal.WinForms.Models;
 using FinanceiroPessoal.WinForms.Services;
 using System.Globalization;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -6,7 +7,7 @@ namespace FinanceiroPessoal.WinForms
 {
     public partial class Form1 : Form
     {
-        private readonly DashboardService _dashboardService = new();
+        private readonly DashboardService _dashboardService;
 
         private readonly Color _menuSidebar = Color.White;
         private readonly Color _menuAtivo = Color.FromArgb(37, 99, 235);      // azul
@@ -18,6 +19,12 @@ namespace FinanceiroPessoal.WinForms
         {
             InitializeComponent();
 
+            // Configuração inicial do serviço e repositório
+            var tipoBanco = TipoBanco.OnlineMySql;
+            var repo = DatabaseFactory.CriarLancamentoRepository(tipoBanco);
+            _dashboardService = new DashboardService(repo);
+
+            // Configurações iniciais dos botões do menu lateral
             btnLancamentos.Text = "☰  Lançamentos";
             btnCategorias.Text = "◈  Categorias";
             btnContas.Text = "◉  Contas";
@@ -137,14 +144,14 @@ namespace FinanceiroPessoal.WinForms
         {
             using var frm = new FrmLancamentos();
             frm.ShowDialog();
-            CarregarDashboard();
+            _ = CarregarDashboard();
         }
 
         private void btnAcaoNovo_Click(object sender, EventArgs e)
         {
             using var frm = new FrmNovoLancamento();
             if (frm.ShowDialog() == DialogResult.OK)
-                CarregarDashboard();
+                _ = CarregarDashboard();
         }
 
         private void ConfigurarGrids()
@@ -168,35 +175,41 @@ namespace FinanceiroPessoal.WinForms
             dgvResumoCategorias.MultiSelect = false;
         }
 
-        private void CarregarDashboard()
+        private async Task CarregarDashboard()
         {
             if (cmbCompetencia.SelectedItem == null)
                 return;
 
             var referencia = (DateTime)cmbCompetencia.SelectedItem;
 
-            CarregarCards(referencia);
-            CarregarGridProximosVencimentos();
-            CarregarGraficoCategorias(referencia);
-            //AtualizarRodape();
+            var resumo = await _dashboardService.ObterResumo(referencia);
+            var proximosVenc = await _dashboardService.ObterProximosVencimentos();
+            var gastosPorCategoria = await _dashboardService.ObterGastosPorCategoria(referencia);
+
+            CarregarCards(resumo);
+            CarregarGridProximosVencimentos(proximosVenc);
+            CarregarGraficoCategorias(gastosPorCategoria);
+
         }
 
-        private void CarregarGraficoCategorias(DateTime referencia)
+        private void CarregarGraficoCategorias(List<GastoCategoriaDto> dados)
         {
-            var dados = _dashboardService.ObterGastosPorCategoria(referencia);
-
             chartCategorias.Series.Clear();
             chartCategorias.ChartAreas.Clear();
             chartCategorias.Legends.Clear();
 
-            var chartArea = new ChartArea("AreaPrincipal");
-            chartArea.BackColor = Color.White;
-            chartArea.Area3DStyle.Enable3D = false;
+            var chartArea = new ChartArea("AreaPrincipal")
+            {
+                BackColor = Color.White,
+                Area3DStyle = { Enable3D = false }
+            };
             chartCategorias.ChartAreas.Add(chartArea);
 
-            var legend = new Legend("Legenda");
-            legend.Docking = Docking.Right;
-            legend.Font = new Font("Segoe UI", 9F);
+            var legend = new Legend("Legenda")
+            {
+                Docking = Docking.Right,
+                Font = new Font("Segoe UI", 9F)
+            };
             chartCategorias.Legends.Add(legend);
 
             var series = new Series("Categorias")
@@ -222,10 +235,8 @@ namespace FinanceiroPessoal.WinForms
                 .ToList();
         }
 
-        private void CarregarGridProximosVencimentos()
+        private void CarregarGridProximosVencimentos(List<ProximoVencimentoDto> dados)
         {
-            var dados = _dashboardService.ObterProximosVencimentos();
-
             dgvProximosVencimentos.DataSource = dados
                 .Select(x => new
                 {
@@ -239,10 +250,8 @@ namespace FinanceiroPessoal.WinForms
                 .ToList();
         }
 
-        private void CarregarCards(DateTime referencia)
+        private void CarregarCards(DashboardResumo resumo)
         {
-            var resumo = _dashboardService.ObterResumo(referencia);
-
             lblTotalEntradaValor.Text = resumo.TotalEntradas.ToString("C2");
             lblTotalEntradaQtd.Text = $"{resumo.QuantidadeEntradas} lançamentos";
 
@@ -269,7 +278,7 @@ namespace FinanceiroPessoal.WinForms
                 e.Value = dt.ToString("MMMM/yyyy", new CultureInfo("pt-BR"));
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
             EstilizarBotaoMenu(btnLancamentos);
             EstilizarBotaoMenu(btnCategorias);
@@ -280,14 +289,14 @@ namespace FinanceiroPessoal.WinForms
             ConfigurarMenuLateral();
             AplicarBordasArredondadas();
             ConfigurarGrids();
-            CarregarDashboard();
+            await CarregarDashboard();
         }
 
         private void btnVerTodos_Click_1(object sender, EventArgs e)
         {
             using var frm = new FrmLancamentos();
             frm.ShowDialog();
-            CarregarDashboard();
+            _ = CarregarDashboard();
         }
 
         private void btnLancamentos_Click(object sender, EventArgs e)
@@ -297,7 +306,7 @@ namespace FinanceiroPessoal.WinForms
             using var frm = new FrmLancamentos();
             frm.ShowDialog();
 
-            CarregarDashboard();
+            _ = CarregarDashboard();
             LimparSelecaoMenu();
         }
 

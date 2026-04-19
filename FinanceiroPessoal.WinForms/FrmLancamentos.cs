@@ -116,7 +116,7 @@ namespace FinanceiroPessoal.WinForms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Erro ao carregar lançamentos: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Erro ao carregar a tabela de lançamentos: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {

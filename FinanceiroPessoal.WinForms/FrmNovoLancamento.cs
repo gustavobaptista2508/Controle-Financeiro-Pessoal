@@ -20,7 +20,7 @@ namespace FinanceiroPessoal.WinForms
         {
             try
             {
-                var tipoBanco = TipoBanco.LocalSqlite; // Mude para OnlineMySql se quiser
+                var tipoBanco = TipoBanco.OnlineMySql; // Mude para OnlineMySql se quiser
                 var lancamentoRepo = DatabaseFactory.CriarLancamentoRepository(tipoBanco);
                 var cadastroRepo = DatabaseFactory.CriarCadastroAuxiliarRepository(tipoBanco);
 

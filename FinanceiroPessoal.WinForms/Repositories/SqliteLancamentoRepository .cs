@@ -157,5 +157,75 @@ namespace FinanceiroPessoal.WinForms.Repositories
             .Where(x => x.Tipo == TipoLancamento.Saida && x.Status == "Pago")
             .SumAsync(x => x.Valor);
         }
+
+        public async Task<List<Lancamento>> ObterLancamentosPorPeriodoAsync(DateTime dataIni, DateTime dataFim)
+        {
+            return await _context.Lancamentos
+                .Include(x => x.Categoria)
+                .Include(x => x.Conta)
+                .Include(x => x.Pessoa)
+                .Where(x => x.DataVencimento >= dataIni && x.DataVencimento <= dataFim.Date.AddDays(1).AddTicks(-1))
+                .OrderBy(x => x.DataVencimento)
+                .ThenBy(x => x.Descricao)
+                .ToListAsync();
+        }
+
+        public async Task<List<Lancamento>> ObterVencimentosSemanaAsync(DateTime dataIni, DateTime dataFim)
+        {
+            return await _context.Lancamentos
+                .Include(x => x.Categoria)
+                .Include(x => x.Conta)
+                .Include(x => x.Pessoa)
+                .Where(x => x.DataVencimento >= dataIni && x.DataVencimento <= dataFim.Date.AddDays(1).AddTicks(-1))
+                .OrderBy(x => x.DataVencimento)
+                .ThenBy(x => x.Descricao)
+                .ToListAsync();
+        }
+
+        public async Task<List<Lancamento>> ObterAtrasadosAsync()
+        {
+            var hoje = DateTime.Today;
+
+            return await _context.Lancamentos
+                .Include(x => x.Categoria)
+                .Include(x => x.Conta)
+                .Include(x => x.Pessoa)
+                .Where(x => x.DataVencimento < hoje && x.Status != "Pago")
+                .OrderBy(x => x.DataVencimento)
+                .ThenBy(x => x.Descricao)
+                .ToListAsync();
+        }
+
+        public async Task<List<Lancamento>> ObterVencemHojeAsync(DateTime dataReferencia)
+        {
+            return await _context.Lancamentos
+                .Include(x => x.Categoria)
+                .Include(x => x.Conta)
+                .Include(x => x.Pessoa)
+                .Where(x => x.DataVencimento.HasValue && x.DataVencimento.Value.Date == dataReferencia.Date)
+                .OrderBy(x => x.DataVencimento)
+                .ThenBy(x => x.Descricao)
+                .ToListAsync();
+        }
+
+        public async Task<List<ProximoVencimentoDto>> ObterProximosVencimentosAsync(int quantidade)
+        {
+            return await _context.Lancamentos
+        .Include(x => x.Conta).Include(x => x.Pessoa)
+        .Where(x => x.DataVencimento.HasValue && x.Tipo == TipoLancamento.Saida && x.Status != "Pago")
+        .OrderBy(x => x.DataVencimento)
+        .Take(quantidade)
+        .Select(x => new ProximoVencimentoDto
+        {
+            Id = x.Id,
+            Vencimento = x.DataVencimento,
+            Descricao = x.Descricao,
+            Valor = x.Valor,
+            Conta = x.Conta != null ? x.Conta.Nome : "",
+            Pessoa = x.Pessoa != null ? x.Pessoa.Nome : "",
+            Status = x.Status,
+            Tipo = x.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída"
+        }).ToListAsync();
+        }
     }
 }

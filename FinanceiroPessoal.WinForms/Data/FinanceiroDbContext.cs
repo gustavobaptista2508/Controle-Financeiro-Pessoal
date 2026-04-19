@@ -42,6 +42,11 @@ namespace FinanceiroPessoal.WinForms.Data
 
                 entity.Property(x => x.Competencia)
                     .HasMaxLength(20);
+
+                // ← ADICIONAR ISSO
+                entity.Property(x => x.Tipo)
+                    .HasMaxLength(20)
+                    .HasConversion<string>();  // converte enum <-> varchar
             });
 
             modelBuilder.Entity<Categoria>(entity =>

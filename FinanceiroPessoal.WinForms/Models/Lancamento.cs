@@ -18,12 +18,12 @@ namespace FinanceiroPessoal.WinForms.Models
         public TipoLancamento Tipo { get; set; } = TipoLancamento.Saida;
 
         public int? CategoriaId { get; set; }
-        public Categoria? Categoria { get; set; }
+        public virtual Categoria? Categoria { get; set; }
 
         public int? ContaId { get; set; }
-        public Conta? Conta { get; set; }
+        public virtual Conta? Conta { get; set; }
 
         public int? PessoaId { get; set; }
-        public Pessoa? Pessoa { get; set; }
+        public virtual Pessoa? Pessoa { get; set; }
     }
 }

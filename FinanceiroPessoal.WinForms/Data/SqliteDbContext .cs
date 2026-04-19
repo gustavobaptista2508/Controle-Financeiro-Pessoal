@@ -5,7 +5,7 @@ using System.Text;
 
 namespace FinanceiroPessoal.WinForms.Data
 {
-    public class SqliteDbContext : BaseDbContext
+    public class SqliteDbContext : FinanceiroDbContext
     {
         private readonly string _connectionString;
 
