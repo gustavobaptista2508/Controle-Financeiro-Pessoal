@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmLancamentos));
             btnNovo = new Button();
             btnExcluir = new Button();
             btnMarcarPago = new Button();
@@ -36,6 +37,8 @@
             panel1 = new Panel();
             pnlBotoes = new FlowLayoutPanel();
             btnEditar = new Button();
+            panel3 = new Panel();
+            btnVoltar = new Button();
             lblFiltroPessoa = new Label();
             cmbFiltroPessoa = new ComboBox();
             lblFiltroStatus = new Label();
@@ -53,7 +56,6 @@
             dtpDataFim = new DateTimePicker();
             label2 = new Label();
             groupBox1 = new GroupBox();
-            panel3 = new Panel();
             panel1.SuspendLayout();
             pnlBotoes.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvLancamentos).BeginInit();
@@ -67,12 +69,14 @@
             btnNovo.FlatAppearance.BorderSize = 0;
             btnNovo.FlatStyle = FlatStyle.Flat;
             btnNovo.ForeColor = Color.White;
-            btnNovo.Location = new Point(335, 2);
-            btnNovo.Margin = new Padding(3, 2, 3, 2);
+            btnNovo.Image = Properties.Resources.ic_local_hospital_128_28459;
+            btnNovo.ImageAlign = ContentAlignment.MiddleLeft;
+            btnNovo.Location = new Point(352, 3);
             btnNovo.Name = "btnNovo";
-            btnNovo.Size = new Size(82, 41);
+            btnNovo.Size = new Size(94, 55);
             btnNovo.TabIndex = 0;
             btnNovo.Text = "Novo";
+            btnNovo.TextAlign = ContentAlignment.MiddleRight;
             btnNovo.UseVisualStyleBackColor = false;
             btnNovo.Click += btnNovo_Click;
             // 
@@ -82,12 +86,14 @@
             btnExcluir.FlatAppearance.BorderSize = 0;
             btnExcluir.FlatStyle = FlatStyle.Flat;
             btnExcluir.ForeColor = Color.White;
-            btnExcluir.Location = new Point(511, 2);
-            btnExcluir.Margin = new Padding(3, 2, 3, 2);
+            btnExcluir.Image = Properties.Resources.ic_highlight_remove_128_28524;
+            btnExcluir.ImageAlign = ContentAlignment.MiddleLeft;
+            btnExcluir.Location = new Point(552, 3);
             btnExcluir.Name = "btnExcluir";
-            btnExcluir.Size = new Size(82, 41);
+            btnExcluir.Size = new Size(94, 55);
             btnExcluir.TabIndex = 1;
             btnExcluir.Text = "Excluir";
+            btnExcluir.TextAlign = ContentAlignment.MiddleRight;
             btnExcluir.UseVisualStyleBackColor = false;
             btnExcluir.Click += btnExcluir_Click;
             // 
@@ -97,12 +103,14 @@
             btnMarcarPago.FlatAppearance.BorderSize = 0;
             btnMarcarPago.FlatStyle = FlatStyle.Flat;
             btnMarcarPago.ForeColor = Color.White;
-            btnMarcarPago.Location = new Point(599, 2);
-            btnMarcarPago.Margin = new Padding(3, 2, 3, 2);
+            btnMarcarPago.Image = Properties.Resources.ic_check_128_28312;
+            btnMarcarPago.ImageAlign = ContentAlignment.MiddleLeft;
+            btnMarcarPago.Location = new Point(652, 3);
             btnMarcarPago.Name = "btnMarcarPago";
-            btnMarcarPago.Size = new Size(142, 41);
+            btnMarcarPago.Size = new Size(178, 55);
             btnMarcarPago.TabIndex = 2;
             btnMarcarPago.Text = "Marcar como Pago";
+            btnMarcarPago.TextAlign = ContentAlignment.MiddleRight;
             btnMarcarPago.UseVisualStyleBackColor = false;
             btnMarcarPago.Click += btnMarcarPago_Click;
             // 
@@ -112,12 +120,14 @@
             btnAtualizar.FlatAppearance.BorderSize = 0;
             btnAtualizar.FlatStyle = FlatStyle.Flat;
             btnAtualizar.ForeColor = Color.White;
-            btnAtualizar.Location = new Point(747, 2);
-            btnAtualizar.Margin = new Padding(3, 2, 3, 2);
+            btnAtualizar.Image = Properties.Resources.ic_loop_128_28425;
+            btnAtualizar.ImageAlign = ContentAlignment.MiddleLeft;
+            btnAtualizar.Location = new Point(836, 3);
             btnAtualizar.Name = "btnAtualizar";
-            btnAtualizar.Size = new Size(82, 41);
+            btnAtualizar.Size = new Size(112, 55);
             btnAtualizar.TabIndex = 3;
             btnAtualizar.Text = "Atualizar";
+            btnAtualizar.TextAlign = ContentAlignment.MiddleRight;
             btnAtualizar.UseVisualStyleBackColor = false;
             btnAtualizar.Click += btnAtualizar_Click;
             // 
@@ -126,12 +136,14 @@
             btnFiltrar.BackColor = SystemColors.HotTrack;
             btnFiltrar.FlatStyle = FlatStyle.Flat;
             btnFiltrar.ForeColor = SystemColors.ButtonHighlight;
-            btnFiltrar.Location = new Point(676, 36);
-            btnFiltrar.Margin = new Padding(3, 2, 3, 2);
+            btnFiltrar.Image = Properties.Resources.ic_search_128_28722;
+            btnFiltrar.ImageAlign = ContentAlignment.MiddleLeft;
+            btnFiltrar.Location = new Point(773, 48);
             btnFiltrar.Name = "btnFiltrar";
-            btnFiltrar.Size = new Size(82, 22);
+            btnFiltrar.Size = new Size(108, 29);
             btnFiltrar.TabIndex = 4;
             btnFiltrar.Text = "Filtrar";
+            btnFiltrar.TextAlign = ContentAlignment.MiddleRight;
             btnFiltrar.UseVisualStyleBackColor = false;
             btnFiltrar.Click += btnFiltrar_Click;
             // 
@@ -140,9 +152,8 @@
             panel1.Controls.Add(pnlBotoes);
             panel1.Dock = DockStyle.Top;
             panel1.Location = new Point(0, 0);
-            panel1.Margin = new Padding(3, 2, 3, 2);
             panel1.Name = "panel1";
-            panel1.Size = new Size(832, 46);
+            panel1.Size = new Size(951, 61);
             panel1.TabIndex = 6;
             // 
             // pnlBotoes
@@ -154,12 +165,12 @@
             pnlBotoes.Controls.Add(btnEditar);
             pnlBotoes.Controls.Add(btnNovo);
             pnlBotoes.Controls.Add(panel3);
+            pnlBotoes.Controls.Add(btnVoltar);
             pnlBotoes.Dock = DockStyle.Fill;
             pnlBotoes.FlowDirection = FlowDirection.RightToLeft;
             pnlBotoes.Location = new Point(0, 0);
-            pnlBotoes.Margin = new Padding(3, 2, 3, 2);
             pnlBotoes.Name = "pnlBotoes";
-            pnlBotoes.Size = new Size(832, 46);
+            pnlBotoes.Size = new Size(951, 61);
             pnlBotoes.TabIndex = 5;
             // 
             // btnEditar
@@ -168,51 +179,78 @@
             btnEditar.FlatAppearance.BorderSize = 0;
             btnEditar.FlatStyle = FlatStyle.Flat;
             btnEditar.ForeColor = Color.White;
-            btnEditar.Location = new Point(423, 2);
-            btnEditar.Margin = new Padding(3, 2, 3, 2);
+            btnEditar.Image = Properties.Resources.ic_create_128_28283;
+            btnEditar.ImageAlign = ContentAlignment.MiddleLeft;
+            btnEditar.Location = new Point(452, 3);
             btnEditar.Name = "btnEditar";
-            btnEditar.Size = new Size(82, 41);
+            btnEditar.Size = new Size(94, 55);
             btnEditar.TabIndex = 4;
             btnEditar.Text = "Editar";
+            btnEditar.TextAlign = ContentAlignment.MiddleRight;
             btnEditar.UseVisualStyleBackColor = false;
             btnEditar.Click += btnEditar_Click;
+            // 
+            // panel3
+            // 
+            panel3.Location = new Point(105, 4);
+            panel3.Margin = new Padding(3, 4, 3, 4);
+            panel3.Name = "panel3";
+            panel3.Size = new Size(241, 53);
+            panel3.TabIndex = 5;
+            // 
+            // btnVoltar
+            // 
+            btnVoltar.BackColor = SystemColors.Highlight;
+            btnVoltar.FlatAppearance.BorderSize = 0;
+            btnVoltar.FlatAppearance.MouseDownBackColor = Color.FromArgb(255, 128, 0);
+            btnVoltar.FlatAppearance.MouseOverBackColor = Color.Red;
+            btnVoltar.FlatStyle = FlatStyle.Flat;
+            btnVoltar.ForeColor = Color.White;
+            btnVoltar.Image = Properties.Resources.ic_keyboard_backspace_128_28494;
+            btnVoltar.ImageAlign = ContentAlignment.MiddleLeft;
+            btnVoltar.Location = new Point(5, 3);
+            btnVoltar.Name = "btnVoltar";
+            btnVoltar.Size = new Size(94, 55);
+            btnVoltar.TabIndex = 6;
+            btnVoltar.Text = "Voltar";
+            btnVoltar.TextAlign = ContentAlignment.MiddleRight;
+            btnVoltar.UseVisualStyleBackColor = false;
+            btnVoltar.Click += btnVoltar_Click;
             // 
             // lblFiltroPessoa
             // 
             lblFiltroPessoa.AutoSize = true;
-            lblFiltroPessoa.Location = new Point(30, 19);
+            lblFiltroPessoa.Location = new Point(34, 25);
             lblFiltroPessoa.Name = "lblFiltroPessoa";
-            lblFiltroPessoa.Size = new Size(43, 15);
+            lblFiltroPessoa.Size = new Size(53, 20);
             lblFiltroPessoa.TabIndex = 7;
             lblFiltroPessoa.Text = "Pessoa";
             // 
             // cmbFiltroPessoa
             // 
             cmbFiltroPessoa.FormattingEnabled = true;
-            cmbFiltroPessoa.Location = new Point(30, 36);
-            cmbFiltroPessoa.Margin = new Padding(3, 2, 3, 2);
+            cmbFiltroPessoa.Location = new Point(34, 48);
             cmbFiltroPessoa.Name = "cmbFiltroPessoa";
-            cmbFiltroPessoa.Size = new Size(133, 23);
+            cmbFiltroPessoa.Size = new Size(151, 28);
             cmbFiltroPessoa.TabIndex = 8;
             cmbFiltroPessoa.Text = "<Todos>";
             // 
             // lblFiltroStatus
             // 
             lblFiltroStatus.AutoSize = true;
-            lblFiltroStatus.Location = new Point(172, 18);
+            lblFiltroStatus.Location = new Point(197, 24);
             lblFiltroStatus.Name = "lblFiltroStatus";
-            lblFiltroStatus.Size = new Size(39, 15);
+            lblFiltroStatus.Size = new Size(49, 20);
             lblFiltroStatus.TabIndex = 9;
             lblFiltroStatus.Text = "Status";
             // 
             // dgvLancamentos
             // 
             dgvLancamentos.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvLancamentos.Location = new Point(10, 117);
-            dgvLancamentos.Margin = new Padding(3, 2, 3, 2);
+            dgvLancamentos.Location = new Point(11, 156);
             dgvLancamentos.Name = "dgvLancamentos";
             dgvLancamentos.RowHeadersWidth = 51;
-            dgvLancamentos.Size = new Size(811, 252);
+            dgvLancamentos.Size = new Size(927, 336);
             dgvLancamentos.TabIndex = 11;
             dgvLancamentos.CellFormatting += dgvLancamentos_CellFormatting;
             dgvLancamentos.CellPainting += dgvLancamentos_CellPainting;
@@ -220,29 +258,27 @@
             // cmbFiltroStatus
             // 
             cmbFiltroStatus.FormattingEnabled = true;
-            cmbFiltroStatus.Location = new Point(172, 36);
-            cmbFiltroStatus.Margin = new Padding(3, 2, 3, 2);
+            cmbFiltroStatus.Location = new Point(197, 48);
             cmbFiltroStatus.Name = "cmbFiltroStatus";
-            cmbFiltroStatus.Size = new Size(133, 23);
+            cmbFiltroStatus.Size = new Size(151, 28);
             cmbFiltroStatus.TabIndex = 12;
             cmbFiltroStatus.Text = "<Todos>";
             // 
             // cmbFiltroTipo
             // 
             cmbFiltroTipo.FormattingEnabled = true;
-            cmbFiltroTipo.Location = new Point(310, 36);
-            cmbFiltroTipo.Margin = new Padding(3, 2, 3, 2);
+            cmbFiltroTipo.Location = new Point(354, 48);
             cmbFiltroTipo.Name = "cmbFiltroTipo";
-            cmbFiltroTipo.Size = new Size(133, 23);
+            cmbFiltroTipo.Size = new Size(151, 28);
             cmbFiltroTipo.TabIndex = 13;
             cmbFiltroTipo.Text = "<Todos>";
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(310, 19);
+            label1.Location = new Point(354, 25);
             label1.Name = "label1";
-            label1.Size = new Size(34, 15);
+            label1.Size = new Size(42, 20);
             label1.TabIndex = 14;
             label1.Text = "Tipo:";
             // 
@@ -255,81 +291,78 @@
             panel2.Controls.Add(lblPagos);
             panel2.Controls.Add(lblTotalGeral);
             panel2.Dock = DockStyle.Bottom;
-            panel2.Location = new Point(0, 373);
-            panel2.Margin = new Padding(3, 2, 3, 2);
+            panel2.Location = new Point(0, 498);
             panel2.Name = "panel2";
-            panel2.Size = new Size(832, 58);
+            panel2.Size = new Size(951, 77);
             panel2.TabIndex = 15;
             // 
             // lblSaldoConta
             // 
             lblSaldoConta.AutoSize = true;
-            lblSaldoConta.Location = new Point(610, 9);
+            lblSaldoConta.Location = new Point(697, 12);
             lblSaldoConta.Name = "lblSaldoConta";
-            lblSaldoConta.Size = new Size(36, 15);
+            lblSaldoConta.Size = new Size(47, 20);
             lblSaldoConta.TabIndex = 4;
             lblSaldoConta.Text = "Saldo";
             // 
             // lblAtrasados
             // 
             lblAtrasados.AutoSize = true;
-            lblAtrasados.Location = new Point(360, 36);
+            lblAtrasados.Location = new Point(411, 48);
             lblAtrasados.Name = "lblAtrasados";
-            lblAtrasados.Size = new Size(59, 15);
+            lblAtrasados.Size = new Size(75, 20);
             lblAtrasados.TabIndex = 3;
             lblAtrasados.Text = "Atrasados";
             // 
             // lblPendentes
             // 
             lblPendentes.AutoSize = true;
-            lblPendentes.Location = new Point(360, 9);
+            lblPendentes.Location = new Point(411, 12);
             lblPendentes.Name = "lblPendentes";
-            lblPendentes.Size = new Size(62, 15);
+            lblPendentes.Size = new Size(76, 20);
             lblPendentes.TabIndex = 2;
             lblPendentes.Text = "Pendentes";
             // 
             // lblPagos
             // 
             lblPagos.AutoSize = true;
-            lblPagos.Location = new Point(10, 36);
+            lblPagos.Location = new Point(11, 48);
             lblPagos.Name = "lblPagos";
-            lblPagos.Size = new Size(39, 15);
+            lblPagos.Size = new Size(48, 20);
             lblPagos.TabIndex = 1;
             lblPagos.Text = "Pagos";
             // 
             // lblTotalGeral
             // 
             lblTotalGeral.AutoSize = true;
-            lblTotalGeral.Location = new Point(10, 9);
+            lblTotalGeral.Location = new Point(11, 12);
             lblTotalGeral.Name = "lblTotalGeral";
-            lblTotalGeral.Size = new Size(63, 15);
+            lblTotalGeral.Size = new Size(81, 20);
             lblTotalGeral.TabIndex = 0;
             lblTotalGeral.Text = "Total Geral";
             // 
             // dtpDataInicio
             // 
             dtpDataInicio.Format = DateTimePickerFormat.Short;
-            dtpDataInicio.Location = new Point(447, 36);
-            dtpDataInicio.Margin = new Padding(3, 2, 3, 2);
+            dtpDataInicio.Location = new Point(511, 48);
             dtpDataInicio.Name = "dtpDataInicio";
-            dtpDataInicio.Size = new Size(100, 23);
+            dtpDataInicio.Size = new Size(114, 27);
             dtpDataInicio.TabIndex = 16;
             // 
             // dtpDataFim
             // 
             dtpDataFim.Format = DateTimePickerFormat.Short;
-            dtpDataFim.Location = new Point(570, 37);
-            dtpDataFim.Margin = new Padding(3, 2, 3, 2);
+            dtpDataFim.Location = new Point(651, 49);
             dtpDataFim.Name = "dtpDataFim";
-            dtpDataFim.Size = new Size(100, 23);
+            dtpDataFim.Size = new Size(114, 27);
             dtpDataFim.TabIndex = 17;
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(552, 38);
+            label2.Location = new Point(631, 51);
             label2.Name = "label2";
-            label2.Size = new Size(12, 15);
+            label2.Size = new Size(15, 20);
             label2.TabIndex = 18;
             label2.Text = "-";
             // 
@@ -345,34 +378,28 @@
             groupBox1.Controls.Add(label1);
             groupBox1.Controls.Add(lblFiltroStatus);
             groupBox1.Controls.Add(cmbFiltroStatus);
-            groupBox1.Location = new Point(10, 50);
-            groupBox1.Margin = new Padding(3, 2, 3, 2);
+            groupBox1.Location = new Point(11, 67);
             groupBox1.Name = "groupBox1";
-            groupBox1.Padding = new Padding(3, 2, 3, 2);
-            groupBox1.Size = new Size(811, 62);
+            groupBox1.Size = new Size(927, 83);
             groupBox1.TabIndex = 19;
             groupBox1.TabStop = false;
             groupBox1.Text = "Pesquisa";
             // 
-            // panel3
-            // 
-            panel3.Location = new Point(3, 3);
-            panel3.Name = "panel3";
-            panel3.Size = new Size(326, 40);
-            panel3.TabIndex = 5;
-            // 
             // FrmLancamentos
             // 
-            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
-            ClientSize = new Size(832, 431);
+            ClientSize = new Size(951, 575);
             Controls.Add(panel2);
             Controls.Add(dgvLancamentos);
             Controls.Add(panel1);
             Controls.Add(groupBox1);
-            Margin = new Padding(3, 2, 3, 2);
+            Icon = (Icon)resources.GetObject("$this.Icon");
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "FrmLancamentos";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Financeiro Pessoal - Lançamentos";
             Load += FrmLancamentos_Load;
@@ -414,5 +441,6 @@
         private GroupBox groupBox1;
         private Label lblSaldoConta;
         private Panel panel3;
+        private Button btnVoltar;
     }
 }

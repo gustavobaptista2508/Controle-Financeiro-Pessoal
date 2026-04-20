@@ -63,6 +63,196 @@ namespace FinanceiroPessoal.WinForms.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap _1486564168_finance_bank_check_81495 {
+            get {
+                object obj = ResourceManager.GetObject("1486564168-finance-bank-check_81495", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564168_finance_bank_check_81495__1_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564168-finance-bank-check_81495 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564169_finance_financial_planning_81494 {
+            get {
+                object obj = ResourceManager.GetObject("1486564169-finance-financial-planning_81494", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564169_finance_financial_planning_81494__1_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564169-finance-financial-planning_81494 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564172_finance_loan_money_81492 {
+            get {
+                object obj = ResourceManager.GetObject("1486564172-finance-loan-money_81492", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564172_finance_loan_money_81492__1_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564172-finance-loan-money_81492 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564172_finance_loan_money_81492__2_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564172-finance-loan-money_81492 (2)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564177_finance_finance_calculator_81497 {
+            get {
+                object obj = ResourceManager.GetObject("1486564177-finance-finance-calculator_81497", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564177_finance_finance_calculator_81497__1_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564177-finance-finance-calculator_81497 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564177_finance_finance_calculator_81497__1_1 {
+            get {
+                object obj = ResourceManager.GetObject("1486564177-finance-finance-calculator_81497 (1)1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564177_finance_finance_calculator_81497__2_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564177-finance-finance-calculator_81497 (2)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564177_finance_finance_calculator_81497__2_1 {
+            get {
+                object obj = ResourceManager.GetObject("1486564177-finance-finance-calculator_81497 (2)1", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564177_finance_finance_calculator_814971 {
+            get {
+                object obj = ResourceManager.GetObject("1486564177-finance-finance-calculator_814971", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564179_finance_saving_81499 {
+            get {
+                object obj = ResourceManager.GetObject("1486564179-finance-saving_81499", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564179_finance_saving_81499__1_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564179-finance-saving_81499 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564179_finance_saving_81499__2_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564179-finance-saving_81499 (2)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564180_finance_financial_report_81493 {
+            get {
+                object obj = ResourceManager.GetObject("1486564180-finance-financial-report_81493", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564180_finance_financial_report_81493__1_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564180-finance-financial-report_81493 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap _1486564180_finance_financial_report_81493__2_ {
+            get {
+                object obj = ResourceManager.GetObject("1486564180-finance-financial-report_81493 (2)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap acoes {
             get {
                 object obj = ResourceManager.GetObject("acoes", resourceCulture);
@@ -136,6 +326,56 @@ namespace FinanceiroPessoal.WinForms.Properties {
         internal static System.Drawing.Bitmap categorias_dark {
             get {
                 object obj = ResourceManager.GetObject("categorias_dark", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap chart_1_111423 {
+            get {
+                object obj = ResourceManager.GetObject("chart-1_111423", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap chart_1_111423__1_ {
+            get {
+                object obj = ResourceManager.GetObject("chart-1_111423 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap chart_1_111423__2_ {
+            get {
+                object obj = ResourceManager.GetObject("chart-1_111423 (2)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap chart_3_111422 {
+            get {
+                object obj = ResourceManager.GetObject("chart-3_111422", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap chart_3_111422__1_ {
+            get {
+                object obj = ResourceManager.GetObject("chart-3_111422 (1)", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
@@ -246,6 +486,116 @@ namespace FinanceiroPessoal.WinForms.Properties {
         internal static System.Drawing.Bitmap Gemini_Generated_Image_qjb58kqjb58kqjb5 {
             get {
                 object obj = ResourceManager.GetObject("Gemini_Generated_Image_qjb58kqjb58kqjb5", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_check_128_28312 {
+            get {
+                object obj = ResourceManager.GetObject("ic_check_128_28312", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_create_128_28283 {
+            get {
+                object obj = ResourceManager.GetObject("ic_create_128_28283", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_flash_on_128_28373 {
+            get {
+                object obj = ResourceManager.GetObject("ic_flash_on_128_28373", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_flash_on_128_28373__1_ {
+            get {
+                object obj = ResourceManager.GetObject("ic_flash_on_128_28373 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_highlight_remove_128_28524 {
+            get {
+                object obj = ResourceManager.GetObject("ic_highlight_remove_128_28524", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_keyboard_backspace_128_28494 {
+            get {
+                object obj = ResourceManager.GetObject("ic_keyboard_backspace_128_28494", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_local_hospital_128_28459 {
+            get {
+                object obj = ResourceManager.GetObject("ic_local_hospital_128_28459", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_loop_128_28425 {
+            get {
+                object obj = ResourceManager.GetObject("ic_loop_128_28425", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_loop_128_284251 {
+            get {
+                object obj = ResourceManager.GetObject("ic_loop_128_284251", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_person_outline_128_28580 {
+            get {
+                object obj = ResourceManager.GetObject("ic_person_outline_128_28580", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ic_search_128_28722 {
+            get {
+                object obj = ResourceManager.GetObject("ic_search_128_28722", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

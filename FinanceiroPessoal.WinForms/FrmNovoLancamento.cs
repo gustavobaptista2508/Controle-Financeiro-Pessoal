@@ -140,7 +140,10 @@ namespace FinanceiroPessoal.WinForms
                 if (!ValidarFormulario())
                     return;
                 int qtdParcelas = 1;
-                if (!string.IsNullOrEmpty(dudParcelas.Text) && int.TryParse(dudParcelas.Text, out qtdParcelas)) ;
+                if (!string.IsNullOrEmpty(dudParcelas.Text) && int.TryParse(dudParcelas.Text, out qtdParcelas))
+                {
+
+                }
 
                 string primeiraParcela = cmbStatus.Text;
                 DateTime competenicaAtual;

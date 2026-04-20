@@ -28,9 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Legend legend1 = new System.Windows.Forms.DataVisualization.Charting.Legend();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             pnlSidebar = new Panel();
             flowLayoutPanel1 = new FlowLayoutPanel();
             pictureBox8 = new PictureBox();
@@ -50,9 +48,9 @@
             lblResumoTotalPago = new Label();
             lblResumoTotalLancamentos = new Label();
             pnlGrafico = new Panel();
+            formsPlotCategorias = new ScottPlot.WinForms.FormsPlot();
             pictureBox2 = new PictureBox();
             lblGastoPorCategoria = new Label();
-            chartCategorias = new System.Windows.Forms.DataVisualization.Charting.Chart();
             dgvResumoCategorias = new DataGridView();
             pnlAcoesRapidas = new Panel();
             pictureBox3 = new PictureBox();
@@ -100,7 +98,6 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox10).BeginInit();
             pnlGrafico.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)chartCategorias).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvResumoCategorias).BeginInit();
             pnlAcoesRapidas.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).BeginInit();
@@ -238,7 +235,7 @@
             // 
             // pictureBox10
             // 
-            pictureBox10.Image = Properties.Resources.dashboard_blue;
+            pictureBox10.Image = (Image)resources.GetObject("pictureBox10.Image");
             pictureBox10.Location = new Point(22, 10);
             pictureBox10.Name = "pictureBox10";
             pictureBox10.Size = new Size(59, 34);
@@ -317,18 +314,25 @@
             // pnlGrafico
             // 
             pnlGrafico.BackColor = Color.White;
+            pnlGrafico.Controls.Add(formsPlotCategorias);
             pnlGrafico.Controls.Add(pictureBox2);
             pnlGrafico.Controls.Add(lblGastoPorCategoria);
-            pnlGrafico.Controls.Add(chartCategorias);
             pnlGrafico.Controls.Add(dgvResumoCategorias);
             pnlGrafico.Location = new Point(30, 449);
             pnlGrafico.Name = "pnlGrafico";
             pnlGrafico.Size = new Size(840, 250);
             pnlGrafico.TabIndex = 8;
             // 
+            // formsPlotCategorias
+            // 
+            formsPlotCategorias.Location = new Point(13, 55);
+            formsPlotCategorias.Name = "formsPlotCategorias";
+            formsPlotCategorias.Size = new Size(521, 183);
+            formsPlotCategorias.TabIndex = 10;
+            // 
             // pictureBox2
             // 
-            pictureBox2.Image = Properties.Resources.dashboard_dark;
+            pictureBox2.Image = (Image)resources.GetObject("pictureBox2.Image");
             pictureBox2.Location = new Point(13, 10);
             pictureBox2.Name = "pictureBox2";
             pictureBox2.Size = new Size(59, 34);
@@ -346,30 +350,16 @@
             lblGastoPorCategoria.TabIndex = 2;
             lblGastoPorCategoria.Text = "Gasto por Categoria";
             // 
-            // chartCategorias
-            // 
-            chartArea1.Name = "ChartArea1";
-            chartCategorias.ChartAreas.Add(chartArea1);
-            legend1.Name = "Legend1";
-            chartCategorias.Legends.Add(legend1);
-            chartCategorias.Location = new Point(20, 50);
-            chartCategorias.Name = "chartCategorias";
-            series1.ChartArea = "ChartArea1";
-            series1.Legend = "Legend1";
-            series1.Name = "Series1";
-            chartCategorias.Series.Add(series1);
-            chartCategorias.Size = new Size(500, 180);
-            chartCategorias.TabIndex = 1;
-            chartCategorias.Text = "Categorias";
-            // 
             // dgvResumoCategorias
             // 
             dgvResumoCategorias.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvResumoCategorias.Location = new Point(540, 55);
             dgvResumoCategorias.Name = "dgvResumoCategorias";
             dgvResumoCategorias.RowHeadersWidth = 51;
-            dgvResumoCategorias.Size = new Size(270, 170);
+            dgvResumoCategorias.Size = new Size(284, 183);
             dgvResumoCategorias.TabIndex = 0;
+            dgvResumoCategorias.CellClick += dgvResumoCategorias_CellClick;
+            dgvResumoCategorias.CellContentClick += dgvResumoCategorias_CellContentClick;
             // 
             // pnlAcoesRapidas
             // 
@@ -387,7 +377,7 @@
             // 
             // pictureBox3
             // 
-            pictureBox3.Image = Properties.Resources.acoes_orange;
+            pictureBox3.Image = Properties.Resources.ic_flash_on_128_28373__1_;
             pictureBox3.Location = new Point(8, 12);
             pictureBox3.Name = "pictureBox3";
             pictureBox3.Size = new Size(59, 34);
@@ -463,7 +453,7 @@
             // 
             // pictureBox1
             // 
-            pictureBox1.Image = Properties.Resources.lancamentos_dark;
+            pictureBox1.Image = (Image)resources.GetObject("pictureBox1.Image");
             pictureBox1.Location = new Point(13, 12);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(59, 34);
@@ -489,6 +479,7 @@
             dgvProximosVencimentos.RowHeadersWidth = 51;
             dgvProximosVencimentos.Size = new Size(800, 180);
             dgvProximosVencimentos.TabIndex = 0;
+            dgvProximosVencimentos.CellFormatting += dgvProximosVencimentos_CellFormatting;
             // 
             // btnVerTodos
             // 
@@ -515,7 +506,7 @@
             // 
             // pictureBox4
             // 
-            pictureBox4.Image = Properties.Resources.calendario_dark;
+            pictureBox4.Image = Properties.Resources._1486564169_finance_financial_planning_81494;
             pictureBox4.Location = new Point(4, 8);
             pictureBox4.Name = "pictureBox4";
             pictureBox4.Size = new Size(59, 71);
@@ -569,7 +560,7 @@
             // 
             // pictureBox7
             // 
-            pictureBox7.Image = Properties.Resources.entrada_dark;
+            pictureBox7.Image = Properties.Resources._1486564172_finance_loan_money_81492__1_;
             pictureBox7.Location = new Point(18, 8);
             pictureBox7.Name = "pictureBox7";
             pictureBox7.Size = new Size(59, 71);
@@ -623,7 +614,7 @@
             // 
             // pictureBox5
             // 
-            pictureBox5.Image = Properties.Resources.saldo_dark;
+            pictureBox5.Image = Properties.Resources._1486564179_finance_saving_81499__1_;
             pictureBox5.Location = new Point(20, 8);
             pictureBox5.Name = "pictureBox5";
             pictureBox5.Size = new Size(59, 71);
@@ -678,7 +669,8 @@
             // 
             // pictureBox6
             // 
-            pictureBox6.Image = Properties.Resources.saida_dark;
+            pictureBox6.Image = Properties.Resources._1486564177_finance_finance_calculator_81497__2_1;
+            pictureBox6.InitialImage = Properties.Resources._1486564177_finance_finance_calculator_81497__1_;
             pictureBox6.Location = new Point(26, 8);
             pictureBox6.Name = "pictureBox6";
             pictureBox6.Size = new Size(59, 71);
@@ -761,7 +753,7 @@
             // 
             // pictureBox9
             // 
-            pictureBox9.Image = Properties.Resources.usuario_dark;
+            pictureBox9.Image = Properties.Resources.ic_person_outline_128_28580;
             pictureBox9.Location = new Point(1270, 4);
             pictureBox9.Name = "pictureBox9";
             pictureBox9.Size = new Size(59, 53);
@@ -793,6 +785,7 @@
             Controls.Add(panel1);
             Controls.Add(pnlSidebar);
             Font = new Font("Segoe UI", 10.2F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MinimumSize = new Size(1573, 970);
             Name = "Form1";
             StartPosition = FormStartPosition.CenterScreen;
@@ -809,7 +802,6 @@
             pnlGrafico.ResumeLayout(false);
             pnlGrafico.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
-            ((System.ComponentModel.ISupportInitialize)chartCategorias).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgvResumoCategorias).EndInit();
             pnlAcoesRapidas.ResumeLayout(false);
             pnlAcoesRapidas.PerformLayout();
@@ -865,7 +857,6 @@
         private Label lblResumoTotalPendente;
         private Label lblResumoTotalPago;
         private Label lblResumoTotalLancamentos;
-        private System.Windows.Forms.DataVisualization.Charting.Chart chartCategorias;
         private Label label1;
         private Label label3;
         private Label lblGastoPorCategoria;
@@ -898,5 +889,6 @@
         private PictureBox pictureBox9;
         private PictureBox pictureBox10;
         private Panel panel2;
+        private ScottPlot.WinForms.FormsPlot formsPlotCategorias;
     }
 }

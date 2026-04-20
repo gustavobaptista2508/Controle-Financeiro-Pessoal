@@ -1,7 +1,10 @@
 using FinanceiroPessoal.WinForms.Models;
 using FinanceiroPessoal.WinForms.Services;
+using ScottPlot;
 using System.Globalization;
 using System.Windows.Forms.DataVisualization.Charting;
+//using Color = ScottPlot.Color;
+using System.Drawing;
 
 namespace FinanceiroPessoal.WinForms
 {
@@ -9,12 +12,12 @@ namespace FinanceiroPessoal.WinForms
     {
         private readonly DashboardService _dashboardService;
 
-        private readonly Color _menuSidebar = Color.White;
-        private readonly Color _menuAtivo = Color.FromArgb(37, 99, 235);      // azul
-        private readonly Color _menuInativo = Color.White;                    // fundo normal
-        private readonly Color _menuHover = Color.FromArgb(239, 244, 255);    // hover
-        private readonly Color _textoAtivo = Color.White;
-        private readonly Color _textoInativo = Color.FromArgb(31, 41, 55);
+        private readonly System.Drawing.Color _menuSidebar = System.Drawing.Color.White;
+        private readonly System.Drawing.Color _menuAtivo = System.Drawing.Color.FromArgb(37, 99, 235);      // azul
+        private readonly System.Drawing.Color _menuInativo = System.Drawing.Color.White;                    // fundo normal
+        private readonly System.Drawing.Color _menuHover = System.Drawing.Color.FromArgb(239, 244, 255);    // hover
+        private readonly System.Drawing.Color _textoAtivo = System.Drawing.Color.White;
+        private readonly System.Drawing.Color _textoInativo = System.Drawing.Color.FromArgb(31, 41, 55);
         public Form1()
         {
             InitializeComponent();
@@ -52,12 +55,42 @@ namespace FinanceiroPessoal.WinForms
             botao.FlatAppearance.MouseDownBackColor = _menuHover;
             botao.BackColor = _menuInativo;
             botao.ForeColor = _textoInativo;
-            botao.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+            botao.Font = new System.Drawing.Font("Segoe UI Semibold", 11F, System.Drawing.FontStyle.Bold);
             botao.TextAlign = ContentAlignment.MiddleLeft;
             botao.Padding = new Padding(16, 0, 0, 0);
             botao.Cursor = Cursors.Hand;
             botao.Height = 46;
             botao.UseVisualStyleBackColor = false;
+        }
+
+        private void EstilizarGrid(DataGridView grid)
+        {
+            // Aparência geral
+            grid.BorderStyle = BorderStyle.None;
+            grid.BackgroundColor = System.Drawing.Color.White;
+            grid.GridColor = System.Drawing.Color.FromArgb(230, 235, 245);
+            grid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+
+            // Cabeçalho
+            grid.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(37, 99, 235);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.White;
+            grid.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI Semibold", 9.5F, System.Drawing.FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.Padding = new System.Windows.Forms.Padding(8, 0, 0, 0);
+            grid.ColumnHeadersHeight = 38;
+            grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            grid.EnableHeadersVisualStyles = false;
+
+            // Linhas
+            grid.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            grid.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(31, 41, 55);
+            grid.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+            grid.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(219, 234, 254);
+            grid.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(31, 41, 55);
+            grid.DefaultCellStyle.Padding = new System.Windows.Forms.Padding(8, 4, 8, 4);
+            grid.RowTemplate.Height = 36;
+
+            // Linhas alternadas
+            grid.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(248, 250, 255);
         }
 
         private void MarcarBotaoAtivo(Button botaoAtivo)
@@ -99,9 +132,9 @@ namespace FinanceiroPessoal.WinForms
                 botao.BackColor = _menuSidebar;
                 botao.ForeColor = _textoInativo;
                 botao.TextAlign = ContentAlignment.MiddleLeft;
-                botao.Padding = new Padding(14, 0, 0, 0);
-                botao.Cursor = Cursors.Hand;
-                botao.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+                botao.Padding = new System.Windows.Forms.Padding(14, 0, 0, 0);
+                botao.Cursor = System.Windows.Forms.Cursors.Hand;
+                botao.Font = new System.Drawing.Font("Segoe UI Semibold", 11F, System.Drawing.FontStyle.Bold);
             }
         }
 
@@ -122,7 +155,7 @@ namespace FinanceiroPessoal.WinForms
             }
 
             botaoAtivo.BackColor = _menuAtivo;
-            botaoAtivo.ForeColor = Color.White;
+            botaoAtivo.ForeColor = System.Drawing.Color.White;
         }
 
         private void CarregarCompetencias()
@@ -173,6 +206,14 @@ namespace FinanceiroPessoal.WinForms
             dgvResumoCategorias.RowHeadersVisible = false;
             dgvResumoCategorias.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvResumoCategorias.MultiSelect = false;
+
+            EstilizarGrid(dgvProximosVencimentos);
+            EstilizarGrid(dgvResumoCategorias);
+
+            dgvProximosVencimentos.CellFormatting += dgvProximosVencimentos_CellFormatting;
+
+            dgvResumoCategorias.CellClick += dgvResumoCategorias_CellClick;
+            formsPlotCategorias.MouseClick += (s, e) => ResetarDestaqueCategorias();
         }
 
         private async Task CarregarDashboard()
@@ -194,45 +235,104 @@ namespace FinanceiroPessoal.WinForms
 
         private void CarregarGraficoCategorias(List<GastoCategoriaDto> dados)
         {
-            chartCategorias.Series.Clear();
-            chartCategorias.ChartAreas.Clear();
-            chartCategorias.Legends.Clear();
+            var top = dados
+        .OrderByDescending(x => x.Valor)
+        .Take(6)
+        .ToList();
 
-            var chartArea = new ChartArea("AreaPrincipal")
+            formsPlotCategorias.Reset();
+            var plt = formsPlotCategorias.Plot;
+
+            // Salva barras no campo da classe para o evento de clique acessar
+            _barras = top.Select((item, i) => new ScottPlot.Bar
             {
-                BackColor = Color.White,
-                Area3DStyle = { Enable3D = false }
-            };
-            chartCategorias.ChartAreas.Add(chartArea);
+                Value = (double)item.Valor,
+                Position = i,
+                FillColor = _cores[i % _cores.Length],
+                Label = item.Valor.ToString("C0"),
+                LineColor = ScottPlot.Colors.Transparent,
+                Size = 0.6,
+            }).ToList();
 
-            var legend = new Legend("Legenda")
-            {
-                Docking = Docking.Right,
-                Font = new Font("Segoe UI", 9F)
-            };
-            chartCategorias.Legends.Add(legend);
+            var barPlot = plt.Add.Bars(_barras);
+            barPlot.ValueLabelStyle.Bold = true;
+            barPlot.ValueLabelStyle.FontSize = 11;
+            barPlot.ValueLabelStyle.ForeColor = ScottPlot.Color.FromHex("#1F2937");
+            barPlot.LabelsOnTop = true;
 
-            var series = new Series("Categorias")
-            {
-                ChartType = SeriesChartType.Doughnut,
-                IsValueShownAsLabel = true,
-                LabelFormat = "C0",
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
-                LegendText = "#AXISLABEL"
-            };
+            // Eixo X — nomes das categorias
+            var tickGen = new ScottPlot.TickGenerators.NumericManual();
+            for (int i = 0; i < top.Count; i++)
+                tickGen.AddMajor(i, top[i].Categoria);
 
-            foreach (var item in dados)
-                series.Points.AddXY(item.Categoria, item.Valor);
+            plt.Axes.Bottom.TickGenerator = tickGen;
+            plt.Axes.Bottom.TickLabelStyle.FontSize = 11;
+            plt.Axes.Bottom.TickLabelStyle.Bold = true;
+            plt.Axes.Bottom.TickLabelStyle.ForeColor = ScottPlot.Color.FromHex("#1F2937");
+            plt.Axes.Bottom.MajorTickStyle.Length = 0;
+            plt.Axes.Bottom.FrameLineStyle.Color = ScottPlot.Color.FromHex("#E2E8F0");
 
-            chartCategorias.Series.Add(series);
+            // Eixo Y — formato R$
+            plt.Axes.Left.TickLabelStyle.FontSize = 10;
+            plt.Axes.Left.TickLabelStyle.ForeColor = ScottPlot.Color.FromHex("#6B7280");
+            plt.Axes.Left.MajorTickStyle.Length = 0;
+            plt.Axes.Left.FrameLineStyle.IsVisible = false;
 
+            var tickGenY = new ScottPlot.TickGenerators.NumericAutomatic();
+            tickGenY.LabelFormatter = v => v.ToString("C0");
+            plt.Axes.Left.TickGenerator = tickGenY;
+
+            // Grid
+            plt.Grid.MajorLineColor = ScottPlot.Color.FromHex("#E2E8F0");
+            plt.Grid.MajorLineWidth = 1;
+            plt.Grid.XAxisStyle.IsVisible = false;
+
+            // Fundo
+            plt.FigureBackground.Color = ScottPlot.Colors.White;
+            plt.DataBackground.Color = ScottPlot.Colors.White;
+
+            // Margens
+            plt.Axes.Margins(bottom: 0, top: 0.25, left: 0.02, right: 0.02);
+
+            // Remove legenda
+            plt.Legend.IsVisible = false;
+
+            formsPlotCategorias.Refresh();
+
+            // Tabela resumo
             dgvResumoCategorias.DataSource = dados
+                .OrderByDescending(x => x.Valor)
                 .Select(x => new
                 {
                     Categoria = x.Categoria,
                     Valor = x.Valor.ToString("C2")
                 })
                 .ToList();
+        }
+
+        private void ResetarDestaqueCategorias()
+        {
+            for (int i = 0; i < _barras.Count; i++)
+            {
+                _barras[i].FillColor = _cores[i % _cores.Length];
+                _barras[i].LineColor = ScottPlot.Colors.Transparent;
+                _barras[i].LineWidth = 0;
+                _barras[i].Size = 0.6;
+            }
+
+            dgvResumoCategorias.ClearSelection();
+            formsPlotCategorias.Refresh();
+        }
+
+        private void ConfigurarGrafico()
+        {
+            // Remove borda padrão do controle WinForms
+            formsPlotCategorias.BackColor = System.Drawing.Color.White;
+            formsPlotCategorias.BorderStyle = BorderStyle.None;
+
+            // Desabilita interação de zoom/pan (não faz sentido num dashboard)
+            formsPlotCategorias.UserInputProcessor.IsEnabled = false;
+            formsPlotCategorias.Plot.Axes.ContinuouslyAutoscale = false;
         }
 
         private void CarregarGridProximosVencimentos(List<ProximoVencimentoDto> dados)
@@ -272,7 +372,7 @@ namespace FinanceiroPessoal.WinForms
             lblResumoVencemSemana.Text = $"Próximos 7 dias: {resumo.TotalSemana:C2}";
         }
 
-        private void cmbCompetencia_Format(object sender, ListControlConvertEventArgs e)
+        private void cmbCompetencia_Format(object? sender, ListControlConvertEventArgs e)
         {
             if (e.ListItem is DateTime dt)
                 e.Value = dt.ToString("MMMM/yyyy", new CultureInfo("pt-BR"));
@@ -285,6 +385,7 @@ namespace FinanceiroPessoal.WinForms
             EstilizarBotaoMenu(btnContas);
             EstilizarBotaoMenu(btnSair);
 
+            ConfigurarGrafico();
             CarregarCompetencias();
             ConfigurarMenuLateral();
             AplicarBordasArredondadas();
@@ -351,6 +452,75 @@ namespace FinanceiroPessoal.WinForms
                 Close();
             else
                 LimparSelecaoMenu();
+        }
+
+        private void dgvProximosVencimentos_CellFormatting(object? sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (dgvProximosVencimentos.Columns[e.ColumnIndex].Name == "Status" && e.Value != null)
+            {
+                var status = e.Value.ToString();
+                var cell = dgvProximosVencimentos.Rows[e.RowIndex].DefaultCellStyle;
+
+                switch (status)
+                {
+                    case "Atrasado":
+                        cell.ForeColor = System.Drawing.Color.FromArgb(220, 38, 38);   // vermelho
+                        cell.BackColor = System.Drawing.Color.FromArgb(254, 242, 242);
+                        break;
+                    case "Pendente":
+                        cell.ForeColor = System.Drawing.Color.FromArgb(180, 83, 9);    // laranja
+                        cell.BackColor = System.Drawing.Color.FromArgb(255, 251, 235);
+                        break;
+                    case "Pago":
+                        cell.ForeColor = System.Drawing.Color.FromArgb(21, 128, 61);   // verde
+                        cell.BackColor = System.Drawing.Color.FromArgb(240, 253, 244);
+                        break;
+                }
+            }
+        }
+
+        private List<ScottPlot.Bar> _barras = new();
+        private ScottPlot.Color[] _cores = new[]
+        {
+            ScottPlot.Color.FromHex("#378ADD"),
+            ScottPlot.Color.FromHex("#1D9E75"),
+            ScottPlot.Color.FromHex("#EF9F27"),
+            ScottPlot.Color.FromHex("#D85A30"),
+            ScottPlot.Color.FromHex("#7F77DD"),
+            ScottPlot.Color.FromHex("#D4537E"),
+        };
+
+        private void dgvResumoCategorias_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            
+        }
+
+        private void dgvResumoCategorias_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.RowIndex >= _barras.Count)
+                return;
+
+            for (int i = 0; i < _barras.Count; i++)
+            {
+                if (i == e.RowIndex)
+                {
+                    // Barra selecionada — mantém cor original e aumenta brilho
+                    _barras[i].FillColor = _cores[i % _cores.Length];
+                    _barras[i].LineColor = ScottPlot.Color.FromHex("#1F2937");
+                    _barras[i].LineWidth = 2;
+                    _barras[i].Size = 0.65;
+                }
+                else
+                {
+                    // Demais barras — esmaece
+                    _barras[i].FillColor = _cores[i % _cores.Length].WithAlpha(0.3f);
+                    _barras[i].LineColor = ScottPlot.Colors.Transparent;
+                    _barras[i].LineWidth = 0;
+                    _barras[i].Size = 0.6;
+                }
+            }
+
+            formsPlotCategorias.Refresh();
         }
     }
 }

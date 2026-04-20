@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmEditarLancamento));
             cmbTipo = new ComboBox();
             label10 = new Label();
             txtValor = new TextBox();
@@ -319,8 +320,11 @@
             Controls.Add(txtCompetencia);
             Controls.Add(txtObservacoes);
             Controls.Add(txtDescricao);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
+            MinimizeBox = false;
             Name = "FrmEditarLancamento";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Editar Lançamento";
             Load += FrmEditarLancamento_Load;

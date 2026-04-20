@@ -336,5 +336,10 @@ namespace FinanceiroPessoal.WinForms
                 _ => Color.Gray
             };
         }
+
+        private void btnVoltar_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
     }
 }

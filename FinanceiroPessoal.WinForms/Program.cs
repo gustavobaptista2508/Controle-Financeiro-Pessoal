@@ -2,6 +2,7 @@ using FinanceiroPessoal.WinForms.Data;
 using FinanceiroPessoal.WinForms.Repositories;
 using FinanceiroPessoal.WinForms.Services;
 
+
 namespace FinanceiroPessoal.WinForms
 {
     internal static class Program

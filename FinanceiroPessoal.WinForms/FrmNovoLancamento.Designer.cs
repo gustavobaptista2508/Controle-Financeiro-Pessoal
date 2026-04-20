@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FrmNovoLancamento));
             btnSalvar = new Button();
             btnCancelar = new Button();
             label11 = new Label();
@@ -401,8 +402,11 @@
             Controls.Add(txtDescricao);
             Controls.Add(btnCancelar);
             Controls.Add(btnSalvar);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MaximizeBox = false;
+            MinimizeBox = false;
             Name = "FrmNovoLancamento";
+            ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Novo Lançamento";
             Load += FrmNovoLancamento_Load;
