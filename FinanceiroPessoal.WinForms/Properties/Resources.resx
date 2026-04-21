@@ -172,9 +172,6 @@
   <data name="chart-3_111422 (1)" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\chart-3_111422 (1).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="relatorio_dark" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\relatorio_dark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
-  </data>
   <data name="ic_highlight_remove_128_28524" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ic_highlight_remove_128_28524.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
@@ -220,14 +217,17 @@
   <data name="1486564180-finance-financial-report_81493 (1)" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\1486564180-finance-financial-report_81493 (1).png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="lancamentos_dark" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\lancamentos_dark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="sair_dark" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\sair_dark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ic_check_128_28312" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ic_check_128_28312.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="entrada_green" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\entrada_green.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="calendario_orange" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\calendario_orange.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="dashboard" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\dashboard.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -316,11 +316,14 @@
   <data name="acoes_orange" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\acoes_orange.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="calendario_orange" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\calendario_orange.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="relatorio_dark" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\relatorio_dark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="saldo_dark" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\saldo_dark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ic_search_128_28722" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\ic_search_128_28722.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="ic_loop_128_284251" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\ic_loop_128_284251.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
@@ -328,10 +331,10 @@
   <data name="1486564177-finance-finance-calculator_81497 (2)1" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Resources\1486564177-finance-finance-calculator_81497 (2)1.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="sair_dark" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\sair_dark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="lancamentos_dark" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\lancamentos_dark.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
-  <data name="ic_search_128_28722" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\ic_search_128_28722.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  <data name="qrcode_icon_187848" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Resources\qrcode_icon_187848.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
 </root>

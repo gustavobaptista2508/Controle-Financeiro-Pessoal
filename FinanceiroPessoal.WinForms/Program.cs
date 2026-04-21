@@ -32,6 +32,12 @@ namespace FinanceiroPessoal.WinForms
                 MessageBox.Show($"Erro ao inicializar o banco de dados: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
+            using var auth = new FrmAuth1();
+            if (auth.ShowDialog() != DialogResult.OK)
+            {
+                MessageBox.Show("Acesso negado. Encerrando o aplicativo.", "Acesso Negado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             Application.Run(new Form1());
         }
     }

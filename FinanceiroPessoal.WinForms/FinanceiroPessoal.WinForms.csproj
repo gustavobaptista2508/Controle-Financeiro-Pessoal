@@ -12,7 +12,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="FrmAuth.cs" />
+    <Compile Remove="FrmAuth.Designer.cs" />
     <Compile Remove="RoundPanel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Remove="FrmAuth.resx" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,8 +38,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Otp.NET" Version="1.4.1" />
     <!-- Atualizado Pomelo para versão 9.x compatível com EF Core 9 -->
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
+    <PackageReference Include="QRCoder" Version="1.8.0" />
     <PackageReference Include="ScottPlot.WinForms" Version="5.1.58" />
     <PackageReference Include="OpenTK" Version="4.9.3" />
     <PackageReference Include="WinForms.DataVisualization" Version="1.10.0" />
