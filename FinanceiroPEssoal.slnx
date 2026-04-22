@@ -1,3 +1,6 @@
 <Solution>
+  <Project Path="FinanceiroPessoal.Api/FinanceiroPessoal.Api.csproj" Id="a1d4669f-0e43-4207-a85b-59dbd07feced" />
+  <Project Path="FinanceiroPessoal.MAUI/FinanceiroPessoal.MAUI.csproj" Id="f072e8bd-ed2a-4163-bc6e-9bf7ee291441" />
+  <Project Path="FinanceiroPessoal.Shared/FinanceiroPessoal.Shared.csproj" Id="08f9eea2-43dd-4589-8c47-92244bbf4d0e" />
   <Project Path="FinanceiroPessoal.WinForms/FinanceiroPessoal.WinForms.csproj" />
 </Solution>
