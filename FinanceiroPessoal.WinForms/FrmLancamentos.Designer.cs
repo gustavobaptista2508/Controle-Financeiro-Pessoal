@@ -252,6 +252,7 @@
             dgvLancamentos.RowHeadersWidth = 51;
             dgvLancamentos.Size = new Size(927, 336);
             dgvLancamentos.TabIndex = 11;
+            dgvLancamentos.CellDoubleClick += dgvLancamentos_CellDoubleClick;
             dgvLancamentos.CellFormatting += dgvLancamentos_CellFormatting;
             dgvLancamentos.CellPainting += dgvLancamentos_CellPainting;
             // 

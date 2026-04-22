@@ -227,5 +227,19 @@ namespace FinanceiroPessoal.WinForms.Repositories
             Tipo = x.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída"
         }).ToListAsync();
         }
+
+        public async Task<List<Lancamento>> ObterPagosPorPeriodoAsync(DateTime inicio, DateTime fim)
+        {
+            return await _context.Lancamentos
+        .Include(x => x.Conta)
+        .Include(x => x.Categoria)
+        .Include(x => x.Pessoa)
+        .Where(x => x.Status == "Pago" &&
+                    x.DataPagamento.HasValue &&
+                    x.DataPagamento.Value.Date >= inicio.Date &&
+                    x.DataPagamento.Value.Date <= fim.Date)
+        .AsNoTracking()
+        .ToListAsync();
+        }
     }
 }

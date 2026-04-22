@@ -106,10 +106,14 @@ namespace FinanceiroPessoal.WinForms.Repositories
         async Task<decimal> ILancamentoRepository.CalcularSaldoConta(string pessoa, string status, string tipo, DateTime? dataIni, DateTime? dataFim)
         {
             var queryEntradas = _context.Lancamentos
-                .Where(x => x.Tipo == TipoLancamento.Entrada);
+        .Where(x => x.Tipo == TipoLancamento.Entrada &&
+                    x.Status == "Pago" &&
+                    x.DataPagamento.HasValue);
 
             var querySaidasPagas = _context.Lancamentos
-                .Where(x => x.Tipo == TipoLancamento.Saida && x.Status == "Pago");
+        .Where(x => x.Tipo == TipoLancamento.Saida &&
+                    x.Status == "Pago" &&
+                    x.DataPagamento.HasValue);
 
             // Aplica filtros
             if (!string.IsNullOrWhiteSpace(pessoa) && pessoa != "Todos")
@@ -126,14 +130,15 @@ namespace FinanceiroPessoal.WinForms.Repositories
 
             if (dataIni.HasValue)
             {
-                queryEntradas = queryEntradas.Where(x => x.DataVencimento >= dataIni.Value);
-                querySaidasPagas = querySaidasPagas.Where(x => x.DataVencimento >= dataIni.Value);
+                queryEntradas = queryEntradas.Where(x => x.DataPagamento!.Value >= dataIni.Value);
+                querySaidasPagas = querySaidasPagas.Where(x => x.DataPagamento!.Value >= dataIni.Value);
             }
 
             if (dataFim.HasValue)
             {
-                queryEntradas = queryEntradas.Where(x => x.DataVencimento <= dataFim.Value.Date.AddDays(1).AddTicks(-1));
-                querySaidasPagas = querySaidasPagas.Where(x => x.DataVencimento <= dataFim.Value.Date.AddDays(1).AddTicks(-1));
+                var fim = dataFim.Value.Date.AddDays(1).AddTicks(-1);
+                queryEntradas = queryEntradas.Where(x => x.DataPagamento!.Value <= fim);
+                querySaidasPagas = querySaidasPagas.Where(x => x.DataPagamento!.Value <= fim);
             }
 
             var totalEntradas = await queryEntradas.SumAsync(x => x.Valor);
@@ -144,16 +149,32 @@ namespace FinanceiroPessoal.WinForms.Repositories
 
         public async Task<decimal> ObterTotalPendenteSaidas()
         {
+            var hoje = DateTime.Today;
+            var inicioMes = new DateTime(hoje.Year, hoje.Month, 1);
+            var fimMes = inicioMes.AddMonths(1).AddDays(-1);
+
             return await _context.Lancamentos
-            .Where(x => x.Tipo == TipoLancamento.Saida && x.Status == "Pendente")
-            .SumAsync(x => x.Valor);
+                .Where(x => x.Tipo == TipoLancamento.Saida &&
+                            x.Status == "Pendente" &&
+                            x.DataVencimento.HasValue &&
+                            x.DataVencimento.Value.Date >= inicioMes &&
+                            x.DataVencimento.Value.Date <= fimMes)
+                .SumAsync(x => x.Valor);
         }
 
         public async Task<decimal> ObterTotalPagoSaidas()
         {
+            var hoje = DateTime.Today;
+            var inicioMes = new DateTime(hoje.Year, hoje.Month, 1);
+            var fimMes = inicioMes.AddMonths(1).AddDays(-1);
+
             return await _context.Lancamentos
-            .Where(x => x.Tipo == TipoLancamento.Saida && x.Status == "Pago")
-            .SumAsync(x => x.Valor);
+                .Where(x => x.Tipo == TipoLancamento.Saida &&
+                            x.Status == "Pago" &&
+                            x.DataPagamento.HasValue &&
+                            x.DataPagamento.Value.Date >= inicioMes &&
+                            x.DataPagamento.Value.Date <= fimMes)
+                .SumAsync(x => x.Valor);
         }
 
         public async Task<List<Lancamento>> ObterLancamentosPorPeriodoAsync(DateTime dataIni, DateTime dataFim)
@@ -224,6 +245,20 @@ namespace FinanceiroPessoal.WinForms.Repositories
            Status = x.Status,
            Tipo = x.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída"
        }).ToListAsync();
+        }
+
+        public async Task<List<Lancamento>> ObterPagosPorPeriodoAsync(DateTime inicio, DateTime fim)
+        {
+            return await _context.Lancamentos
+        .Include(x => x.Conta)
+        .Include(x => x.Categoria)
+        .Include(x => x.Pessoa)
+        .Where(x => x.Status == "Pago" &&
+                    x.DataPagamento.HasValue &&
+                    x.DataPagamento.Value.Date >= inicio.Date &&
+                    x.DataPagamento.Value.Date <= fim.Date)
+        .AsNoTracking()
+        .ToListAsync();
         }
     }
 }

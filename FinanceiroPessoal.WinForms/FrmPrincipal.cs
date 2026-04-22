@@ -355,7 +355,7 @@ namespace FinanceiroPessoal.WinForms
             lblTotalEntradaValor.Text = resumo.TotalEntradas.ToString("C2");
             lblTotalEntradaQtd.Text = $"{resumo.QuantidadeEntradas} lançamentos";
 
-            lblTotalSaidaValor.Text = resumo.TotalSaidas.ToString("C2");
+            lblTotalSaidaValor.Text = resumo.TotalPago.ToString("C2");
             lblTotalSaidaQtd.Text = $"{resumo.QuantidadeSaidas} lançamentos";
 
             lblSaldoMesValor.Text = resumo.SaldoMes.ToString("C2");

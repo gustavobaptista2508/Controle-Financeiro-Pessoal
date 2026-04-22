@@ -23,5 +23,6 @@ namespace FinanceiroPessoal.WinForms.Repositories
         Task<List<Lancamento>> ObterAtrasadosAsync();
         Task<List<Lancamento>> ObterVencemHojeAsync(DateTime dataReferencia);
         Task<List<ProximoVencimentoDto>> ObterProximosVencimentosAsync(int quantidade);
+        Task<List<Lancamento>> ObterPagosPorPeriodoAsync(DateTime inicio, DateTime fim);
     }
 }

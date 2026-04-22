@@ -25,19 +25,41 @@ namespace FinanceiroPessoal.WinForms.Services
 
             // ✅ Usa repository - Funciona com qualquer banco
             var lancamentosMes = await _repository.ObterLancamentosPorPeriodoAsync(inicioMes, fimMes);
+            var pagosNoMes = await _repository.ObterPagosPorPeriodoAsync(inicioMes, fimMes);
 
-            var entradasMes = lancamentosMes.Where(x => x.Tipo == TipoLancamento.Entrada).ToList();
+            var entradasMes = lancamentosMes.Where(x => x.Tipo == TipoLancamento.Entrada
+            && x.DataPagamento.HasValue &&
+            x.DataPagamento.Value.Month == referencia.Month &&
+            x.DataPagamento.Value.Year == referencia.Year).ToList();
             var saidasMes = lancamentosMes.Where(x => x.Tipo == TipoLancamento.Saida).ToList();
-            var saidasPagasMes = saidasMes.Where(x => x.Status == "Pago").ToList();
+            var saidasPagasMes = saidasMes.Where(x => x.Status == "Pago" &&
+            x.DataPagamento.HasValue &&
+            x.DataPagamento.Value.Month == referencia.Month &&
+            x.DataPagamento.Value.Year == referencia.Year).ToList();
             var pendentesMes = saidasMes.Where(x => x.Status == "Pendente").ToList();
-            var pagosMes = saidasMes.Where(x => x.Status == "Pago").ToList();
+            var pagosMes = pagosNoMes
+    .Where(x => x.Tipo == TipoLancamento.Saida)
+    .Sum(x => x.Valor);
+
+            var qtdSaidasPagasMes = saidasPagasMes.Count;
 
             var vencemSemana = await _repository.ObterVencimentosSemanaAsync(hoje, fimSemana);
             var atrasados = await _repository.ObterAtrasadosAsync();
             var vencemHoje = await _repository.ObterVencemHojeAsync(hoje);
 
-            var totalEntradas = entradasMes.Sum(x => x.Valor);
-            var totalSaidasPagas = saidasPagasMes.Sum(x => x.Valor);
+            var totalEntradas = entradasMes
+    .Where(x => x.Status == "Pago" &&
+                x.DataPagamento.HasValue &&
+                x.DataPagamento.Value.Month == referencia.Month &&
+                x.DataPagamento.Value.Year == referencia.Year)
+    .Sum(x => x.Valor);
+
+            var totalSaidasPagas = saidasMes
+                .Where(x => x.Status == "Pago" &&
+                            x.DataPagamento.HasValue &&
+                            x.DataPagamento.Value.Month == referencia.Month &&
+                            x.DataPagamento.Value.Year == referencia.Year)
+                .Sum(x => x.Valor);
 
             return new DashboardResumo
             {
@@ -45,11 +67,11 @@ namespace FinanceiroPessoal.WinForms.Services
                 QuantidadeEntradas = entradasMes.Count,
                 TotalSaidas = totalSaidasPagas,
                 QuantidadeSaidas = saidasPagasMes.Count,
-                SaldoMes = totalEntradas - totalSaidasPagas,
+                SaldoMes = totalEntradas - pagosMes,
                 TotalPendente = pendentesMes.Sum(x => x.Valor),
                 QuantidadePendentes = pendentesMes.Count,
-                TotalPago = pagosMes.Sum(x => x.Valor),
-                QuantidadePagos = pagosMes.Count,
+                TotalPago = pagosMes,
+                QuantidadePagos = qtdSaidasPagasMes,
                 TotalSemana = vencemSemana.Sum(x => x.Valor),
                 QuantidadeSemana = vencemSemana.Count,
                 TotalLancamentosMes = lancamentosMes.Count,

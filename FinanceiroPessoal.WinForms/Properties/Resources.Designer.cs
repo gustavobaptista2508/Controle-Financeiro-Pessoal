@@ -403,6 +403,26 @@ namespace FinanceiroPessoal.WinForms.Properties {
         /// <summary>
         ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap credit_card_payment_finance_credit_card_icon_124664 {
+            get {
+                object obj = ResourceManager.GetObject("credit_card_payment_finance_credit_card_icon_124664", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap credit_card_payment_finance_credit_card_icon_124664__1_ {
+            get {
+                object obj = ResourceManager.GetObject("credit_card_payment_finance_credit_card_icon_124664 (1)", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap dashboard {
             get {
                 object obj = ResourceManager.GetObject("dashboard", resourceCulture);
@@ -596,6 +616,16 @@ namespace FinanceiroPessoal.WinForms.Properties {
         internal static System.Drawing.Bitmap ic_search_128_28722 {
             get {
                 object obj = ResourceManager.GetObject("ic_search_128_28722", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Consulta um recurso localizado do tipo System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap interface_decline_reject_close_delete_failed_icon_133000 {
+            get {
+                object obj = ResourceManager.GetObject("interface_decline_reject_close_delete_failed_icon_133000", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

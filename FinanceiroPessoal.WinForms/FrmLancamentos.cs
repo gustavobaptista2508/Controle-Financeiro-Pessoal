@@ -14,6 +14,8 @@ namespace FinanceiroPessoal.WinForms
     {
         private readonly LancamentoService _service;
         private readonly CadastroAuxiliarService _cadastroService;
+
+        private Dictionary<int, (int ContaID, string NomeCartao)> _linhasFatura = new();
         public FrmLancamentos()
         {
             var tipoBanco = TipoBanco.OnlineMySql; // ✅ Configuração centralizada
@@ -21,11 +23,12 @@ namespace FinanceiroPessoal.WinForms
             var cadastroRepo = DatabaseFactory.CriarCadastroAuxiliarRepository(tipoBanco);
             _service = new LancamentoService(lancamentoRepo);
             _cadastroService = new CadastroAuxiliarService(cadastroRepo);
+
             InitializeComponent();
-            // Vincula eventos ANTES de carregar dados
+
             dgvLancamentos.CellPainting += dgvLancamentos_CellPainting;
             dgvLancamentos.CellFormatting += dgvLancamentos_CellFormatting;
-
+            dgvLancamentos.CellDoubleClick += dgvLancamentos_CellDoubleClick;
 
         }
 
@@ -90,29 +93,79 @@ namespace FinanceiroPessoal.WinForms
         {
             try
             {
+                _linhasFatura.Clear(); // Limpa cache de faturas
+
                 var lancamentos = await _service.Filtrar(
                     cmbFiltroPessoa.Text,
                     cmbFiltroStatus.Text,
                     cmbFiltroTipo.Text,
                     dtpDataInicio.Value,
                     dtpDataFim.Value);
-                var dados = lancamentos.Select(x => new
+
+                var normais = lancamentos.Where(x => x.Conta?.Tipo != "Cartão").ToList();
+                var cartoes = lancamentos.Where(x => x.Conta?.Tipo == "Cartão").ToList();
+
+                //Agrupar lançamentos de cartão por fatura
+
+                var faturas = cartoes
+                .GroupBy(x => new { x.ContaId, Nome = x.Conta?.Nome ?? "Cartão" })
+                .Select(g => new
+                {
+                    Id = -(g.Key.ContaId ?? 0), // negativo = fatura
+                    Tipo = "Saída",
+                    Descricao = $"Fatura {g.Key.Nome}  •  {g.Count()} lançamento(s)",
+                    Valor = g.Sum(x => x.Valor).ToString("N2"),
+                    Vencimento = g.Max(x => x.DataVencimento).HasValue
+                                    ? g.Max(x => x.DataVencimento)!.Value.ToString("dd/MM/yyyy")
+                                    : "",
+                    StatusIcone = g.All(x => x.Status == "Pago") ? "Pago" :
+                                  g.Any(x => x.Status == "Pago") ? "Parcial" :
+                                  g.Any(x => x.Status == "Atrasado") ? "Atrasado" : "Pendente",
+                    Categoria = "Cartão de Crédito",
+                    Conta = g.Key.Nome,
+                    Pessoa = "",
+                    Competencia = "",
+                    ContaIdFatura = g.Key.ContaId ?? 0,
+                    NomeCartao = g.Key.Nome,
+                })
+                .ToList();
+
+                var dadosNormais = normais.Select(x => new
                 {
                     x.Id,
                     Tipo = x.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída",
                     x.Descricao,
                     Valor = x.Valor.ToString("N2"),
-                    Vencimento = x.DataVencimento.HasValue ? x.DataVencimento.Value.ToString("dd/MM/yyyy") : "",
-                    StatusIcone = x.Status.ToString(),  // ✅ Garantir que é string
+                    Vencimento = x.DataVencimento.HasValue
+                                ? x.DataVencimento.Value.ToString("dd/MM/yyyy") : "",
+                    StatusIcone = x.Status.ToString(),
                     Categoria = x.Categoria?.Nome ?? "",
                     Conta = x.Conta?.Nome ?? "",
                     Pessoa = x.Pessoa?.Nome ?? "",
-                    x.Competencia
-                })
+                    x.Competencia,
+                    ContaIdFatura = 0,
+                    NomeCartao = "",
+                }).ToList();
+
+                var todos = dadosNormais
+                .Cast<dynamic>()
+                .Concat(faturas.Cast<dynamic>())
+                .OrderBy(x => x.Vencimento)
                 .ToList();
 
                 dgvLancamentos.DataSource = null;
-                dgvLancamentos.DataSource = dados;
+                dgvLancamentos.DataSource = todos;
+
+                // Registra quais linhas são faturas para o duplo clique
+                for (int i = 0; i < dgvLancamentos.Rows.Count; i++)
+                {
+                    var row = dgvLancamentos.Rows[i];
+                    var contaId = Convert.ToInt32(row.Cells["ContaIdFatura"].Value);
+                    var nome = row.Cells["NomeCartao"].Value?.ToString() ?? "";
+
+                    if (contaId > 0)
+                        _linhasFatura[i] = (contaId, nome);
+                }
             }
             catch (Exception ex)
             {
@@ -121,36 +174,55 @@ namespace FinanceiroPessoal.WinForms
             finally
             {
                 ConfigurarColunas();
-                // ✅ Refresh para aplicar formatação
+                AplicarEstiloFaturas(); // Estiliza as linhas de fatura
                 dgvLancamentos.Refresh();
                 AtualizarDashboard();
             }
         }
 
+        // Estiliza as linhas de fatura para destacá-las visualmente
+        private void AplicarEstiloFaturas()
+        {
+            foreach (var kvp in _linhasFatura)
+            {
+                if (kvp.Key >= dgvLancamentos.Rows.Count) continue;
+
+                var row = dgvLancamentos.Rows[kvp.Key];
+                row.DefaultCellStyle.BackColor = Color.FromArgb(230, 241, 251); // azul claro
+                row.DefaultCellStyle.ForeColor = Color.FromArgb(12, 68, 124);   // azul escuro
+                row.DefaultCellStyle.Font = new Font("Segoe UI Semibold", 9F, FontStyle.Bold);
+            }
+        }
+
         private void ConfigurarColunas()
         {
-            // StatusIcone como primeira coluna (ícone)
             if (dgvLancamentos.Columns["StatusIcone"] != null)
             {
-                dgvLancamentos.Columns["StatusIcone"].DisplayIndex = 0; // Primeira coluna
+                dgvLancamentos.Columns["StatusIcone"].DisplayIndex = 0;
                 dgvLancamentos.Columns["StatusIcone"].Width = 45;
                 dgvLancamentos.Columns["StatusIcone"].HeaderText = "Status";
                 dgvLancamentos.Columns["StatusIcone"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 dgvLancamentos.Columns["StatusIcone"].SortMode = DataGridViewColumnSortMode.NotSortable;
             }
 
-            // Id em segunda posição
             if (dgvLancamentos.Columns["Id"] != null)
             {
                 dgvLancamentos.Columns["Id"].DisplayIndex = 1;
                 dgvLancamentos.Columns["Id"].Width = 60;
             }
 
-            // Suas outras configurações...
             if (dgvLancamentos.Columns["Tipo"] != null)
                 dgvLancamentos.Columns["Tipo"].Width = 90;
+
             if (dgvLancamentos.Columns["Descricao"] != null)
                 dgvLancamentos.Columns["Descricao"].Width = 250;
+
+            // Esconde colunas internas de controle
+            if (dgvLancamentos.Columns["ContaIdFatura"] != null)
+                dgvLancamentos.Columns["ContaIdFatura"].Visible = false;
+
+            if (dgvLancamentos.Columns["NomeCartao"] != null)
+                dgvLancamentos.Columns["NomeCartao"].Visible = false;
         }
 
         private async Task CarregarFiltros()
@@ -340,6 +412,18 @@ namespace FinanceiroPessoal.WinForms
         private void btnVoltar_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void dgvLancamentos_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            if (!_linhasFatura.TryGetValue(e.RowIndex, out var fatura)) return;
+
+            var referencia = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+            using var frm = new FrmExtratoCartao(fatura.ContaID, fatura.NomeCartao, referencia, _service);
+            frm.ShowDialog();
+            _ = CarregarGrid();
         }
     }
 }
