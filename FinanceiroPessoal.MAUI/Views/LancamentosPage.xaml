@@ -1,0 +1,51 @@
+<!-- Views/LancamentosPage.xaml -->
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="FinanceiroPessoal.MAUI.Views.LancamentosPage"
+             Title="LanÃ§amentos">
+
+    <RefreshView IsRefreshing="{Binding Carregando}"
+                 Command="{Binding CarregarCommand}">
+        <CollectionView ItemsSource="{Binding Lancamentos}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Frame Margin="8,4" Padding="12" CornerRadius="8" HasShadow="False"
+                           BorderColor="#E5E7EB">
+                        <Frame.Triggers>
+                            <DataTrigger TargetType="Frame" Binding="{Binding IsCartao}" Value="True">
+                                <Setter Property="BackgroundColor" Value="#E6F1FB"/>
+                                <Setter Property="BorderColor" Value="#378ADD"/>
+                            </DataTrigger>
+                        </Frame.Triggers>
+
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+
+                            <VerticalStackLayout Grid.Column="0" Grid.RowSpan="2" Spacing="2">
+                                <Label Text="{Binding Descricao}" FontSize="13" FontAttributes="Bold"/>
+                                <Label Text="{Binding DataVencimento, StringFormat='{0:dd/MM/yyyy}'}"
+                                       FontSize="11" TextColor="#6B7280"/>
+                                <Label Text="{Binding Categoria}" FontSize="11" TextColor="#6B7280"/>
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="1" Grid.Row="0"
+                                   Text="{Binding Valor, StringFormat='R$ {0:N2}'}"
+                                   FontSize="13" FontAttributes="Bold" HorizontalOptions="End"/>
+
+                            <Label Grid.Column="1" Grid.Row="1"
+                                   Text="{Binding Status}" FontSize="11" HorizontalOptions="End"/>
+
+                        </Grid>
+
+                        <Frame.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}},
+                                          Path=BindingContext.AbrirExtratoCommand}"
+                                CommandParameter="{Binding .}"/>
+                        </Frame.GestureRecognizers>
+                    </Frame>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </RefreshView>
+</ContentPage>

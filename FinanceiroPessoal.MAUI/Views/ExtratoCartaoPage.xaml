@@ -1,0 +1,78 @@
+<!-- Views/ExtratoCartaoPage.xaml -->
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="FinanceiroPessoal.MAUI.Views.ExtratoCartaoPage"
+             Title="{Binding NomeCartao}">
+
+    <RefreshView IsRefreshing="{Binding Carregando}"
+                 Command="{Binding CarregarCommand}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="12">
+
+                <!-- Cards resumo -->
+                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
+
+                    <Frame Grid.Column="0" BackgroundColor="White" CornerRadius="8"
+                           Padding="10" HasShadow="False" BorderColor="#E5E7EB">
+                        <VerticalStackLayout>
+                            <Label Text="Total" FontSize="11" TextColor="#6B7280"/>
+                            <Label Text="{Binding TotalFatura, StringFormat='R$ {0:N2}'}"
+                                   FontSize="14" FontAttributes="Bold"/>
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame Grid.Column="1" BackgroundColor="White" CornerRadius="8"
+                           Padding="10" HasShadow="False" BorderColor="#E5E7EB">
+                        <VerticalStackLayout>
+                            <Label Text="Pago" FontSize="11" TextColor="#6B7280"/>
+                            <Label Text="{Binding TotalPago, StringFormat='R$ {0:N2}'}"
+                                   FontSize="14" FontAttributes="Bold" TextColor="#15803D"/>
+                        </VerticalStackLayout>
+                    </Frame>
+
+                    <Frame Grid.Column="2" BackgroundColor="White" CornerRadius="8"
+                           Padding="10" HasShadow="False" BorderColor="#E5E7EB">
+                        <VerticalStackLayout>
+                            <Label Text="Pendente" FontSize="11" TextColor="#6B7280"/>
+                            <Label Text="{Binding TotalPendente, StringFormat='R$ {0:N2}'}"
+                                   FontSize="14" FontAttributes="Bold" TextColor="#B45309"/>
+                        </VerticalStackLayout>
+                    </Frame>
+
+                </Grid>
+
+                <!-- BotÃ£o pagar fatura -->
+                <Button Text="Marcar fatura como paga"
+                        Command="{Binding MarcarFaturaPagaCommand}"
+                        BackgroundColor="#15803D" TextColor="White"
+                        CornerRadius="8" HeightRequest="44"/>
+
+                <!-- Lista de lanÃ§amentos -->
+                <CollectionView ItemsSource="{Binding Lancamentos}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Frame Margin="0,0,0,6" Padding="12" CornerRadius="8"
+                                   BackgroundColor="White" BorderColor="#E5E7EB" HasShadow="False">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                        <Label Text="{Binding Descricao}" FontSize="13" FontAttributes="Bold"/>
+                                        <Label Text="{Binding DataVencimento, StringFormat='{0:dd/MM/yyyy}'}"
+                                               FontSize="11" TextColor="#6B7280"/>
+                                        <Label Text="{Binding Categoria}" FontSize="11" TextColor="#6B7280"/>
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Grid.Column="1" HorizontalOptions="End" Spacing="4">
+                                        <Label Text="{Binding Valor, StringFormat='R$ {0:N2}'}"
+                                               FontSize="13" FontAttributes="Bold" HorizontalOptions="End"/>
+                                        <Label Text="{Binding Status}" FontSize="11" HorizontalOptions="End"/>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Frame>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+</ContentPage>

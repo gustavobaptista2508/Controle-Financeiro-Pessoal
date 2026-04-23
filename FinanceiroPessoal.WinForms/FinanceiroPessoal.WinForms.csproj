@@ -15,6 +15,7 @@
     <Compile Remove="FrmAuth.cs" />
     <Compile Remove="FrmAuth.Designer.cs" />
     <Compile Remove="RoundPanel.cs" />
+    <Compile Remove="Services\ExcelImportService.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +46,10 @@
     <PackageReference Include="ScottPlot.WinForms" Version="5.1.58" />
     <PackageReference Include="OpenTK" Version="4.9.3" />
     <PackageReference Include="WinForms.DataVisualization" Version="1.10.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FinanceiroPessoal.Core\FinanceiroPessoal.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

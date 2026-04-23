@@ -1,35 +1,25 @@
-using System.Text.Json.Serialization;
+using FinanceiroPessoal.WinForms.Data;
+using FinanceiroPessoal.WinForms.Repositories;
+using FinanceiroPessoal.WinForms.Services;
 
-var builder = WebApplication.CreateSlimBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.TypeInfoResolverChain.Insert(0, AppJsonSerializerContext.Default);
-});
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Reutiliza o DbContext e repositórios já existentes
+builder.Services.AddDbContext<MySqlDbContext>();
+builder.Services.AddScoped<ILancamentoRepository, MySqlLancamentoRepository>();
+builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRepository>();
+builder.Services.AddScoped<LancamentoService>();
+builder.Services.AddScoped<CadastroAuxiliarService>();
+builder.Services.AddScoped<DashboardService>();
 
 var app = builder.Build();
 
-var sampleTodos = new Todo[] {
-    new(1, "Walk the dog"),
-    new(2, "Do the dishes", DateOnly.FromDateTime(DateTime.Now)),
-    new(3, "Do the laundry", DateOnly.FromDateTime(DateTime.Now.AddDays(1))),
-    new(4, "Clean the bathroom"),
-    new(5, "Clean the car", DateOnly.FromDateTime(DateTime.Now.AddDays(2)))
-};
-
-var todosApi = app.MapGroup("/todos");
-todosApi.MapGet("/", () => sampleTodos);
-todosApi.MapGet("/{id}", (int id) =>
-    sampleTodos.FirstOrDefault(a => a.Id == id) is { } todo
-        ? Results.Ok(todo)
-        : Results.NotFound());
-
+app.UseSwagger();
+app.UseSwaggerUI();
+app.UseAuthorization();
+app.MapControllers();
 app.Run();
-
-public record Todo(int Id, string? Title, DateOnly? DueBy = null, bool IsComplete = false);
-
-[JsonSerializable(typeof(Todo[]))]
-internal partial class AppJsonSerializerContext : JsonSerializerContext
-{
-
-}

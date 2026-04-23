@@ -1,0 +1,65 @@
+<!-- Views/AuthPage.xaml -->
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="FinanceiroPessoal.MAUI.Views.AuthPage">I.Views.AuthPage"
+             BackgroundColor="#185FA5">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="32" Spacing="20" VerticalOptions="Center">
+
+            <Frame BackgroundColor="White" CornerRadius="16" Padding="28" HasShadow="False">
+
+                <VerticalStackLayout Spacing="16">
+
+                    <Label Text="Controle Financeiro"
+                           FontSize="20" FontAttributes="Bold"
+                           TextColor="#185FA5" HorizontalOptions="Center"/>
+
+                    <Label Text="VerificaÃ§Ã£o em dois fatores"
+                           FontSize="13" TextColor="#6B7280"
+                           HorizontalOptions="Center"/>
+
+                    <Frame IsVisible="{Binding QrCodeVisivel}"
+                           BackgroundColor="#F5F8FF" CornerRadius="8"
+                           Padding="12" HasShadow="False">
+                        <Label Text="{Binding Instrucao}"
+                               FontSize="12" TextColor="#374151"
+                               HorizontalOptions="Center"/>
+                    </Frame>
+
+                    <Label Text="{Binding Instrucao}"
+                           IsVisible="{Binding QrCodeVisivel, Converter={StaticResource InvertedBoolConverter}}"
+                           FontSize="12" TextColor="#6B7280"
+                           HorizontalOptions="Center"/>
+
+                    <Entry Placeholder="Digite o cÃ³digo de 6 dÃ­gitos"
+                           Text="{Binding Codigo}"
+                           Keyboard="Numeric" MaxLength="6"
+                           FontSize="22" FontAttributes="Bold"
+                           TextColor="#0C447C" BackgroundColor="#E6F1FB"
+                           HorizontalTextAlignment="Center"/>
+
+                    <Frame IsVisible="{Binding ErroVisivel}"
+                           BackgroundColor="#FCEBEB" CornerRadius="8"
+                           Padding="10" HasShadow="False">
+                        <Label Text="{Binding MensagemErro}"
+                               TextColor="#A32D2D" FontSize="12"
+                               HorizontalOptions="Center"/>
+                    </Frame>
+
+                    <Button Text="Entrar"
+                            Command="{Binding EntrarCommand}"
+                            BackgroundColor="#185FA5" TextColor="White"
+                            CornerRadius="8" FontAttributes="Bold"
+                            HeightRequest="48"/>
+
+                    <Label Text="{Binding SegsRestantes, StringFormat='cÃ³digo expira em {0}s'}"
+                           FontSize="11" TextColor="#9CA3AF"
+                           HorizontalOptions="Center"/>
+
+                </VerticalStackLayout>
+            </Frame>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

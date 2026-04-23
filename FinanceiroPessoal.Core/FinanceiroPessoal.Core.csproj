@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Services\ExcelImportService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
+    <PackageReference Include="Otp.NET" Version="1.4.0" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="OpenTK">
+      <HintPath>..\..\..\..\.nuget\packages\opentk\3.1.0\lib\net20\OpenTK.dll</HintPath>
+    </Reference>
+    <Reference Include="Otp.NET">
+      <HintPath>..\..\..\..\.nuget\packages\otp.net\1.4.1\lib\net8.0\Otp.NET.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

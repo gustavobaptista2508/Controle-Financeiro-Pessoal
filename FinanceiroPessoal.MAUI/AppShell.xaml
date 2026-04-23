@@ -1,14 +1,33 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<Shell
-    x:Class="FinanceiroPessoal.MAUI.AppShell"
-    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
-    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:local="clr-namespace:FinanceiroPessoal.MAUI"
-    Title="FinanceiroPessoal.MAUI">
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:views="clr-namespace:FinanceiroPessoal.MAUI.Views"
+       x:Class="FinanceiroPessoal.MAUI.AppShell">
 
-    <ShellContent
-        Title="Home"
-        ContentTemplate="{DataTemplate local:MainPage}"
-        Route="MainPage" />
+    <Shell.Resources>
+        <ResourceDictionary>
+            <!-- Cor da barra de navegaÃ§Ã£o -->
+            <Color x:Key="NavBarColor">#185FA5</Color>
+        </ResourceDictionary>
+    </Shell.Resources>
+
+    <Shell.BackgroundColor>
+        <Color>#185FA5</Color>
+    </Shell.BackgroundColor>
+
+    <!-- Auth â€” sem tab bar -->
+    <ShellContent Route="AuthPage"
+                  ContentTemplate="{DataTemplate views:AuthPage}"
+                  Shell.TabBarIsVisible="False"/>
+
+    <!-- App principal com tab bar -->
+    <TabBar>
+        <ShellContent Title="Dashboard"
+                      Route="DashboardPage"
+                      ContentTemplate="{DataTemplate views:DashboardPage}"/>
+        <ShellContent Title="LanÃ§amentos"
+                      Route="LancamentosPage"
+                      ContentTemplate="{DataTemplate views:LancamentosPage}"/>
+    </TabBar>
 
 </Shell>
