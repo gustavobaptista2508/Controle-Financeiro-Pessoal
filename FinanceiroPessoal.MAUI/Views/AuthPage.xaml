@@ -1,9 +1,16 @@
-<!-- Views/AuthPage.xaml -->
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-             x:Class="FinanceiroPessoal.MAUI.Views.AuthPage">I.Views.AuthPage"
+             xmlns:converters="clr-namespace:FinanceiroPessoal.MAUI.Converters"
+             x:Class="FinanceiroPessoal.MAUI.Views.AuthPage"
              BackgroundColor="#185FA5">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <!-- Defina aqui o seu conversor InvertedBoolConverter -->
+            <converters:InvertedBoolConverter x:Key="InvertedBoolConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
 
     <ScrollView>
         <VerticalStackLayout Padding="32" Spacing="20" VerticalOptions="Center">
@@ -16,7 +23,7 @@
                            FontSize="20" FontAttributes="Bold"
                            TextColor="#185FA5" HorizontalOptions="Center"/>
 
-                    <Label Text="VerificaÃ§Ã£o em dois fatores"
+                    <Label Text="Verificação em dois fatores"
                            FontSize="13" TextColor="#6B7280"
                            HorizontalOptions="Center"/>
 
@@ -33,11 +40,13 @@
                            FontSize="12" TextColor="#6B7280"
                            HorizontalOptions="Center"/>
 
-                    <Entry Placeholder="Digite o cÃ³digo de 6 dÃ­gitos"
+                    <Entry Placeholder="Digite o código de 6 dígitos"
                            Text="{Binding Codigo}"
-                           Keyboard="Numeric" MaxLength="6"
+                           Keyboard="Numeric"
+                           MaxLength="6"
                            FontSize="22" FontAttributes="Bold"
-                           TextColor="#0C447C" BackgroundColor="#E6F1FB"
+                           TextColor="#0C447C"
+                           BackgroundColor="#E6F1FB"
                            HorizontalTextAlignment="Center"/>
 
                     <Frame IsVisible="{Binding ErroVisivel}"
@@ -54,7 +63,7 @@
                             CornerRadius="8" FontAttributes="Bold"
                             HeightRequest="48"/>
 
-                    <Label Text="{Binding SegsRestantes, StringFormat='cÃ³digo expira em {0}s'}"
+                    <Label Text="{Binding SegsRestantes, StringFormat='código expira em {0}s'}"
                            FontSize="11" TextColor="#9CA3AF"
                            HorizontalOptions="Center"/>
 

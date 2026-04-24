@@ -1,4 +1,3 @@
-<!-- Views/ExtratoCartaoPage.xaml -->
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
@@ -42,13 +41,13 @@
 
                 </Grid>
 
-                <!-- BotÃ£o pagar fatura -->
+                <!-- Botão pagar fatura -->
                 <Button Text="Marcar fatura como paga"
                         Command="{Binding MarcarFaturaPagaCommand}"
                         BackgroundColor="#15803D" TextColor="White"
                         CornerRadius="8" HeightRequest="44"/>
 
-                <!-- Lista de lanÃ§amentos -->
+                <!-- Lista de lançamentos -->
                 <CollectionView ItemsSource="{Binding Lancamentos}">
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
