@@ -1,5 +1,5 @@
 @page "/lancamentos"
-@using FinanceiroPessoal.Core.Models
+@using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @using FinanceiroPessoal.Core.Services
 @inject LancamentoService LancamentoService
 
@@ -41,7 +41,7 @@ else
                     <tr>
                         <td class="text-center">@item.Status</td>
                         <td>@item.Id</td>
-                        <td>@(item.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída")</td>
+                        <td>@(item.Tipo == global::FinanceiroPessoal.Core.Models.TipoLancamento.Entrada ? "Entrada" : "Saída")</td>
                         <td>@item.Descricao</td>
                         <td>@item.Valor.ToString("N2")</td>
                         <td>@(item.DataVencimento?.ToString("dd/MM/yyyy") ?? "")</td>
@@ -58,7 +58,7 @@ else
 
 @code {
     private bool carregando = true;
-    private List<Lancamento> lancamentos = new();
+    private List<ModelLancamento> lancamentos = new();
 
     protected override async Task OnInitializedAsync()
     {

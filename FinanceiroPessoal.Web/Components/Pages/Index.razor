@@ -2,6 +2,7 @@
 @using FinanceiroPessoal.Core.Models
 @using FinanceiroPessoal.Core.Repositories
 @using FinanceiroPessoal.Core.Services
+@using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @inject DashboardService DashboardService
 @inject IJSRuntime JS
 
@@ -110,8 +111,8 @@
     private DashboardResumo? resumo;
     private List<GastoCategoriaDto> gastosPorCategoria = new();
     private List<ProximoVencimentoDto> proximosVencimentos = new();
-    private List<Lancamento> vencemHoje = new();
-    private List<Lancamento> atrasados = new();
+    private List<ModelLancamento> vencemHoje = new();
+    private List<ModelLancamento> atrasados = new();
 
     // Opções dos gráficos
     private ApexChartOptions<GastoCategoriaDto> gastosOptions = new()
