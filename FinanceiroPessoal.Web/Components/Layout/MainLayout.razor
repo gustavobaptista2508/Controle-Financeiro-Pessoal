@@ -13,21 +13,25 @@
         </div>
 
         <article class="content px-4">
-            @Body
+            @if (CanRenderProtectedContent)
+            {
+                @Body
+            }
         </article>
     </main>
 </div>
 
 @code {
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (!firstRender)
-        {
-            return;
-        }
+    private bool CanRenderProtectedContent;
 
+    protected override void OnParametersSet()
+    {
         var relativePath = Nav.ToBaseRelativePath(Nav.Uri).Trim('/');
-        if (!Session.IsAuthenticated && !string.Equals(relativePath, "auth", StringComparison.OrdinalIgnoreCase))
+        var isAuthRoute = string.Equals(relativePath, "auth", StringComparison.OrdinalIgnoreCase);
+
+        CanRenderProtectedContent = Session.IsAuthenticated || isAuthRoute;
+
+        if (!CanRenderProtectedContent)
         {
             Nav.NavigateTo("/auth", true);
         }
