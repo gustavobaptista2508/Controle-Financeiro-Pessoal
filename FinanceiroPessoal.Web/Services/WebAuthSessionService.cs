@@ -5,10 +5,13 @@ namespace FinanceiroPessoal.Web.Services;
 public class WebAuthSessionService
 {
     private readonly AuthService _authService;
+    private readonly bool _initialKeyExists;
 
     public WebAuthSessionService(AuthService authService)
     {
         _authService = authService;
+        _initialKeyExists = _authService.ChaveExiste();
+        IsFirstAccess = !_initialKeyExists;
     }
 
     public bool IsAuthenticated { get; private set; }
@@ -17,7 +20,7 @@ public class WebAuthSessionService
     public string? PreferredPushApp { get; private set; }
     public bool PushChallengePending { get; private set; }
 
-    public bool IsFirstAccess => !_authService.ChaveExiste();
+    public bool IsFirstAccess { get; private set; }
 
     public void EnsureSecret()
     {
@@ -42,6 +45,7 @@ public class WebAuthSessionService
 
         if (ok)
         {
+            IsFirstAccess = false;
             PushChallengePending = false;
         }
 
@@ -75,6 +79,7 @@ public class WebAuthSessionService
         }
 
         IsAuthenticated = true;
+        IsFirstAccess = false;
         PushChallengePending = false;
         return true;
     }
