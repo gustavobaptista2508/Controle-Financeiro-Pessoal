@@ -1,4 +1,4 @@
-﻿namespace FinanceiroPessoal.WinForms.Services
+﻿namespace FinanceiroPessoal.Core.Services
 {
     public enum TipoBanco
     {

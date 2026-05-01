@@ -1,0 +1,142 @@
+﻿@page "/"
+@using FinanceiroPessoal.Core.Models
+@using FinanceiroPessoal.Core.Repositories
+@using FinanceiroPessoal.Core.Services
+@inject DashboardService DashboardService
+@inject IJSRuntime JS
+
+<PageTitle>Dashboard</PageTitle>
+
+<div class="container-fluid">
+    <h1 class="mt-3 mb-4">Dashboard Financeiro</h1>
+
+    @if (resumo == null)
+    {
+        <p>Carregando...</p>
+    }
+    else
+    {
+        <!-- Cards de resumo -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card text-white bg-success mb-3">
+                    <div class="card-header">Entradas</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@resumo.TotalEntradas.ToString("C")</h5>
+                        <p class="card-text">@resumo.QuantidadeEntradas lançamentos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-danger mb-3">
+                    <div class="card-header">Saídas Pagas</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@resumo.TotalSaidas.ToString("C")</h5>
+                        <p class="card-text">@resumo.QuantidadeSaidas lançamentos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-warning mb-3">
+                    <div class="card-header">Pendentes</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@resumo.TotalPendente.ToString("C")</h5>
+                        <p class="card-text">@resumo.QuantidadePendentes lançamentos</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-white bg-info mb-3">
+                    <div class="card-header">Saldo do Mês</div>
+                    <div class="card-body">
+                        <h5 class="card-title">@resumo.SaldoMes.ToString("C")</h5>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <!-- Gráfico: Gastos por categoria -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Gastos por Categoria
+                    </div>
+                    <div class="card-body">
+                        <ApexChart TItem="GastoCategoriaDto"
+                                   Title=""
+                                   Options="gastosOptions"
+                                   Height="350">
+                            <ApexPointSeries TItem="GastoCategoriaDto"
+                                             Items="gastosPorCategoria"
+                                             Name="Valor"
+                                             SeriesType="SeriesType.Bar"
+                                             XValue="@(e => e.Categoria)"
+                                             YValue="@(e => e.Valor)" />
+                        </ApexChart>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gráfico: Próximos vencimentos (últimos 5) como barras -->
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        Próximos Vencimentos
+                    </div>
+                    <div class="card-body">
+                        <ApexChart TItem="ProximoVencimentoDto"
+                                   Options="proximosOptions"
+                                   Height="350">
+                            <ApexPointSeries TItem="ProximoVencimentoDto"
+                                             Items="proximosVencimentos"
+                                             Name="Valor"
+                                             SeriesType="SeriesType.Bar"
+                                             XValue="@(e => e.Descricao)"
+                                             YValue="@(e => e.Valor)" />
+                        </ApexChart>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private DashboardResumo? resumo;
+    private List<GastoCategoriaDto> gastosPorCategoria = new();
+    private List<ProximoVencimentoDto> proximosVencimentos = new();
+    private List<Lancamento> vencemHoje = new();
+    private List<Lancamento> atrasados = new();
+
+    // Opções dos gráficos
+    private ApexChartOptions<GastoCategoriaDto> gastosOptions = new()
+    {
+        Chart = new Chart { Toolbar = new Toolbar { Show = false } },
+        Xaxis = new XAxis { Labels = new XAxisLabels { Show = true } },
+        Yaxis = new List<YAxis> { new YAxis { Labels = new YAxisLabels { Formatter = "function(val) { return 'R$ ' + val.toFixed(2); }" } } }
+    };
+
+    private ApexChartOptions<ProximoVencimentoDto> proximosOptions = new()
+    {
+        Chart = new Chart { Toolbar = new Toolbar { Show = false } },
+        Xaxis = new XAxis { Labels = new XAxisLabels { Show = true } },
+        Yaxis = new List<YAxis> { new YAxis { Labels = new YAxisLabels { Formatter = "function(val) { return 'R$ ' + val.toFixed(2); }" } } }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        var hoje = DateTime.Today;
+
+        resumo = await DashboardService.ObterResumo(hoje);
+        gastosPorCategoria = await DashboardService.ObterGastosPorCategoria(hoje);
+        proximosVencimentos = (await DashboardService.ObterProximosVencimentos(5)).ToList();
+
+        // Vencem hoje
+    }
+
+    // Injetamos o repositório diretamente para dados complementares
+    [Inject] private ILancamentoRepository LancRepository { get; set; } = default!;
+
+    private ILancamentoRepository GetRepository() => LancRepository;
+}

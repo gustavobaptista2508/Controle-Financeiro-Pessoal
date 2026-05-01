@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FinanceiroPessoal.WinForms.Data
+namespace FinanceiroPessoal.Core.Data
 {
     public class SqliteDbContext : FinanceiroDbContext
     {

@@ -1,4 +1,4 @@
-﻿namespace FinanceiroPessoal.WinForms.Models
+﻿namespace FinanceiroPessoal.Core.Models
 {
     public class Categoria
     {

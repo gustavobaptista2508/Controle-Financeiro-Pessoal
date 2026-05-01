@@ -1,12 +1,12 @@
-﻿using FinanceiroPessoal.WinForms.Data;
-using FinanceiroPessoal.WinForms.Models;
+﻿using FinanceiroPessoal.Core.Data;
+using FinanceiroPessoal.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 
-namespace FinanceiroPessoal.WinForms.Repositories
+namespace FinanceiroPessoal.Core.Repositories
 {
     public class SqliteLancamentoRepository : ILancamentoRepository
     {

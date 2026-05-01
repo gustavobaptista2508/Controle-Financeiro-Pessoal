@@ -1,6 +1,6 @@
-using FinanceiroPessoal.WinForms.Data;
-using FinanceiroPessoal.WinForms.Repositories;
-using FinanceiroPessoal.WinForms.Services;
+using FinanceiroPessoal.Core.Data;
+using FinanceiroPessoal.Core.Repositories;
+using FinanceiroPessoal.Core.Services;
 
 
 namespace FinanceiroPessoal.WinForms

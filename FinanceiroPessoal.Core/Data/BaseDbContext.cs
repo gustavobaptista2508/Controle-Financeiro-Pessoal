@@ -1,8 +1,8 @@
-﻿using FinanceiroPessoal.WinForms.Models;
+﻿using FinanceiroPessoal.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using DbContext = Microsoft.EntityFrameworkCore.DbContext;
 
-namespace FinanceiroPessoal.WinForms.Data
+namespace FinanceiroPessoal.Core.Data
 {
     public abstract class BaseDbContext : DbContext
     {

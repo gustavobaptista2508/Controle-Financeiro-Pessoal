@@ -1,10 +1,10 @@
-﻿using FinanceiroPessoal.WinForms.Models;
+﻿using FinanceiroPessoal.Core.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FinanceiroPessoal.WinForms.Data
+namespace FinanceiroPessoal.Core.Data
 {
     public class FinanceiroDbContext : DbContext
     {

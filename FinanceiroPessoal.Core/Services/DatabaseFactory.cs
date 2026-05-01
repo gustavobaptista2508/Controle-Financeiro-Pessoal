@@ -1,9 +1,9 @@
-﻿using FinanceiroPessoal.WinForms.Repositories;
+﻿using FinanceiroPessoal.Core.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FinanceiroPessoal.WinForms.Services
+namespace FinanceiroPessoal.Core.Services
 {
     public static class DatabaseFactory
     {

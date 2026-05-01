@@ -1,11 +1,11 @@
-﻿using FinanceiroPessoal.WinForms.Data;
-using FinanceiroPessoal.WinForms.Models;
+﻿using FinanceiroPessoal.Core.Data;
+using FinanceiroPessoal.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 
-namespace FinanceiroPessoal.WinForms.Repositories
+namespace FinanceiroPessoal.Core.Repositories
 {
     public class SqliteCadastroAuxiliarRepository : ICadastroAuxiliarRepository
     {

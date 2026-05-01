@@ -1,10 +1,10 @@
-﻿using FinanceiroPessoal.WinForms.Data;
-using FinanceiroPessoal.WinForms.Models;
+﻿using FinanceiroPessoal.Core.Data;
+using FinanceiroPessoal.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FinanceiroPessoal.WinForms.Repositories
+namespace FinanceiroPessoal.Core.Repositories
 {
     public class RepositoryDbInitializer
     {

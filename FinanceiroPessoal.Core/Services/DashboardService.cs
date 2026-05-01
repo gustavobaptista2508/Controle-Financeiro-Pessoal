@@ -1,12 +1,12 @@
-﻿using FinanceiroPessoal.WinForms.Data;
-using FinanceiroPessoal.WinForms.Models;
-using FinanceiroPessoal.WinForms.Repositories;
+﻿using FinanceiroPessoal.Core.Data;
+using FinanceiroPessoal.Core.Models;
+using FinanceiroPessoal.Core.Repositories;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FinanceiroPessoal.WinForms.Services
+namespace FinanceiroPessoal.Core.Services
 {
     public class DashboardService
     {

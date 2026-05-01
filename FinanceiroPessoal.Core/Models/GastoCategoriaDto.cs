@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FinanceiroPessoal.WinForms.Models
+namespace FinanceiroPessoal.Core.Models
 {
     public class GastoCategoriaDto
     {

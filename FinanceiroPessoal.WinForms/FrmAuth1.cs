@@ -1,4 +1,4 @@
-﻿using FinanceiroPessoal.WinForms.Services;
+﻿using FinanceiroPessoal.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

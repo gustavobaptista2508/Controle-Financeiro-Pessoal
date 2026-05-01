@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="FinanceiroPessoal.Core/FinanceiroPessoal.Core.csproj" Id="642b6678-af9a-4f43-802e-4eb9e2f2e8f8" />
+  <Project Path="FinanceiroPessoal.Web/FinanceiroPessoal.Web.csproj" Id="9f2fa1c3-99fc-4beb-ab83-30570a1034b3" />
   <Project Path="FinanceiroPessoal.WinForms/FinanceiroPessoal.WinForms.csproj" />
 </Solution>

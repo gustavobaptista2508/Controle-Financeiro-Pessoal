@@ -1,5 +1,5 @@
-﻿using FinanceiroPessoal.WinForms.Models;
-using FinanceiroPessoal.WinForms.Services;
+﻿using FinanceiroPessoal.Core.Models;
+using FinanceiroPessoal.Core.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;

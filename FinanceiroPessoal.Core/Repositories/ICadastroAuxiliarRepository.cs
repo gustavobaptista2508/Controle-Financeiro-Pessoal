@@ -1,9 +1,9 @@
-﻿using FinanceiroPessoal.WinForms.Models;
+﻿using FinanceiroPessoal.Core.Models;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace FinanceiroPessoal.WinForms.Repositories
+namespace FinanceiroPessoal.Core.Repositories
 {
     public interface ICadastroAuxiliarRepository
     {
