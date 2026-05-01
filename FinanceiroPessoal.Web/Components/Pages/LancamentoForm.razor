@@ -1,25 +1,109 @@
 @page "/lancamentos/novo"
 @page "/lancamentos/editar/{Id:int}"
+@using FinanceiroPessoal.Core.Models
+@using FinanceiroPessoal.Core.Services
+@inject LancamentoService LancamentoService
+@inject NavigationManager Navigation
 
-<PageTitle>@(Id.HasValue ? "Editar Lançamento" : "Novo Lançamento")</PageTitle>
+<PageTitle>@(Id.HasValue ? "Editar Lançamento" : "Cadastro de Lançamento")</PageTitle>
 
-<h3>@(Id.HasValue ? "Editar Lançamento" : "Novo Lançamento")</h3>
+<h3>@(Id.HasValue ? "Editar Lançamento" : "Cadastro de Lançamento")</h3>
 
 <div class="d-flex gap-2 mb-3">
     <a class="btn btn-outline-primary" href="/lancamentos">Voltar para lançamentos</a>
-    <a class="btn btn-outline-secondary" href="/cadastros">Ir para cadastros</a>
+    <a class="btn btn-outline-secondary" href="/">Voltar para página principal</a>
 </div>
 
-@if (Id.HasValue)
+<EditForm Model="lancamento" OnValidSubmit="SalvarLancamento">
+    <DataAnnotationsValidator />
+
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label class="form-label">Descrição</label>
+            <InputText class="form-control" @bind-Value="lancamento.Descricao" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Valor</label>
+            <InputNumber class="form-control" @bind-Value="lancamento.Valor" />
+        </div>
+
+        <div class="col-md-3">
+            <label class="form-label">Tipo</label>
+            <InputSelect class="form-select" @bind-Value="lancamento.Tipo">
+                <option value="@TipoLancamento.Entrada">Entrada</option>
+                <option value="@TipoLancamento.Saida">Saída</option>
+            </InputSelect>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Vencimento</label>
+            <InputDate class="form-control" @bind-Value="lancamento.DataVencimento" />
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Status</label>
+            <InputSelect class="form-select" @bind-Value="lancamento.Status">
+                <option>Pendente</option>
+                <option>Pago</option>
+                <option>Atrasado</option>
+            </InputSelect>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Competência</label>
+            <InputText class="form-control" @bind-Value="lancamento.Competencia" placeholder="Ex: 05/2026" />
+        </div>
+
+        <div class="col-12">
+            <label class="form-label">Observações</label>
+            <InputTextArea class="form-control" @bind-Value="lancamento.Observacoes" rows="3" />
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <button type="submit" class="btn btn-success">Salvar</button>
+        <a class="btn btn-outline-secondary" href="/lancamentos">Cancelar</a>
+    </div>
+</EditForm>
+
+@if (!string.IsNullOrWhiteSpace(mensagem))
 {
-    <p>Editando o lançamento <strong>#@Id</strong>.</p>
-}
-else
-{
-    <p>Cadastro de novo lançamento.</p>
+    <div class="alert alert-info mt-3">@mensagem</div>
 }
 
 @code {
     [Parameter]
     public int? Id { get; set; }
+
+    private Lancamento lancamento = new();
+    private string? mensagem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id.HasValue)
+        {
+            var existente = await LancamentoService.ObterPorId(Id.Value);
+            if (existente is not null)
+            {
+                lancamento = existente;
+            }
+        }
+    }
+
+    private async Task SalvarLancamento()
+    {
+        if (Id.HasValue)
+        {
+            await LancamentoService.Atualizar(lancamento);
+            mensagem = "Lançamento atualizado com sucesso.";
+        }
+        else
+        {
+            await LancamentoService.Adicionar(lancamento);
+            mensagem = "Lançamento cadastrado com sucesso.";
+        }
+
+        Navigation.NavigateTo("/lancamentos");
+    }
 }

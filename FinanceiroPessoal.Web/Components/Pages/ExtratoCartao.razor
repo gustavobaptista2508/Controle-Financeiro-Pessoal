@@ -1,0 +1,84 @@
+@page "/cartoes/extrato/{ContaId:int}/{Ano:int}/{Mes:int}"
+@using FinanceiroPessoal.Core.Models
+@using FinanceiroPessoal.Core.Services
+@inject LancamentoService LancamentoService
+
+<PageTitle>Extrato do Cartão</PageTitle>
+
+<h3>Extrato do Cartão: @NomeCartao</h3>
+<p class="text-muted">Referência: @Mes/@Ano</p>
+
+<div class="d-flex gap-2 mb-3">
+    <a class="btn btn-outline-secondary" href="/lancamentos">Voltar para lançamentos</a>
+    <a class="btn btn-outline-primary" href="/">Voltar para página principal</a>
+</div>
+
+@if (carregando)
+{
+    <p>Carregando extrato...</p>
+}
+else
+{
+    <div class="row g-3 mb-3">
+        <div class="col-md-4"><div class="card"><div class="card-body"><strong>Total fatura:</strong> @total.ToString("C2")</div></div></div>
+        <div class="col-md-4"><div class="card"><div class="card-body"><strong>Total pago:</strong> @pago.ToString("C2")</div></div></div>
+        <div class="col-md-4"><div class="card"><div class="card-body"><strong>Total pendente:</strong> @pendente.ToString("C2")</div></div></div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Vencimento</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in itens)
+            {
+                <tr class="@LinhaStatus(item.Status)">
+                    <td>@(item.DataVencimento?.ToString("dd/MM/yyyy") ?? "")</td>
+                    <td>@item.Descricao</td>
+                    <td>@(item.Categoria?.Nome ?? "Sem categoria")</td>
+                    <td>@item.Valor.ToString("N2")</td>
+                    <td>@item.Status</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public int ContaId { get; set; }
+    [Parameter] public int Ano { get; set; }
+    [Parameter] public int Mes { get; set; }
+    [SupplyParameterFromQuery] public string? NomeCartao { get; set; }
+
+    private bool carregando = true;
+    private List<Lancamento> itens = new();
+    private decimal total;
+    private decimal pago;
+    private decimal pendente;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var inicio = new DateTime(Ano, Mes, 1);
+        var fim = inicio.AddMonths(1).AddDays(-1);
+
+        var todos = await LancamentoService.Filtrar("", "Todos", "Saída", inicio, fim);
+        itens = todos.Where(x => x.ContaId == ContaId).OrderBy(x => x.DataVencimento).ToList();
+
+        total = itens.Sum(x => x.Valor);
+        pago = itens.Where(x => x.Status == "Pago").Sum(x => x.Valor);
+        pendente = itens.Where(x => x.Status != "Pago").Sum(x => x.Valor);
+
+        carregando = false;
+    }
+
+    private static string LinhaStatus(string? status) => status switch
+    {
+        "Pago" => "table-success",
+        "Atrasado" => "table-danger",
+        _ => "table-warning"
+    };
+}
