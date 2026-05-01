@@ -3,11 +3,14 @@ using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Repositories;
 using FinanceiroPessoal.Core.Services;
 using Microsoft.EntityFrameworkCore;
+using ApexCharts;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddApexCharts();
 
 // DbContext
 var connectionString = builder.Configuration.GetConnectionString("MySqlConnection");
