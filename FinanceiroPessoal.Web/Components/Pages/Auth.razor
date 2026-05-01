@@ -4,35 +4,93 @@
 
 <PageTitle>Autenticação</PageTitle>
 
-<div class="container mt-4" style="max-width: 480px;">
-    <h1 class="h3 mb-3">Entrar no site</h1>
+<div class="container mt-4" style="max-width: 520px;">
+    <h1 class="h3 mb-3">Autenticação de acesso</h1>
 
-    @if (!string.IsNullOrWhiteSpace(Session.SetupSecret))
+    @if (Session.IsFirstAccess)
     {
         <div class="alert alert-warning">
-            <strong>Primeiro acesso:</strong> cadastre este segredo no app autenticador e gere o código TOTP.<br />
-            <code>@Session.SetupSecret</code>
+            <strong>Primeiro acesso:</strong> escaneie o QR Code no seu app autenticador favorito e salve a configuração.
         </div>
-    }
 
-    <EditForm Model="this" OnSubmit="HandleLogin">
+        @if (!string.IsNullOrWhiteSpace(Session.SetupQrUri))
+        {
+            <div class="text-center mb-3">
+                <img src="@($"https://quickchart.io/qr?text={Uri.EscapeDataString(Session.SetupQrUri)}&size=220")"
+                     alt="QR Code para app autenticador"
+                     class="img-thumbnail" />
+            </div>
+        }
+
         <div class="mb-3">
-            <label for="codigo" class="form-label">Código do autenticador</label>
-            <InputText id="codigo" @bind-Value="codigo" class="form-control" maxlength="6" />
+            <label class="form-label">Chave de backup (manual)</label>
+            <input class="form-control" value="@Session.SetupSecret" readonly />
         </div>
+
+        <div class="mb-3">
+            <label class="form-label">App preferido para push no próximo acesso</label>
+            <InputSelect @bind-Value="pushApp" class="form-select">
+                <option value="">Selecione...</option>
+                <option value="Google Authenticator">Google Authenticator</option>
+                <option value="Microsoft Authenticator">Microsoft Authenticator</option>
+                <option value="Authy">Authy</option>
+            </InputSelect>
+        </div>
+
+        <EditForm Model="this" OnSubmit="HandleFirstAccessLogin">
+            <div class="mb-3">
+                <label for="codigo" class="form-label">Código do autenticador</label>
+                <InputText id="codigo" @bind-Value="codigo" class="form-control" maxlength="6" />
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(erro))
+            {
+                <div class="alert alert-danger">@erro</div>
+            }
+
+            <button type="submit" class="btn btn-primary w-100">Concluir primeiro acesso</button>
+        </EditForm>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <strong>Próximo acesso:</strong> enviaremos uma notificação push para o app selecionado para autorizar sua entrada.
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">App de push selecionado</label>
+            <InputSelect @bind-Value="pushApp" class="form-select">
+                <option value="">Selecione...</option>
+                <option value="Google Authenticator">Google Authenticator</option>
+                <option value="Microsoft Authenticator">Microsoft Authenticator</option>
+                <option value="Authy">Authy</option>
+            </InputSelect>
+        </div>
+
+        <button class="btn btn-primary w-100" @onclick="SendPush">Enviar push de autorização</button>
+
+        @if (!string.IsNullOrWhiteSpace(pushInfo))
+        {
+            <div class="alert alert-success mt-3">@pushInfo</div>
+        }
+
+        @if (Session.PushChallengePending)
+        {
+            <button class="btn btn-success w-100 mt-2" @onclick="ApprovePush">Aprovar entrada (simulação do app)</button>
+        }
 
         @if (!string.IsNullOrWhiteSpace(erro))
         {
-            <div class="alert alert-danger">@erro</div>
+            <div class="alert alert-danger mt-3">@erro</div>
         }
-
-        <button type="submit" class="btn btn-primary w-100">Entrar</button>
-    </EditForm>
+    }
 </div>
 
 @code {
     private string codigo = string.Empty;
     private string? erro;
+    private string? pushInfo;
+    private string pushApp = string.Empty;
 
     protected override void OnInitialized()
     {
@@ -40,16 +98,60 @@
         if (Session.IsAuthenticated)
         {
             Nav.NavigateTo("/");
+            return;
         }
+
+        pushApp = Session.PreferredPushApp ?? string.Empty;
     }
 
-    private void HandleLogin()
+    private void HandleFirstAccessLogin()
     {
         erro = null;
+
+        if (string.IsNullOrWhiteSpace(pushApp))
+        {
+            erro = "Selecione o app preferido para push antes de continuar.";
+            return;
+        }
+
+        Session.SetPreferredPushApp(pushApp);
 
         if (!Session.Login(codigo))
         {
             erro = "Código inválido. Tente novamente.";
+            return;
+        }
+
+        Nav.NavigateTo("/");
+    }
+
+    private void SendPush()
+    {
+        erro = null;
+        pushInfo = null;
+
+        if (string.IsNullOrWhiteSpace(pushApp))
+        {
+            erro = "Selecione um app para receber a notificação push.";
+            return;
+        }
+
+        Session.SetPreferredPushApp(pushApp);
+
+        if (!Session.StartPushChallenge())
+        {
+            erro = "Não foi possível iniciar o desafio de push.";
+            return;
+        }
+
+        pushInfo = $"Notificação enviada para {Session.PreferredPushApp}. Autorize no app para continuar.";
+    }
+
+    private void ApprovePush()
+    {
+        if (!Session.ApprovePushChallenge())
+        {
+            erro = "Desafio de push expirado. Reenvie a notificação.";
             return;
         }
 

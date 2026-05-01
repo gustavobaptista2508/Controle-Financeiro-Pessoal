@@ -13,6 +13,11 @@ public class WebAuthSessionService
 
     public bool IsAuthenticated { get; private set; }
     public string? SetupSecret { get; private set; }
+    public string? SetupQrUri { get; private set; }
+    public string? PreferredPushApp { get; private set; }
+    public bool PushChallengePending { get; private set; }
+
+    public bool IsFirstAccess => !_authService.ChaveExiste();
 
     public void EnsureSecret()
     {
@@ -22,6 +27,7 @@ public class WebAuthSessionService
         }
 
         SetupSecret = _authService.GerarNovaChave();
+        SetupQrUri = _authService.GerarUriQrCode(SetupSecret);
     }
 
     public bool Login(string codigo)
@@ -33,8 +39,49 @@ public class WebAuthSessionService
 
         var ok = _authService.VerificarCodigo(codigo.Trim());
         IsAuthenticated = ok;
+
+        if (ok)
+        {
+            PushChallengePending = false;
+        }
+
         return ok;
     }
 
-    public void Logout() => IsAuthenticated = false;
+    public void SetPreferredPushApp(string app)
+    {
+        if (!string.IsNullOrWhiteSpace(app))
+        {
+            PreferredPushApp = app.Trim();
+        }
+    }
+
+    public bool StartPushChallenge()
+    {
+        if (string.IsNullOrWhiteSpace(PreferredPushApp))
+        {
+            return false;
+        }
+
+        PushChallengePending = true;
+        return true;
+    }
+
+    public bool ApprovePushChallenge()
+    {
+        if (!PushChallengePending)
+        {
+            return false;
+        }
+
+        IsAuthenticated = true;
+        PushChallengePending = false;
+        return true;
+    }
+
+    public void Logout()
+    {
+        IsAuthenticated = false;
+        PushChallengePending = false;
+    }
 }
