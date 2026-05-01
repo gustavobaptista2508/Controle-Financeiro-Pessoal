@@ -9,6 +9,7 @@ public class WebAuthSessionService
     public WebAuthSessionService(AuthService authService)
     {
         _authService = authService;
+        _isFirstAccess = !_authService.ChaveExiste();
     }
 
     public bool IsAuthenticated { get; private set; }
@@ -17,7 +18,9 @@ public class WebAuthSessionService
     public string? PreferredPushApp { get; private set; }
     public bool PushChallengePending { get; private set; }
 
-    public bool IsFirstAccess => !_authService.ChaveExiste();
+    private bool _isFirstAccess;
+
+    public bool IsFirstAccess => _isFirstAccess;
 
     public void EnsureSecret()
     {
@@ -43,6 +46,7 @@ public class WebAuthSessionService
         if (ok)
         {
             PushChallengePending = false;
+            _isFirstAccess = false;
         }
 
         return ok;
@@ -69,7 +73,7 @@ public class WebAuthSessionService
 
     public bool ApprovePushChallenge()
     {
-        if (!PushChallengePending)
+        if (_isFirstAccess || !PushChallengePending)
         {
             return false;
         }
