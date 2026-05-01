@@ -51,7 +51,12 @@
             </InputSelect>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-2">
+            <label class="form-label">Parcelas</label>
+            <InputNumber class="form-control" @bind-Value="quantidadeParcelas" min="1" disabled="@Id.HasValue" />
+        </div>
+
+        <div class="col-md-2">
             <label class="form-label">Competência</label>
             <InputText class="form-control" @bind-Value="lancamento.Competencia" placeholder="Ex: 05/2026" />
         </div>
@@ -78,6 +83,7 @@
     public int? Id { get; set; }
 
     private ModelLancamento lancamento = new();
+    private int quantidadeParcelas = 1;
     private string? mensagem;
 
     protected override async Task OnInitializedAsync()
@@ -101,10 +107,47 @@
         }
         else
         {
-            await LancamentoService.Adicionar(lancamento);
+            var parcelas = Math.Max(1, quantidadeParcelas);
+            var competenciaBase = ObterCompetenciaBase();
+            var vencimentoBase = lancamento.DataVencimento?.Date ?? DateTime.Today;
+
+            for (var parcela = 1; parcela <= parcelas; parcela++)
+            {
+                var novoLancamento = new ModelLancamento
+                {
+                    Descricao = parcelas > 1
+                        ? $"{lancamento.Descricao} - Parcela {parcela} de {parcelas}"
+                        : lancamento.Descricao,
+                    Valor = lancamento.Valor,
+                    DataVencimento = vencimentoBase.AddMonths(parcela - 1),
+                    DataPagamento = parcela == 1 && lancamento.Status == "Pago" ? DateTime.Now : null,
+                    Status = parcela == 1 ? lancamento.Status : "Pendente",
+                    Observacoes = lancamento.Observacoes,
+                    Competencia = competenciaBase.AddMonths(parcela - 1).ToString("MM/yyyy"),
+                    Tipo = lancamento.Tipo,
+                    CategoriaId = lancamento.CategoriaId,
+                    ContaId = lancamento.ContaId,
+                    PessoaId = lancamento.PessoaId
+                };
+
+                await LancamentoService.Adicionar(novoLancamento);
+            }
+
             mensagem = "Lançamento cadastrado com sucesso.";
         }
 
         Navigation.NavigateTo("/lancamentos");
     }
+    private DateTime ObterCompetenciaBase()
+    {
+        var competenciaTexto = (lancamento.Competencia ?? string.Empty).Trim();
+
+        if (DateTime.TryParseExact($"01/{competenciaTexto}", "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var competencia))
+        {
+            return competencia;
+        }
+
+        return lancamento.DataVencimento?.Date ?? DateTime.Today;
+    }
+
 }
