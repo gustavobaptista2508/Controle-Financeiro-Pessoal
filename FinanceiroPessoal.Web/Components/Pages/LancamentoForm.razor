@@ -1,5 +1,25 @@
-﻿<h3>LancamentoForm</h3>
+@page "/lancamentos/novo"
+@page "/lancamentos/editar/{Id:int}"
+
+<PageTitle>@(Id.HasValue ? "Editar Lançamento" : "Novo Lançamento")</PageTitle>
+
+<h3>@(Id.HasValue ? "Editar Lançamento" : "Novo Lançamento")</h3>
+
+<div class="d-flex gap-2 mb-3">
+    <a class="btn btn-outline-primary" href="/lancamentos">Voltar para lançamentos</a>
+    <a class="btn btn-outline-secondary" href="/cadastros">Ir para cadastros</a>
+</div>
+
+@if (Id.HasValue)
+{
+    <p>Editando o lançamento <strong>#@Id</strong>.</p>
+}
+else
+{
+    <p>Cadastro de novo lançamento.</p>
+}
 
 @code {
-
+    [Parameter]
+    public int? Id { get; set; }
 }
