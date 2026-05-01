@@ -1,5 +1,6 @@
 @page "/lancamentos/novo"
 @page "/lancamentos/editar/{Id:int}"
+@using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @using FinanceiroPessoal.Core.Models
 @using FinanceiroPessoal.Core.Services
 @inject LancamentoService LancamentoService
@@ -76,7 +77,7 @@
     [Parameter]
     public int? Id { get; set; }
 
-    private Lancamento lancamento = new();
+    private ModelLancamento lancamento = new();
     private string? mensagem;
 
     protected override async Task OnInitializedAsync()
