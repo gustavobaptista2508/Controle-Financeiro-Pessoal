@@ -37,7 +37,10 @@
                     <option value="Saída">Saída</option>
                 </select>
             </div>
-            <div class="col-md-2 d-grid">
+            <div class="col-12 col-md-2 d-grid">
+                <button class="btn btn-primary" @onclick="AplicarFiltros">Buscar</button>
+            </div>
+            <div class="col-12 col-md-2 d-grid">
                 <button class="btn btn-outline-secondary" @onclick="LimparFiltros">Limpar filtros</button>
             </div>
         </div>
@@ -83,7 +86,7 @@ else
                         <td>@item.Conta</td>
                         <td>@item.Pessoa</td>
                         <td>@item.Competencia</td>
-                        <td class="d-flex gap-2">
+                        <td class="acoes-linha">
                             @if (item.ContaIdFatura > 0)
                             {
                                 <a class="btn btn-sm btn-outline-primary" href="@GetExtratoUrl(item)">Abrir extrato</a>
@@ -189,6 +192,11 @@ else
         }
 
         return true;
+    }
+
+    private void AplicarFiltros()
+    {
+        StateHasChanged();
     }
 
     private void LimparFiltros()
