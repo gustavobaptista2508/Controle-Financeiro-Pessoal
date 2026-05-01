@@ -9,8 +9,7 @@
 
 <div class="d-flex flex-wrap gap-2 mb-3">
     <a class="btn btn-primary" href="/lancamentos/novo">Novo</a>
-    <a class="btn btn-outline-primary" href="/lancamentos/editar/1">Editar</a>
-    <a class="btn btn-outline-secondary" href="/cadastros">Cadastros</a>
+    <a class="btn btn-outline-secondary" href="/">Voltar para página principal</a>
 </div>
 
 @if (carregando)
@@ -23,32 +22,41 @@ else
         <table class="table table-striped table-hover align-middle">
             <thead class="table-light">
                 <tr>
-                    <th style="width: 45px; text-align: center;">Status</th>
+                    <th style="width: 140px; text-align: center;">Status</th>
                     <th style="width: 60px;">Id</th>
                     <th style="width: 90px;">Tipo</th>
-                    <th style="width: 250px;">Descrição</th>
+                    <th style="width: 280px;">Descrição</th>
                     <th>Valor</th>
                     <th>Vencimento</th>
                     <th>Categoria</th>
                     <th>Conta</th>
                     <th>Pessoa</th>
                     <th>Competência</th>
+                    <th style="width: 120px;">Ações</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in lancamentos)
+                @foreach (var item in linhas)
                 {
-                    <tr>
-                        <td class="text-center">@item.Status</td>
+                    <tr class="@(item.ContaIdFatura > 0 ? "table-primary" : string.Empty)">
+                        <td class="text-center">
+                            <span class="badge @GetStatusClass(item.StatusIcone)">@GetStatusIcon(item.StatusIcone) @item.StatusIcone</span>
+                        </td>
                         <td>@item.Id</td>
-                        <td>@(item.Tipo == global::FinanceiroPessoal.Core.Models.TipoLancamento.Entrada ? "Entrada" : "Saída")</td>
+                        <td>@item.Tipo</td>
                         <td>@item.Descricao</td>
                         <td>@item.Valor.ToString("N2")</td>
-                        <td>@(item.DataVencimento?.ToString("dd/MM/yyyy") ?? "")</td>
-                        <td>@(item.Categoria?.Nome ?? "")</td>
-                        <td>@(item.Conta?.Nome ?? "")</td>
-                        <td>@(item.Pessoa?.Nome ?? "")</td>
+                        <td>@(item.Vencimento?.ToString("dd/MM/yyyy") ?? "")</td>
+                        <td>@item.Categoria</td>
+                        <td>@item.Conta</td>
+                        <td>@item.Pessoa</td>
                         <td>@item.Competencia</td>
+                        <td>
+                            @if (item.ContaIdFatura > 0)
+                            {
+                                <a class="btn btn-sm btn-outline-primary" href="@GetExtratoUrl(item)">Abrir extrato</a>
+                            }
+                        </td>
                     </tr>
                 }
             </tbody>
@@ -58,11 +66,96 @@ else
 
 @code {
     private bool carregando = true;
-    private List<ModelLancamento> lancamentos = new();
+    private List<LancamentoLinhaDto> linhas = new();
 
     protected override async Task OnInitializedAsync()
     {
-        lancamentos = await LancamentoService.ObterTodos();
+        var lancamentos = await LancamentoService.ObterTodos();
+
+        var normais = lancamentos.Where(x => x.Conta?.Tipo != "Cartão").ToList();
+        var cartoes = lancamentos.Where(x => x.Conta?.Tipo == "Cartão").ToList();
+
+        var faturas = cartoes
+            .GroupBy(x => new { x.ContaId, Nome = x.Conta?.Nome ?? "Cartão" })
+            .Select(g => new LancamentoLinhaDto
+            {
+                Id = -(g.Key.ContaId ?? 0),
+                Tipo = "Saída",
+                Descricao = $"Fatura {g.Key.Nome}  •  {g.Count()} lançamento(s)",
+                Valor = g.Sum(x => x.Valor),
+                Vencimento = g.Max(x => x.DataVencimento),
+                StatusIcone = g.All(x => x.Status == "Pago") ? "Pago" :
+                              g.Any(x => x.Status == "Pago") ? "Parcial" :
+                              g.Any(x => x.Status == "Atrasado") ? "Atrasado" : "Pendente",
+                Categoria = "Cartão de Crédito",
+                Conta = g.Key.Nome,
+                Pessoa = string.Empty,
+                Competencia = string.Empty,
+                ContaIdFatura = g.Key.ContaId ?? 0,
+                NomeCartao = g.Key.Nome
+            })
+            .ToList();
+
+        var dadosNormais = normais.Select(x => new LancamentoLinhaDto
+        {
+            Id = x.Id,
+            Tipo = x.Tipo == global::FinanceiroPessoal.Core.Models.TipoLancamento.Entrada ? "Entrada" : "Saída",
+            Descricao = x.Descricao,
+            Valor = x.Valor,
+            Vencimento = x.DataVencimento,
+            StatusIcone = x.Status,
+            Categoria = x.Categoria?.Nome ?? string.Empty,
+            Conta = x.Conta?.Nome ?? string.Empty,
+            Pessoa = x.Pessoa?.Nome ?? string.Empty,
+            Competencia = x.Competencia,
+            ContaIdFatura = 0,
+            NomeCartao = string.Empty
+        }).ToList();
+
+        linhas = dadosNormais
+            .Concat(faturas)
+            .OrderBy(x => x.Vencimento ?? DateTime.MaxValue)
+            .ToList();
+
         carregando = false;
+    }
+
+    private static string GetStatusClass(string? status) => status?.Trim().ToLowerInvariant() switch
+    {
+        "pago" => "bg-success",
+        "atrasado" => "bg-danger",
+        "parcial" => "bg-info text-dark",
+        _ => "bg-warning text-dark"
+    };
+
+    private static string GetStatusIcon(string? status) => status?.Trim().ToLowerInvariant() switch
+    {
+        "pago" => "✅",
+        "atrasado" => "⛔",
+        "parcial" => "🧾",
+        _ => "⏳"
+    };
+
+        private static string GetExtratoUrl(LancamentoLinhaDto item)
+    {
+        var referencia = item.Vencimento ?? DateTime.Today;
+        var nome = Uri.EscapeDataString(item.NomeCartao);
+        return $"/cartoes/extrato/{item.ContaIdFatura}/{referencia.Year}/{referencia.Month}?NomeCartao={nome}";
+    }
+
+    private sealed class LancamentoLinhaDto
+    {
+        public int Id { get; set; }
+        public string Tipo { get; set; } = string.Empty;
+        public string Descricao { get; set; } = string.Empty;
+        public decimal Valor { get; set; }
+        public DateTime? Vencimento { get; set; }
+        public string StatusIcone { get; set; } = "Pendente";
+        public string Categoria { get; set; } = string.Empty;
+        public string Conta { get; set; } = string.Empty;
+        public string Pessoa { get; set; } = string.Empty;
+        public string? Competencia { get; set; }
+        public int ContaIdFatura { get; set; }
+        public string NomeCartao { get; set; } = string.Empty;
     }
 }
