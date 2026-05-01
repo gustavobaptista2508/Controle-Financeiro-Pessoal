@@ -1,3 +1,5 @@
+using System;
+
 ﻿// Models/Dtos.cs
 namespace FinanceiroPessoal.MAUI
 {
@@ -32,6 +34,7 @@ namespace FinanceiroPessoal.MAUI
         public int? ContaId { get; set; }
         public string? Pessoa { get; set; }
         public bool IsCartao => ContaTipo == "Cartão";
+        public bool PodeMarcarPago => Id > 0 && !IsCartao && !string.Equals(Status, "Pago", StringComparison.OrdinalIgnoreCase);
     }
 
     public class ProximoVencimentoDto
