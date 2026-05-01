@@ -23,6 +23,8 @@ builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRep
 builder.Services.AddScoped<LancamentoService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<CadastroAuxiliarService>();
+builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<FinanceiroPessoal.Web.Services.WebAuthSessionService>();
 
 var app = builder.Build();
 

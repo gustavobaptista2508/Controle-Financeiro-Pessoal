@@ -1,0 +1,58 @@
+@page "/auth"
+@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Autenticação</PageTitle>
+
+<div class="container mt-4" style="max-width: 480px;">
+    <h1 class="h3 mb-3">Entrar no site</h1>
+
+    @if (!string.IsNullOrWhiteSpace(Session.SetupSecret))
+    {
+        <div class="alert alert-warning">
+            <strong>Primeiro acesso:</strong> cadastre este segredo no app autenticador e gere o código TOTP.<br />
+            <code>@Session.SetupSecret</code>
+        </div>
+    }
+
+    <EditForm Model="this" OnSubmit="HandleLogin">
+        <div class="mb-3">
+            <label for="codigo" class="form-label">Código do autenticador</label>
+            <InputText id="codigo" @bind-Value="codigo" class="form-control" maxlength="6" />
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(erro))
+        {
+            <div class="alert alert-danger">@erro</div>
+        }
+
+        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+    </EditForm>
+</div>
+
+@code {
+    private string codigo = string.Empty;
+    private string? erro;
+
+    protected override void OnInitialized()
+    {
+        Session.EnsureSecret();
+        if (Session.IsAuthenticated)
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+
+    private void HandleLogin()
+    {
+        erro = null;
+
+        if (!Session.Login(codigo))
+        {
+            erro = "Código inválido. Tente novamente.";
+            return;
+        }
+
+        Nav.NavigateTo("/");
+    }
+}
