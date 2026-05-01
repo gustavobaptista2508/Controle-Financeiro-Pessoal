@@ -5,6 +5,7 @@
 @using FinanceiroPessoal.Core.Services
 @inject LancamentoService LancamentoService
 @inject NavigationManager Navigation
+@inject CadastroAuxiliarService CadastroAuxiliarService
 
 <PageTitle>@(Id.HasValue ? "Editar Lançamento" : "Cadastro de Lançamento")</PageTitle>
 
@@ -40,6 +41,40 @@
         <div class="col-md-4">
             <label class="form-label">Vencimento</label>
             <InputDate class="form-control" @bind-Value="lancamento.DataVencimento" />
+        </div>
+
+
+        <div class="col-md-4">
+            <label class="form-label">Categoria</label>
+            <InputSelect class="form-select" @bind-Value="lancamento.CategoriaId">
+                <option value="">Selecione...</option>
+                @foreach (var categoria in categorias)
+                {
+                    <option value="@categoria.Id">@categoria.Nome</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Conta</label>
+            <InputSelect class="form-select" @bind-Value="lancamento.ContaId">
+                <option value="">Selecione...</option>
+                @foreach (var conta in contas)
+                {
+                    <option value="@conta.Id">@conta.Nome</option>
+                }
+            </InputSelect>
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Pessoa</label>
+            <InputSelect class="form-select" @bind-Value="lancamento.PessoaId">
+                <option value="">Selecione...</option>
+                @foreach (var pessoa in pessoas)
+                {
+                    <option value="@pessoa.Id">@pessoa.Nome</option>
+                }
+            </InputSelect>
         </div>
 
         <div class="col-md-4">
@@ -85,9 +120,16 @@
     private ModelLancamento lancamento = new();
     private int quantidadeParcelas = 1;
     private string? mensagem;
+    private List<Categoria> categorias = new();
+    private List<Conta> contas = new();
+    private List<Pessoa> pessoas = new();
 
     protected override async Task OnInitializedAsync()
     {
+        categorias = await CadastroAuxiliarService.ObterCategorias();
+        contas = await CadastroAuxiliarService.ObterContas();
+        pessoas = await CadastroAuxiliarService.ObterPessoas();
+
         if (Id.HasValue)
         {
             var existente = await LancamentoService.ObterPorId(Id.Value);
