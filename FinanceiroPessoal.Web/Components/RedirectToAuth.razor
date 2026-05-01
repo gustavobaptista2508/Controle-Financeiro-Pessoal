@@ -5,7 +5,9 @@
     {
         if (firstRender)
         {
-            Nav.NavigateTo("/auth", true);
+            // Evita forceLoad para não reiniciar o circuito Blazor Server,
+            // preservando o estado de autenticação em WebAuthSessionService.
+            Nav.NavigateTo("/auth");
         }
     }
 }
