@@ -2,6 +2,7 @@
 @using FinanceiroPessoal.Core.Models
 @using FinanceiroPessoal.Core.Repositories
 @using FinanceiroPessoal.Core.Services
+@using ModelLancamento = FinanceiroPessoal.Core.Models.Lancamento
 @inject DashboardService DashboardService
 @inject IJSRuntime JS
 
@@ -9,6 +10,10 @@
 
 <div class="container-fluid">
     <h1 class="mt-3 mb-4">Dashboard Financeiro</h1>
+
+    <div class="mb-3">
+        <a class="btn btn-primary" href="/lancamentos">Ir para Lançamentos</a>
+    </div>
 
     @if (resumo == null)
     {
@@ -106,8 +111,8 @@
     private DashboardResumo? resumo;
     private List<GastoCategoriaDto> gastosPorCategoria = new();
     private List<ProximoVencimentoDto> proximosVencimentos = new();
-    private List<Lancamento> vencemHoje = new();
-    private List<Lancamento> atrasados = new();
+    private List<ModelLancamento> vencemHoje = new();
+    private List<ModelLancamento> atrasados = new();
 
     // Opções dos gráficos
     private ApexChartOptions<GastoCategoriaDto> gastosOptions = new()

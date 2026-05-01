@@ -1,5 +1,69 @@
-﻿<h3>Lancamento</h3>
+@page "/lancamentos"
+@using ModelLancamento = FinanceiroPessoal.Core.Models.Lancamento
+@using FinanceiroPessoal.Core.Models
+@using FinanceiroPessoal.Core.Services
+@inject LancamentoService LancamentoService
+
+<PageTitle>Lançamentos</PageTitle>
+
+<h3>Lançamentos</h3>
+
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="btn btn-primary" href="/lancamentos/novo">Novo</a>
+    <a class="btn btn-outline-primary" href="/lancamentos/editar/1">Editar</a>
+    <a class="btn btn-outline-secondary" href="/cadastros">Cadastros</a>
+</div>
+
+@if (carregando)
+{
+    <p>Carregando lançamentos...</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 45px; text-align: center;">Status</th>
+                    <th style="width: 60px;">Id</th>
+                    <th style="width: 90px;">Tipo</th>
+                    <th style="width: 250px;">Descrição</th>
+                    <th>Valor</th>
+                    <th>Vencimento</th>
+                    <th>Categoria</th>
+                    <th>Conta</th>
+                    <th>Pessoa</th>
+                    <th>Competência</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in lancamentos)
+                {
+                    <tr>
+                        <td class="text-center">@item.Status</td>
+                        <td>@item.Id</td>
+                        <td>@(item.Tipo == TipoLancamento.Entrada ? "Entrada" : "Saída")</td>
+                        <td>@item.Descricao</td>
+                        <td>@item.Valor.ToString("N2")</td>
+                        <td>@(item.DataVencimento?.ToString("dd/MM/yyyy") ?? "")</td>
+                        <td>@(item.Categoria?.Nome ?? "")</td>
+                        <td>@(item.Conta?.Nome ?? "")</td>
+                        <td>@(item.Pessoa?.Nome ?? "")</td>
+                        <td>@item.Competencia</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
 
 @code {
+    private bool carregando = true;
+    private List<ModelLancamento> lancamentos = new();
 
+    protected override async Task OnInitializedAsync()
+    {
+        lancamentos = await LancamentoService.ObterTodos();
+        carregando = false;
+    }
 }

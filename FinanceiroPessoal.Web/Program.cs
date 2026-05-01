@@ -6,8 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
+builder.Services.AddRazorComponents()
+    .AddInteractiveServerComponents();
 
 // DbContext
 var connectionString = builder.Configuration.GetConnectionString("MySqlConnection");
@@ -34,11 +34,9 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseRouting();
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
+app.UseAntiforgery();
+
+app.MapRazorComponents<FinanceiroPessoal.Web.Components.App>()
+    .AddInteractiveServerRenderMode();
 
 app.Run();
-
-{
-}
