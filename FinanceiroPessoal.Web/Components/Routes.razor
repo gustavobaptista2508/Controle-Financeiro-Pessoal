@@ -1,15 +1,11 @@
-@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
-
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        @if (!Session.IsAuthenticated && routeData.PageType != typeof(Pages.Auth))
-        {
-            <RedirectToAuth />
-        }
-        else
-        {
-            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-            <FocusOnNavigate RouteData="routeData" Selector="h1" />
-        }
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
+    <NotFound>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <p>Página não encontrada.</p>
+        </LayoutView>
+    </NotFound>
 </Router>

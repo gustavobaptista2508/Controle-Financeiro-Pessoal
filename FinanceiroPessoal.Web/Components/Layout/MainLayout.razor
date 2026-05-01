@@ -1,6 +1,4 @@
 @inherits LayoutComponentBase
-@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
-@inject NavigationManager Nav
 
 <div class="page">
     <div class="sidebar">
@@ -17,19 +15,3 @@
         </article>
     </main>
 </div>
-
-@code {
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (!firstRender)
-        {
-            return;
-        }
-
-        var relativePath = Nav.ToBaseRelativePath(Nav.Uri).Trim('/');
-        if (!Session.IsAuthenticated && !string.Equals(relativePath, "auth", StringComparison.OrdinalIgnoreCase))
-        {
-            Nav.NavigateTo("/auth", true);
-        }
-    }
-}
