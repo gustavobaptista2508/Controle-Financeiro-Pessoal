@@ -12,6 +12,38 @@
     <a class="btn btn-outline-secondary" href="/">Voltar para página principal</a>
 </div>
 
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Descrição</label>
+                <input class="form-control" @bind="filtroDescricao" placeholder="Buscar por descrição" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select class="form-select" @bind="filtroStatus">
+                    <option value="Todos">Todos</option>
+                    <option value="Pendente">Pendente</option>
+                    <option value="Pago">Pago</option>
+                    <option value="Atrasado">Atrasado</option>
+                    <option value="Parcial">Parcial</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Tipo</label>
+                <select class="form-select" @bind="filtroTipo">
+                    <option value="Todos">Todos</option>
+                    <option value="Entrada">Entrada</option>
+                    <option value="Saída">Saída</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-grid">
+                <button class="btn btn-outline-secondary" @onclick="LimparFiltros">Limpar filtros</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @if (carregando)
 {
     <p>Carregando lançamentos...</p>
@@ -32,11 +64,11 @@ else
                     <th>Conta</th>
                     <th>Pessoa</th>
                     <th>Competência</th>
-                    <th style="width: 120px;">Ações</th>
+                    <th style="width: 220px;">Ações</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach (var item in linhas)
+                @foreach (var item in LinhasFiltradas)
                 {
                     <tr class="@(item.ContaIdFatura > 0 ? "table-primary" : string.Empty)">
                         <td class="text-center">
@@ -51,10 +83,14 @@ else
                         <td>@item.Conta</td>
                         <td>@item.Pessoa</td>
                         <td>@item.Competencia</td>
-                        <td>
+                        <td class="d-flex gap-2">
                             @if (item.ContaIdFatura > 0)
                             {
                                 <a class="btn btn-sm btn-outline-primary" href="@GetExtratoUrl(item)">Abrir extrato</a>
+                            }
+                            else if (!item.EhPago)
+                            {
+                                <button class="btn btn-sm btn-success" @onclick="() => MarcarComoPago(item.Id)">Marcar como pago</button>
                             }
                         </td>
                     </tr>
@@ -67,9 +103,21 @@ else
 @code {
     private bool carregando = true;
     private List<LancamentoLinhaDto> linhas = new();
+    private string filtroDescricao = string.Empty;
+    private string filtroStatus = "Todos";
+    private string filtroTipo = "Todos";
+
+    private IEnumerable<LancamentoLinhaDto> LinhasFiltradas => linhas.Where(AtendeFiltros);
 
     protected override async Task OnInitializedAsync()
     {
+        await Recarregar();
+    }
+
+    private async Task Recarregar()
+    {
+        carregando = true;
+
         var lancamentos = await LancamentoService.ObterTodos();
 
         var normais = lancamentos.Where(x => x.Conta?.Tipo != "Cartão").ToList();
@@ -92,7 +140,8 @@ else
                 Pessoa = string.Empty,
                 Competencia = string.Empty,
                 ContaIdFatura = g.Key.ContaId ?? 0,
-                NomeCartao = g.Key.Nome
+                NomeCartao = g.Key.Nome,
+                EhPago = g.All(x => x.Status == "Pago")
             })
             .ToList();
 
@@ -109,7 +158,8 @@ else
             Pessoa = x.Pessoa?.Nome ?? string.Empty,
             Competencia = x.Competencia,
             ContaIdFatura = 0,
-            NomeCartao = string.Empty
+            NomeCartao = string.Empty,
+            EhPago = string.Equals(x.Status, "Pago", StringComparison.OrdinalIgnoreCase)
         }).ToList();
 
         linhas = dadosNormais
@@ -118,6 +168,40 @@ else
             .ToList();
 
         carregando = false;
+    }
+
+    private bool AtendeFiltros(LancamentoLinhaDto linha)
+    {
+        if (!string.IsNullOrWhiteSpace(filtroDescricao) &&
+            !linha.Descricao.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (filtroStatus != "Todos" && !string.Equals(linha.StatusIcone, filtroStatus, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (filtroTipo != "Todos" && !string.Equals(linha.Tipo, filtroTipo, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void LimparFiltros()
+    {
+        filtroDescricao = string.Empty;
+        filtroStatus = "Todos";
+        filtroTipo = "Todos";
+    }
+
+    private async Task MarcarComoPago(int id)
+    {
+        await LancamentoService.MarcarComoPago(id);
+        await Recarregar();
     }
 
     private static string GetStatusClass(string? status) => status?.Trim().ToLowerInvariant() switch
@@ -136,7 +220,7 @@ else
         _ => "⏳"
     };
 
-        private static string GetExtratoUrl(LancamentoLinhaDto item)
+    private static string GetExtratoUrl(LancamentoLinhaDto item)
     {
         var referencia = item.Vencimento ?? DateTime.Today;
         var nome = Uri.EscapeDataString(item.NomeCartao);
@@ -157,5 +241,6 @@ else
         public string? Competencia { get; set; }
         public int ContaIdFatura { get; set; }
         public string NomeCartao { get; set; } = string.Empty;
+        public bool EhPago { get; set; }
     }
 }
