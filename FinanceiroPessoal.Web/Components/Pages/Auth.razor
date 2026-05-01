@@ -15,6 +15,11 @@
         </div>
     }
 
+    @if (!string.IsNullOrWhiteSpace(Session.SetupError))
+    {
+        <div class="alert alert-danger">@Session.SetupError</div>
+    }
+
     <EditForm Model="this" OnSubmit="HandleLogin">
         <div class="mb-3">
             <label for="codigo" class="form-label">Código do autenticador</label>
@@ -26,7 +31,7 @@
             <div class="alert alert-danger">@erro</div>
         }
 
-        <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        <button type="submit" class="btn btn-primary w-100" disabled="@(!string.IsNullOrWhiteSpace(Session.SetupError))">Entrar</button>
     </EditForm>
 </div>
 

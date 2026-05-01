@@ -1,6 +1,23 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
+
+<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        @if (RequiresAuthentication(routeData.PageType) && !Session.IsAuthenticated)
+        {
+            <LayoutView Layout="typeof(Layout.MainLayout)">
+                <p>Redirecionando para autenticação...</p>
+            </LayoutView>
+            <RedirectToAuth />
+        }
+        else
+        {
+            <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        }
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
 </Router>
+
+@code {
+    private static bool RequiresAuthentication(Type pageType)
+        => pageType != typeof(Pages.Auth);
+}
