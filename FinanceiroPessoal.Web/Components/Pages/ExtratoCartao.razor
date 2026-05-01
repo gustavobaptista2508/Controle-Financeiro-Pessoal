@@ -1,5 +1,5 @@
 @page "/cartoes/extrato/{ContaId:int}/{Ano:int}/{Mes:int}"
-@using FinanceiroPessoal.Core.Models
+@using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @using FinanceiroPessoal.Core.Services
 @inject LancamentoService LancamentoService
 
@@ -55,7 +55,7 @@ else
     [SupplyParameterFromQuery] public string? NomeCartao { get; set; }
 
     private bool carregando = true;
-    private List<Lancamento> itens = new();
+    private List<ModelLancamento> itens = new();
     private decimal total;
     private decimal pago;
     private decimal pendente;
