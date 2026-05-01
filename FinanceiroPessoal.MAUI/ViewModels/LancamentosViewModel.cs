@@ -17,6 +17,7 @@ namespace FinanceiroPessoal.MAUI.ViewModels
         [ObservableProperty] private string filtroTipo = "Todos";
         [ObservableProperty] private DateTime dataInicio = DateTime.Today.AddMonths(-1);
         [ObservableProperty] private DateTime dataFim = DateTime.Today;
+        public List<string> OpcoesStatus { get; } = ["Todos", "Pendente", "A Vencer", "Em Aberto", "Atrasado", "Pago"];
 
         public LancamentosViewModel(ApiService api)
             => _api = api;
@@ -62,6 +63,10 @@ namespace FinanceiroPessoal.MAUI.ViewModels
             }
             finally { Carregando = false; }
         }
+
+        [RelayCommand]
+        private async Task AplicarFiltros()
+            => await Carregar();
 
         [RelayCommand]
         private async Task AbrirExtrato(LancamentoDto item)

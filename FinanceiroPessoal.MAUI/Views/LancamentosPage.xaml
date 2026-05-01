@@ -4,9 +4,26 @@
              x:Class="FinanceiroPessoal.MAUI.Views.LancamentosPage"
              Title="Lançamentos">
 
-    <RefreshView IsRefreshing="{Binding Carregando}"
-                 Command="{Binding CarregarCommand}">
-        <CollectionView ItemsSource="{Binding Lancamentos}">
+    <Grid RowDefinitions="Auto,*" Padding="8">
+        <Frame Grid.Row="0" Padding="10" CornerRadius="10" HasShadow="False" BorderColor="#E5E7EB">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Filtros" FontAttributes="Bold" FontSize="13"/>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8">
+                    <DatePicker Grid.Column="0" Date="{Binding DataInicio}" Format="dd/MM/yyyy"/>
+                    <DatePicker Grid.Column="1" Date="{Binding DataFim}" Format="dd/MM/yyyy"/>
+                </Grid>
+                <Picker Title="Status"
+                        ItemsSource="{Binding OpcoesStatus}"
+                        SelectedItem="{Binding FiltroStatus}"/>
+                <Button Text="Aplicar filtros"
+                        Command="{Binding AplicarFiltrosCommand}"
+                        HeightRequest="36"/>
+            </VerticalStackLayout>
+        </Frame>
+
+        <RefreshView Grid.Row="1" IsRefreshing="{Binding Carregando}"
+                     Command="{Binding CarregarCommand}">
+            <CollectionView ItemsSource="{Binding Lancamentos}">
             <CollectionView.ItemTemplate>
                 <DataTemplate>
                     <Frame Margin="8,4" Padding="12" CornerRadius="8" HasShadow="False"
@@ -18,7 +35,7 @@
                             </DataTrigger>
                         </Frame.Triggers>
 
-                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
 
                             <VerticalStackLayout Grid.Column="0" Grid.RowSpan="2" Spacing="2">
                                 <Label Text="{Binding Descricao}" FontSize="13" FontAttributes="Bold"/>
@@ -34,6 +51,15 @@
                             <Label Grid.Column="1" Grid.Row="1"
                                    Text="{Binding Status}" FontSize="11" HorizontalOptions="End"/>
 
+                            <Button Grid.Column="1" Grid.Row="2"
+                                    Margin="0,6,0,0"
+                                    Text="Marcar como pago"
+                                    IsVisible="{Binding PodeMarcarPago}"
+                                    FontSize="11"
+                                    HeightRequest="30"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.MarcarPagoCommand}"
+                                    CommandParameter="{Binding .}"/>
+
                         </Grid>
 
                         <Frame.GestureRecognizers>
@@ -44,6 +70,7 @@
                     </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
-        </CollectionView>
-    </RefreshView>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
 </ContentPage>
