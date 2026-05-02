@@ -16,26 +16,27 @@ builder.Services.AddApexCharts();
 
 // DbContext
 var connectionString = builder.Configuration.GetConnectionString("MySqlConnection");
-var encryptedConnectionString = builder.Configuration["ConnectionStrings:MySqlConnectionEncrypted"];
-var encryptionKey = builder.Configuration["ConnectionStrings:MySqlConnectionEncryptionKey"];
-
-if (string.IsNullOrWhiteSpace(connectionString) && !string.IsNullOrWhiteSpace(encryptedConnectionString))
-{
-    if (string.IsNullOrWhiteSpace(encryptionKey))
-    {
-        throw new InvalidOperationException(
-            "A chave de criptografia 'ConnectionStrings:MySqlConnectionEncryptionKey' não foi configurada.");
-    }
-
-    connectionString = DecryptConnectionString(encryptedConnectionString, encryptionKey);
-    builder.Configuration["ConnectionStrings:MySqlConnection"] = connectionString;
-}
+var encryptionKey = ResolveEncryptionKey(builder.Configuration);
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
         "Connection string 'ConnectionStrings:MySqlConnection' não configurada. " +
         "Defina no appsettings, Secret Manager ou variável de ambiente.");
+}
+
+if (IsEncryptedConnectionValue(connectionString))
+{
+    if (string.IsNullOrWhiteSpace(encryptionKey))
+    {
+        throw new InvalidOperationException(
+            "'ConnectionStrings:MySqlConnection' está em formato criptografado, mas a chave não foi configurada. " +
+            "Defina 'ConnectionStrings:MySqlConnectionEncryptionKey' (appsettings/Secret Manager) " +
+            "ou a variável de ambiente 'ConnectionStrings__MySqlConnectionEncryptionKey'.");
+    }
+
+    connectionString = DecryptConnectionString(connectionString, encryptionKey);
+    builder.Configuration["ConnectionStrings:MySqlConnection"] = connectionString;
 }
 
 builder.Services.AddDbContext<MySqlDbContext>(options =>
@@ -69,6 +70,45 @@ app.MapRazorComponents<FinanceiroPessoal.Web.Components.App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+
+static string? ResolveEncryptionKey(IConfiguration configuration)
+{
+    var rawKey = configuration["ConnectionStrings:MySqlConnectionEncryptionKey"];
+
+    if (string.IsNullOrWhiteSpace(rawKey))
+    {
+        return null;
+    }
+
+    var normalized = rawKey.Trim();
+    if (normalized.Equals("DEFINA_EM_VARIAVEL_DE_AMBIENTE", StringComparison.OrdinalIgnoreCase))
+    {
+        return null;
+    }
+
+    return normalized;
+}
+
+static bool IsEncryptedConnectionValue(string value)
+{
+    var parts = value.Split(':', 2);
+    if (parts.Length != 2)
+    {
+        return false;
+    }
+
+    try
+    {
+        _ = Convert.FromBase64String(parts[0]);
+        _ = Convert.FromBase64String(parts[1]);
+        return true;
+    }
+    catch (FormatException)
+    {
+        return false;
+    }
+}
 
 static string DecryptConnectionString(string encryptedValue, string key)
 {
