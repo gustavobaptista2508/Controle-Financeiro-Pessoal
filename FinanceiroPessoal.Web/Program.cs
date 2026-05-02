@@ -28,6 +28,7 @@ if (string.IsNullOrWhiteSpace(connectionString) && !string.IsNullOrWhiteSpace(en
     }
 
     connectionString = DecryptConnectionString(encryptedConnectionString, encryptionKey);
+    builder.Configuration["ConnectionStrings:MySqlConnection"] = connectionString;
 }
 
 if (string.IsNullOrWhiteSpace(connectionString))
