@@ -16,7 +16,9 @@
 }
 
 .top-row {
-    height: 3.5rem;
+    min-height: 5.5rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
     background-color: rgba(0,0,0,0.4);
 }
 
@@ -102,4 +104,30 @@
         height: calc(100vh - 3.5rem);
         overflow-y: auto;
     }
+}
+
+
+
+
+.brand-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    line-height: 1.1;
+    text-align: center;
+}
+
+.brand-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.brand-logo {
+    width: 3.25rem;
+    height: 3.25rem;
+    object-fit: contain;
+    border-radius: 0.35rem;
+    background: white;
+    padding: 0.15rem;
 }

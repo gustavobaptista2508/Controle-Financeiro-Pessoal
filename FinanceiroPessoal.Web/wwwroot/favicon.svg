@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 260" role="img" aria-labelledby="title desc">
+  <title id="title">Logo GranaOK</title>
+  <desc id="desc">Logo com símbolo verde de gráfico com check e texto GranaOK.</desc>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00c853" />
+      <stop offset="100%" stop-color="#00a83b" />
+    </linearGradient>
+  </defs>
+  <g transform="translate(20,10)">
+    <path d="M130 20a110 110 0 1 0 77 188" fill="none" stroke="url(#g)" stroke-width="18" stroke-linecap="round"/>
+    <rect x="92" y="108" width="25" height="60" rx="8" fill="url(#g)"/>
+    <rect x="127" y="88" width="25" height="80" rx="8" fill="url(#g)"/>
+    <rect x="162" y="62" width="25" height="106" rx="8" fill="url(#g)"/>
+    <path d="M110 174l36 28 82-78" fill="none" stroke="url(#g)" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="250" y="205" font-family="Segoe UI, Arial, sans-serif" font-size="120" font-weight="700" fill="#002a58">Grana</text>
+  <text x="620" y="205" font-family="Segoe UI, Arial, sans-serif" font-size="120" font-weight="700" fill="#00b73f">OK</text>
+</svg>
