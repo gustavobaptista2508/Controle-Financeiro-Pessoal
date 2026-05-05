@@ -103,3 +103,13 @@
         overflow-y: auto;
     }
 }
+
+
+.brand-logo {
+    width: 2rem;
+    height: 2rem;
+    object-fit: contain;
+    border-radius: 0.25rem;
+    background: white;
+    padding: 0.1rem;
+}
