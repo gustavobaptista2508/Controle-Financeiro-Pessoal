@@ -1,9 +1,10 @@
 // FinanceiroPessoal.Web/Program.cs
+using ApexCharts;
 using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Repositories;
 using FinanceiroPessoal.Core.Services;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
-using ApexCharts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,13 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddApexCharts();
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // DbContext
 var connectionString = builder.Configuration.GetConnectionString("MySqlConnection");
@@ -45,6 +53,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
