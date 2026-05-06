@@ -1,64 +1,26 @@
-// FinanceiroPessoal.Web/Program.cs
 using ApexCharts;
-using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Repositories;
 using FinanceiroPessoal.Core.Services;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.EntityFrameworkCore;
+using FinanceiroPessoal.Web;
+using FinanceiroPessoal.Web.Services;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebAssemblyHostBuilder.CreateDefault(args);
+builder.RootComponents.Add<App>("#app");
+builder.RootComponents.Add<HeadOutlet>("head::after");
 
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-
+builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddApexCharts();
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownNetworks.Clear();
-    options.KnownProxies.Clear();
-});
+// TODO (Cloudflare/WASM): substituir os repositórios locais por clientes HTTP para FinanceiroPessoal.Api.
+builder.Services.AddScoped<ILancamentoRepository, InMemoryLancamentoRepository>();
+builder.Services.AddScoped<ICadastroAuxiliarRepository, InMemoryCadastroAuxiliarRepository>();
 
-// DbContext
-var connectionString = builder.Configuration.GetConnectionString("MySqlConnection");
-
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException(
-        "Connection string 'ConnectionStrings:MySqlConnection' não configurada. " +
-        "Defina no appsettings, Secret Manager ou variável de ambiente.");
-}
-
-builder.Services.AddDbContext<MySqlDbContext>(options =>
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)),
-    ServiceLifetime.Scoped);
-
-// Repositórios
-builder.Services.AddScoped<ILancamentoRepository, MySqlLancamentoRepository>();
-builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRepository>();
-
-// Serviços
 builder.Services.AddScoped<LancamentoService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<CadastroAuxiliarService>();
 builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<FinanceiroPessoal.Web.Services.WebAuthSessionService>();
+builder.Services.AddScoped<WebAuthSessionService>();
 
-var app = builder.Build();
-
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
-}
-
-app.UseForwardedHeaders();
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseAntiforgery();
-
-app.MapRazorComponents<FinanceiroPessoal.Web.Components.App>()
-    .AddInteractiveServerRenderMode();
-
-app.Run();
+await builder.Build().RunAsync();
