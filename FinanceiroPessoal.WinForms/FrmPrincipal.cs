@@ -430,7 +430,14 @@ namespace FinanceiroPessoal.WinForms
 
         private void btnCategorias_Click(object sender, EventArgs e)
         {
+            AtivarBotaoMenu(btnCategorias);
+            MarcarBotaoAtivo(btnCategorias);
 
+            using var frm = new FrmCategorias();
+            frm.ShowDialog();
+
+            _ = CarregarDashboard();
+            LimparSelecaoMenu();
         }
 
         private void btnContas_Click(object sender, EventArgs e)
