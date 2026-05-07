@@ -10,5 +10,6 @@ namespace FinanceiroPessoal.Core.Repositories
         Task<List<Pessoa>> ObterPessoas();
         Task<List<Categoria>> ObterCategorias();
         Task<List<Conta>> ObterContas();
+        Task<Categoria> AdicionarCategoriaAsync(Categoria categoria);
     }
 }

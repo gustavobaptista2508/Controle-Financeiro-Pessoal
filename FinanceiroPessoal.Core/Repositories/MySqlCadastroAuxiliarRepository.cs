@@ -34,5 +34,13 @@ namespace FinanceiroPessoal.Core.Repositories
                 .OrderBy(x => x.Nome)
                 .ToListAsync();
         }
+
+
+        public async Task<Categoria> AdicionarCategoriaAsync(Categoria categoria)
+        {
+            _context.Categorias.Add(categoria);
+            await _context.SaveChangesAsync();
+            return categoria;
+        }
     }
 }
