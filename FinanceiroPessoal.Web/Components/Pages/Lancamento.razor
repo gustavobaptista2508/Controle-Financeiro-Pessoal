@@ -5,11 +5,12 @@
 
 <PageTitle>Lançamentos</PageTitle>
 
-<h3>Lançamentos</h3>
+<h2 class="mb-1">Consulta de Lançamentos</h2>
+<p class="text-muted">Home > Lançamentos > Consulta</p>
 
 <div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="btn btn-primary" href="/lancamentos/novo">Novo</a>
-    <a class="btn btn-outline-secondary" href="/">Voltar para página principal</a>
+    <a class="btn btn-primary btn-mobile-full" href="/lancamentos/novo">Novo</a>
+    <a class="btn btn-outline-secondary btn-mobile-full" href="/">Voltar para página principal</a>
 </div>
 
 <div class="card mb-3">
@@ -38,10 +39,10 @@
                 </select>
             </div>
             <div class="col-12 col-md-2 d-grid">
-                <button class="btn btn-primary" @onclick="AplicarFiltros">Buscar</button>
+                <button class="btn btn-primary btn-mobile-full" @onclick="AplicarFiltros">Buscar</button>
             </div>
             <div class="col-12 col-md-2 d-grid">
-                <button class="btn btn-outline-secondary" @onclick="LimparFiltros">Limpar filtros</button>
+                <button class="btn btn-outline-secondary btn-mobile-full" @onclick="LimparFiltros">Limpar filtros</button>
             </div>
         </div>
     </div>
