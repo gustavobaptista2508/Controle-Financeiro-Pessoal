@@ -2,6 +2,8 @@ using ApexCharts;
 using FinanceiroPessoal.Core.Repositories;
 using FinanceiroPessoal.Core.Services;
 using FinanceiroPessoal.Web;
+using Microsoft.AspNetCore.Localization;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,17 @@ builder.Services.AddScoped<CadastroAuxiliarService>();
 builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
+
+var culturaPtBr = new CultureInfo("pt-BR");
+CultureInfo.DefaultThreadCurrentCulture = culturaPtBr;
+CultureInfo.DefaultThreadCurrentUICulture = culturaPtBr;
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(culturaPtBr),
+    SupportedCultures = [culturaPtBr],
+    SupportedUICultures = [culturaPtBr]
+});
 
 if (!app.Environment.IsDevelopment())
 {
