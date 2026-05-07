@@ -1,12 +1,12 @@
 @inherits LayoutComponentBase
 
-<div class="container-fluid min-vh-100 bg-light">
-    <div class="row flex-nowrap">
+<div class="container-fluid min-vh-100 py-2 py-md-3">
+    <div class="row g-0 flex-nowrap rounded-4 overflow-hidden border">
         <aside class="col-12 col-md-3 col-xl-2 p-0 bg-primary bg-gradient text-white d-none d-md-flex flex-column">
             <NavMenu />
         </aside>
 
-        <div class="col p-0 d-flex flex-column">
+        <div class="col bg-light p-0 d-flex flex-column">
             <header class="navbar navbar-expand bg-white border-bottom px-3 py-2 shadow-sm">
                 <button class="btn btn-link text-dark p-0 me-3" title="Menu">
                     <i class="bi bi-list fs-4"></i>
@@ -32,7 +32,7 @@
 </div>
 
 
-<div class="d-md-none fixed-bottom bg-white border-top">
+<div class="mobile-nav d-md-none fixed-bottom bg-white border-top shadow-sm">
     <div class="nav nav-pills nav-justified py-1">
         <a class="nav-link" href="/"><i class="bi bi-house d-block"></i><small>Dashboard</small></a>
         <a class="nav-link" href="/lancamentos"><i class="bi bi-card-list d-block"></i><small>Lançamentos</small></a>

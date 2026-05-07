@@ -9,15 +9,15 @@
 <PageTitle>Dashboard</PageTitle>
 
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3"><div><h2 class="mb-1">Dashboard</h2><div class="text-muted">Visão geral das suas finanças</div></div><a class="btn btn-success" href="/lancamentos/novo">+ Novo lançamento</a></div>
+    <div class="d-flex justify-content-between align-items-center mb-3"><div><h2 class="mb-1 page-title">Dashboard</h2><div class="text-muted">Visão geral das suas finanças</div></div><a class="btn btn-success btn-mobile-full" href="/lancamentos/novo">+ Novo lançamento</a></div>
     
 
     <div class="d-flex justify-content-center align-items-center gap-3 mb-4">
-        <button class="btn btn-outline-secondary" @onclick="MesAnterior" aria-label="Mês anterior">
+        <button class="btn btn-outline-secondary btn-mobile-full" @onclick="MesAnterior" aria-label="Mês anterior">
             <span aria-hidden="true">&#8592;</span>
         </button>
         <span class="fw-semibold fs-5">@MesCompetenciaTexto</span>
-        <button class="btn btn-outline-secondary" @onclick="ProximoMes" aria-label="Próximo mês">
+        <button class="btn btn-outline-secondary btn-mobile-full" @onclick="ProximoMes" aria-label="Próximo mês">
             <span aria-hidden="true">&#8594;</span>
         </button>
     </div>
@@ -33,7 +33,7 @@
         <!-- Cards de resumo -->
         <div class="row">
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card text-white bg-success mb-3">
+                <div class="card dashboard-stat bg-success mb-3">
                     <div class="card-header">Entradas</div>
                     <div class="card-body">
                         <h5 class="card-title">@resumo.TotalEntradas.ToString("C")</h5>
@@ -42,7 +42,7 @@
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card text-white bg-danger mb-3">
+                <div class="card dashboard-stat bg-danger mb-3">
                     <div class="card-header">Saídas Pagas</div>
                     <div class="card-body">
                         <h5 class="card-title">@resumo.TotalSaidas.ToString("C")</h5>
@@ -51,7 +51,7 @@
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card text-white bg-warning mb-3">
+                <div class="card dashboard-stat bg-warning mb-3">
                     <div class="card-header">Pendentes</div>
                     <div class="card-body">
                         <h5 class="card-title">@resumo.TotalPendente.ToString("C")</h5>
@@ -60,7 +60,7 @@
                 </div>
             </div>
             <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card text-white bg-info mb-3">
+                <div class="card dashboard-stat bg-primary mb-3">
                     <div class="card-header">Saldo do Mês</div>
                     <div class="card-body">
                         <h5 class="card-title">@resumo.SaldoMes.ToString("C")</h5>
