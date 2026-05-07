@@ -1,5 +1,7 @@
-﻿using FinanceiroPessoal.WinForms.Models;
+﻿using FinanceiroPessoal.WinForms.Data;
+using FinanceiroPessoal.WinForms.Models;
 using FinanceiroPessoal.WinForms.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinanceiroPessoal.Api.Controllers
@@ -9,9 +11,13 @@ namespace FinanceiroPessoal.Api.Controllers
     public class LancamentosController : ControllerBase
     {
         private readonly LancamentoService _service;
+        private readonly MySqlDbContext _context;
 
-        public LancamentosController(LancamentoService service)
-            => _service = service;
+        public LancamentosController(LancamentoService service, MySqlDbContext context)
+        {
+            _service = service;
+            _context = context;
+        }
 
         [HttpGet]
         public async Task<IActionResult> Filtrar(
@@ -45,8 +51,41 @@ namespace FinanceiroPessoal.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Criar([FromBody] Lancamento lancamento)
+        public async Task<IActionResult> Criar([FromBody] NovoLancamentoRequest request)
         {
+            var lancamento = new Lancamento
+            {
+                Descricao = request.Descricao,
+                Valor = request.Valor,
+                Tipo = request.Tipo,
+                Status = string.IsNullOrWhiteSpace(request.Status) ? "Pendente" : request.Status,
+                DataVencimento = request.DataVencimento,
+                DataPagamento = request.DataPagamento,
+                Observacoes = request.Observacoes,
+                Competencia = request.Competencia,
+                CategoriaId = request.CategoriaId,
+                ContaId = request.ContaId,
+                PessoaId = request.PessoaId
+            };
+
+            if (!lancamento.CategoriaId.HasValue && !string.IsNullOrWhiteSpace(request.Categoria))
+                lancamento.CategoriaId = await _context.Categorias
+                    .Where(x => x.Nome == request.Categoria)
+                    .Select(x => (int?)x.Id)
+                    .FirstOrDefaultAsync();
+
+            if (!lancamento.ContaId.HasValue && !string.IsNullOrWhiteSpace(request.Conta))
+                lancamento.ContaId = await _context.Contas
+                    .Where(x => x.Nome == request.Conta)
+                    .Select(x => (int?)x.Id)
+                    .FirstOrDefaultAsync();
+
+            if (!lancamento.PessoaId.HasValue && !string.IsNullOrWhiteSpace(request.Pessoa))
+                lancamento.PessoaId = await _context.Pessoas
+                    .Where(x => x.Nome == request.Pessoa)
+                    .Select(x => (int?)x.Id)
+                    .FirstOrDefaultAsync();
+
             await _service.Adicionar(lancamento);
             return Ok(new { lancamento.Id });
         }
@@ -64,5 +103,23 @@ namespace FinanceiroPessoal.Api.Controllers
             await _service.Excluir(id);
             return Ok();
         }
+    }
+
+    public class NovoLancamentoRequest
+    {
+        public string Descricao { get; set; } = string.Empty;
+        public decimal Valor { get; set; }
+        public DateTime? DataVencimento { get; set; }
+        public DateTime? DataPagamento { get; set; }
+        public string Status { get; set; } = "Pendente";
+        public string? Observacoes { get; set; }
+        public string? Competencia { get; set; }
+        public TipoLancamento Tipo { get; set; } = TipoLancamento.Saida;
+        public int? CategoriaId { get; set; }
+        public int? ContaId { get; set; }
+        public int? PessoaId { get; set; }
+        public string? Categoria { get; set; }
+        public string? Conta { get; set; }
+        public string? Pessoa { get; set; }
     }
 }
