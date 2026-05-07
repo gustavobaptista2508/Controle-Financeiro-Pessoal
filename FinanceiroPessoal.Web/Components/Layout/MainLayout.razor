@@ -1,16 +1,29 @@
 @inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
+<div class="app-shell">
+    <aside class="sidebar-shell">
         <NavMenu />
-    </div>
+    </aside>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://docs.microsoft.com/aspnet/" target="_blank">Sobre</a>
-        </div>
+    <main class="main-shell">
+        <header class="topbar-shell">
+            <button class="icon-btn" title="Menu">
+                <span class="oi oi-menu"></span>
+            </button>
+            <div class="topbar-actions">
+                <button class="icon-btn" title="Buscar"><span class="oi oi-magnifying-glass"></span></button>
+                <button class="icon-btn" title="Notificações"><span class="oi oi-bell"></span></button>
+                <div class="user-chip">
+                    <span class="user-avatar">JD</span>
+                    <div>
+                        <strong>João da Silva</strong>
+                        <small>Perfil</small>
+                    </div>
+                </div>
+            </div>
+        </header>
 
-        <article class="content px-4">
+        <article class="content-shell">
             @Body
         </article>
     </main>
