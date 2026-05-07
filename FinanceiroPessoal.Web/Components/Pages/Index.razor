@@ -1,4 +1,5 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 @using FinanceiroPessoal.Core.Models
 @using FinanceiroPessoal.Core.Repositories
 @using FinanceiroPessoal.Core.Services
@@ -88,6 +89,10 @@
                                              XValue="@(e => e.Categoria)"
                                              YValue="@(e => e.Valor)" />
                         </ApexChart>
+                        @if (proximosVencimentos.Count == 0)
+                        {
+                            <p class="text-muted mb-0 mt-2">Sem próximos vencimentos pendentes.</p>
+                        }
                     </div>
                 </div>
             </div>
@@ -109,6 +114,10 @@
                                              XValue="@(e => e.Descricao)"
                                              YValue="@(e => e.Valor)" />
                         </ApexChart>
+                        @if (proximosVencimentos.Count == 0)
+                        {
+                            <p class="text-muted mb-0 mt-2">Sem próximos vencimentos pendentes.</p>
+                        }
                     </div>
                 </div>
             </div>

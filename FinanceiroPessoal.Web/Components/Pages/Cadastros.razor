@@ -1,12 +1,78 @@
-@page "/cadastros"
+@page "/categorias"
+@rendermode InteractiveServer
+@using FinanceiroPessoal.Core.Models
+@using FinanceiroPessoal.Core.Services
+@inject CadastroAuxiliarService CadastroAuxiliarService
 
-<PageTitle>Cadastros</PageTitle>
+<PageTitle>Categorias</PageTitle>
 
-<h3>Cadastros</h3>
+<h3>Categorias</h3>
 
-<div class="d-flex gap-2 mb-3">
-    <a class="btn btn-primary" href="/lancamentos/novo">Novo lançamento</a>
-    <a class="btn btn-outline-primary" href="/lancamentos/editar/1">Editar lançamento (exemplo)</a>
+<div class="card mb-3">
+    <div class="card-body">
+        <EditForm Model="this" OnValidSubmit="SalvarCategoria">
+            <div class="row g-2 align-items-end">
+                <div class="col-12 col-md-8">
+                    <label class="form-label">Nova categoria</label>
+                    <input class="form-control" @bind="novoNomeCategoria" placeholder="Ex: Alimentação" />
+                </div>
+                <div class="col-12 col-md-4">
+                    <button type="submit" class="btn btn-success w-100">Cadastrar categoria</button>
+                </div>
+            </div>
+        </EditForm>
+
+        @if (!string.IsNullOrWhiteSpace(mensagem))
+        {
+            <div class="alert alert-info mt-3 mb-0">@mensagem</div>
+        }
+    </div>
 </div>
 
-<p>Acesse os botões para ir às páginas de cadastro e edição de lançamentos.</p>
+<div class="card">
+    <div class="card-header">Categorias cadastradas</div>
+    <ul class="list-group list-group-flush">
+        @if (categorias.Count == 0)
+        {
+            <li class="list-group-item text-muted">Nenhuma categoria cadastrada.</li>
+        }
+        else
+        {
+            @foreach (var categoria in categorias)
+            {
+                <li class="list-group-item">@categoria.Nome</li>
+            }
+        }
+    </ul>
+</div>
+
+@code {
+    private List<Categoria> categorias = new();
+    private string novoNomeCategoria = string.Empty;
+    private string? mensagem;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarCategorias();
+    }
+
+    private async Task SalvarCategoria()
+    {
+        try
+        {
+            await CadastroAuxiliarService.AdicionarCategoriaAsync(novoNomeCategoria);
+            novoNomeCategoria = string.Empty;
+            mensagem = "Categoria cadastrada com sucesso.";
+            await CarregarCategorias();
+        }
+        catch (Exception ex)
+        {
+            mensagem = ex.Message;
+        }
+    }
+
+    private async Task CarregarCategorias()
+    {
+        categorias = await CadastroAuxiliarService.ObterCategorias();
+    }
+}

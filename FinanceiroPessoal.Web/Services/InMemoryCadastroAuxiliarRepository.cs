@@ -12,4 +12,11 @@ public class InMemoryCadastroAuxiliarRepository : ICadastroAuxiliarRepository
     public Task<List<Pessoa>> ObterPessoas() => Task.FromResult(_pessoas.ToList());
     public Task<List<Categoria>> ObterCategorias() => Task.FromResult(_categorias.ToList());
     public Task<List<Conta>> ObterContas() => Task.FromResult(_contas.ToList());
+
+    public Task<Categoria> AdicionarCategoriaAsync(Categoria categoria)
+    {
+        categoria.Id = _categorias.Count == 0 ? 1 : _categorias.Max(x => x.Id) + 1;
+        _categorias.Add(categoria);
+        return Task.FromResult(categoria);
+    }
 }
