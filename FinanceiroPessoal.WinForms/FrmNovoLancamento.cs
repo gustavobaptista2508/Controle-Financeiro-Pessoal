@@ -148,9 +148,10 @@ namespace FinanceiroPessoal.WinForms
                 string primeiraParcela = cmbStatus.Text;
                 DateTime competenicaAtual;
                 var competenciaTexto = txtCompetencia.Text.Trim();
+                var formatosCompetencia = new[] { "dd/MM/yyyy", "dd/M/yyyy" };
                 if (!DateTime.TryParseExact(
                     "01/" + competenciaTexto,
-                    "dd/MM/yyyy",
+                    formatosCompetencia,
                     CultureInfo.InvariantCulture,
                     DateTimeStyles.None,
                     out competenicaAtual))

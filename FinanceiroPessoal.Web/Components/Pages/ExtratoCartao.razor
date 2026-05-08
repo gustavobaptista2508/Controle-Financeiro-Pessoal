@@ -29,7 +29,7 @@ else
         <table class="table table-striped align-middle">
             <thead class="table-light">
                 <tr>
-                    <th>Vencimento</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Status</th>
+                    <th>Vencimento</th><th>Descrição</th><th>Categoria</th><th>Valor</th><th>Status</th><th>Ações</th>
                 </tr>
             </thead>
             <tbody>
@@ -41,6 +41,12 @@ else
                     <td>@(item.Categoria?.Nome ?? "Sem categoria")</td>
                     <td>@item.Valor.ToString("N2")</td>
                     <td>@item.Status</td>
+                    <td>
+                        @if (item.Status != "Pago")
+                        {
+                            <button class="btn btn-sm btn-success" @onclick="() => MarcarComoPago(item.Id)">Marcar como pago</button>
+                        }
+                    </td>
                 </tr>
             }
             </tbody>
@@ -73,6 +79,13 @@ else
         pendente = itens.Where(x => x.Status != "Pago").Sum(x => x.Valor);
 
         carregando = false;
+    }
+
+    private async Task MarcarComoPago(int id)
+    {
+        await LancamentoService.MarcarComoPago(id);
+        await OnInitializedAsync();
+        StateHasChanged();
     }
 
     private static string LinhaStatus(string? status) => status switch

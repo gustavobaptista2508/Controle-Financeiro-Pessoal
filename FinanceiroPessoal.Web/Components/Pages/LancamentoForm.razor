@@ -186,7 +186,8 @@
     {
         var competenciaTexto = (lancamento.Competencia ?? string.Empty).Trim();
 
-        if (DateTime.TryParseExact($"01/{competenciaTexto}", "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var competencia))
+        var formatos = new[] { "dd/MM/yyyy", "dd/M/yyyy" };
+        if (DateTime.TryParseExact($"01/{competenciaTexto}", formatos, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var competencia))
         {
             return competencia;
         }
