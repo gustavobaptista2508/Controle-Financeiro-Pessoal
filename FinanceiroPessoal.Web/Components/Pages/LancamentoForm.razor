@@ -118,7 +118,8 @@
     [Parameter]
     public int? Id { get; set; }
 
-    private ModelLancamento lancamento = new();
+    [SupplyParameterFromForm]
+    private ModelLancamento lancamento { get; set; } = new();
     private int quantidadeParcelas = 1;
     private string? mensagem;
     private List<Categoria> categorias = new();
