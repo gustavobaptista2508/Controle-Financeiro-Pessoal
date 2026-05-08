@@ -1,0 +1,32 @@
+@page "/login"
+@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
+@inject NavigationManager Nav
+
+<PageTitle>Login</PageTitle>
+<div class="container mt-4" style="max-width:450px;">
+    <h3>Entrar</h3>
+    <div class="mb-3"><label>E-mail</label><input class="form-control" @bind="email" /></div>
+    <div class="mb-3"><label>Senha</label><input class="form-control" type="password" @bind="senha" /></div>
+    @if (!string.IsNullOrWhiteSpace(erro))
+    {
+        <div class="alert alert-danger">@erro</div>
+    }
+    <button class="btn btn-primary w-100" @onclick="Entrar">Entrar</button>
+</div>
+
+@code {
+    private string email = string.Empty;
+    private string senha = string.Empty;
+    private string? erro;
+
+    private void Entrar()
+    {
+        if (!Session.LoginWithPassword(email, senha))
+        {
+            erro = "E-mail ou senha inválidos.";
+            return;
+        }
+
+        Nav.NavigateTo("/");
+    }
+}

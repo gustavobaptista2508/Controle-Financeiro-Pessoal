@@ -1,7 +1,6 @@
-﻿using FinanceiroPessoal.WinForms.Data;
+using FinanceiroPessoal.WinForms.Data;
 using FinanceiroPessoal.WinForms.Models;
-using System;
-using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace FinanceiroPessoal.WinForms.Repositories
@@ -24,18 +23,18 @@ namespace FinanceiroPessoal.WinForms.Repositories
             {
                 context.Categorias.AddRange(
                     new Categoria { Nome = "Salário" },
-                new Categoria { Nome = "Comissão" },
-                new Categoria { Nome = "Recebimento" },
-                new Categoria { Nome = "Moradia" },
-                new Categoria { Nome = "Cartão" },
-                new Categoria { Nome = "Financiamento" },
-                new Categoria { Nome = "Alimentação" },
-                new Categoria { Nome = "Saúde" },
-                new Categoria { Nome = "Transporte" },
-                new Categoria { Nome = "Outros" },
-                new Categoria { Nome = "Lazer" },
-                new Categoria { Nome = "Educação" },
-                new Categoria { Nome = "Impostos" }
+                    new Categoria { Nome = "Comissão" },
+                    new Categoria { Nome = "Recebimento" },
+                    new Categoria { Nome = "Moradia" },
+                    new Categoria { Nome = "Cartão" },
+                    new Categoria { Nome = "Financiamento" },
+                    new Categoria { Nome = "Alimentação" },
+                    new Categoria { Nome = "Saúde" },
+                    new Categoria { Nome = "Transporte" },
+                    new Categoria { Nome = "Outros" },
+                    new Categoria { Nome = "Lazer" },
+                    new Categoria { Nome = "Educação" },
+                    new Categoria { Nome = "Impostos" }
                 );
             }
 
@@ -49,7 +48,28 @@ namespace FinanceiroPessoal.WinForms.Repositories
                 );
             }
 
+            if (!context.Usuarios.Any())
+            {
+                context.Usuarios.Add(new Usuario
+                {
+                    Nome = "Administrador",
+                    Email = "admin@financeiro.local",
+                    SenhaHash = GerarSha256("123456"),
+                    Ativo = true,
+                    EmailConfirmado = true,
+                    DataCriacao = DateTime.Now,
+                    DataAtualizacao = DateTime.Now
+                });
+            }
+
             context.SaveChanges();
+        }
+
+        private static string GerarSha256(string senha)
+        {
+            using var sha = SHA256.Create();
+            var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(senha));
+            return Convert.ToHexString(hash).ToLowerInvariant();
         }
     }
 }
