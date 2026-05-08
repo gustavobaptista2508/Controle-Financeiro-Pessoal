@@ -35,4 +35,22 @@ public class CadastroAuxiliarService
         var categoria = new Categoria { Nome = nome.Trim() };
         return await _repository.AdicionarCategoriaAsync(categoria);
     }
+    public async Task<Pessoa> AdicionarPessoaAsync(string nome)
+    {
+        if (string.IsNullOrWhiteSpace(nome))
+            throw new ArgumentException("Nome da pessoa é obrigatório.", nameof(nome));
+
+        var pessoa = new Pessoa { Nome = nome.Trim() };
+        return await _repository.AdicionarPessoaAsync(pessoa);
+    }
+
+    public async Task<Conta> AdicionarContaAsync(string nome, string tipo)
+    {
+        if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(tipo))
+            throw new ArgumentException("Nome e tipo da conta são obrigatórios.");
+
+        var conta = new Conta { Nome = nome.Trim(), Tipo = tipo.Trim() };
+        return await _repository.AdicionarContaAsync(conta);
+    }
+
 }

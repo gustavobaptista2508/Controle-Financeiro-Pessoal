@@ -1,0 +1,47 @@
+@page "/contas"
+@rendermode InteractiveServer
+@using FinanceiroPessoal.Core.Models
+@using FinanceiroPessoal.Core.Services
+@inject CadastroAuxiliarService CadastroAuxiliarService
+
+<PageTitle>Contas</PageTitle>
+<h3>Contas</h3>
+
+<div class="card mb-3"><div class="card-body">
+    <EditForm Model="this" OnValidSubmit="Salvar">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-5"><label class="form-label">Nome da conta</label><input class="form-control" @bind="nome" /></div>
+            <div class="col-12 col-md-5"><label class="form-label">Tipo</label><input class="form-control" @bind="tipo" /></div>
+            <div class="col-12 col-md-2"><button type="submit" class="btn btn-success w-100">Cadastrar</button></div>
+        </div>
+    </EditForm>
+    @if (!string.IsNullOrWhiteSpace(mensagem)) { <div class="alert alert-info mt-3 mb-0">@mensagem</div> }
+</div></div>
+
+<ul class="list-group">
+@foreach (var item in contas) { <li class="list-group-item">@item.Nome - @item.Tipo</li> }
+</ul>
+
+@code {
+    private List<Conta> contas = new();
+    private string nome = string.Empty;
+    private string tipo = string.Empty;
+    private string? mensagem;
+
+    protected override async Task OnInitializedAsync() => await Carregar();
+
+    private async Task Salvar()
+    {
+        try
+        {
+            await CadastroAuxiliarService.AdicionarContaAsync(nome, tipo);
+            nome = string.Empty;
+            tipo = string.Empty;
+            mensagem = "Conta cadastrada com sucesso.";
+            await Carregar();
+        }
+        catch (Exception ex) { mensagem = ex.Message; }
+    }
+
+    private async Task Carregar() => contas = await CadastroAuxiliarService.ObterContas();
+}

@@ -433,8 +433,15 @@ namespace FinanceiroPessoal.WinForms
             AtivarBotaoMenu(btnCategorias);
             MarcarBotaoAtivo(btnCategorias);
 
-            using var frm = new FrmCategorias();
-            frm.ShowDialog();
+            try
+            {
+                using var frm = new FrmCategorias();
+                frm.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Erro ao abrir tela de categorias: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
 
             _ = CarregarDashboard();
             LimparSelecaoMenu();
@@ -442,7 +449,17 @@ namespace FinanceiroPessoal.WinForms
 
         private void btnContas_Click(object sender, EventArgs e)
         {
+            AtivarBotaoMenu(btnContas);
+            MarcarBotaoAtivo(btnContas);
 
+            using var frmContas = new FrmContas();
+            frmContas.ShowDialog();
+
+            using var frmPessoas = new FrmPessoas();
+            frmPessoas.ShowDialog();
+
+            _ = CarregarDashboard();
+            LimparSelecaoMenu();
         }
 
         private void btnSair_Click(object sender, EventArgs e)
