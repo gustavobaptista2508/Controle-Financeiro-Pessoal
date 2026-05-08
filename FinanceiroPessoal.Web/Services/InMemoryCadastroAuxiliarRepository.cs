@@ -19,4 +19,18 @@ public class InMemoryCadastroAuxiliarRepository : ICadastroAuxiliarRepository
         _categorias.Add(categoria);
         return Task.FromResult(categoria);
     }
+
+    public Task<Pessoa> AdicionarPessoaAsync(Pessoa pessoa)
+    {
+        pessoa.Id = _pessoas.Count == 0 ? 1 : _pessoas.Max(x => x.Id) + 1;
+        _pessoas.Add(pessoa);
+        return Task.FromResult(pessoa);
+    }
+
+    public Task<Conta> AdicionarContaAsync(Conta conta)
+    {
+        conta.Id = _contas.Count == 0 ? 1 : _contas.Max(x => x.Id) + 1;
+        _contas.Add(conta);
+        return Task.FromResult(conta);
+    }
 }
