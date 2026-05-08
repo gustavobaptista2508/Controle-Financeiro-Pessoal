@@ -1,4 +1,5 @@
-﻿using OtpNet;
+﻿using FinanceiroPessoal.Core.Models;
+using OtpNet;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -55,8 +56,10 @@ namespace FinanceiroPessoal.Core.Services
 
 
 
-        private static readonly Dictionary<string, (string Nome, string Senha)> _usuarios =
+        private static readonly Dictionary<string, Usuario> _usuarios =
             new(StringComparer.OrdinalIgnoreCase);
+
+        public Usuario? UsuarioAtual { get; private set; }
 
         public (bool ok, string mensagem) CadastrarUsuario(string nome, string email, string senha)
         {
@@ -71,8 +74,32 @@ namespace FinanceiroPessoal.Core.Services
                 return (false, "E-mail já cadastrado.");
             }
 
-            _usuarios[emailNormalizado] = (nome.Trim(), senha);
+            _usuarios[emailNormalizado] = new Usuario
+            {
+                Nome = nome.Trim(),
+                Email = emailNormalizado,
+                SenhaHash = senha,
+                Ativo = true
+            };
             return (true, "Usuário cadastrado com sucesso.");
+        }
+
+        public Usuario? LoginUsuario(string email, string senha)
+        {
+            var emailNormalizado = email.Trim();
+            if (!_usuarios.TryGetValue(emailNormalizado, out var usuario))
+            {
+                return null;
+            }
+
+            if (!usuario.Ativo || !string.Equals(usuario.SenhaHash, senha, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            usuario.UltimoLogin = DateTime.Now;
+            UsuarioAtual = usuario;
+            return usuario;
         }
         public string GerarUriQrCode(string base32, string usuario = "Financeiro Pessoal")
         {
