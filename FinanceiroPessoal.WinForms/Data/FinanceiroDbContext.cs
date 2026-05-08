@@ -12,6 +12,7 @@ namespace FinanceiroPessoal.WinForms.Data
         public DbSet<Categoria> Categorias => Set<Categoria>();
         public DbSet<Conta> Contas => Set<Conta>();
         public DbSet<Pessoa> Pessoas => Set<Pessoa>();
+        public DbSet<Usuario> Usuarios => Set<Usuario>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -66,6 +67,24 @@ namespace FinanceiroPessoal.WinForms.Data
             {
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+            });
+
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.ToTable("usuarios");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Email).HasMaxLength(150).IsRequired();
+                entity.HasIndex(x => x.Email).IsUnique();
+                entity.Property(x => x.SenhaHash).HasColumnName("senha_hash").HasMaxLength(255).IsRequired();
+                entity.Property(x => x.Telefone).HasMaxLength(20);
+                entity.Property(x => x.Ativo).HasColumnName("ativo");
+                entity.Property(x => x.EmailConfirmado).HasColumnName("email_confirmado");
+                entity.Property(x => x.TokenRecuperacao).HasColumnName("token_recuperacao").HasMaxLength(255);
+                entity.Property(x => x.TokenExpiracao).HasColumnName("token_expiracao");
+                entity.Property(x => x.UltimoLogin).HasColumnName("ultimo_login");
+                entity.Property(x => x.DataCriacao).HasColumnName("data_criacao").HasDefaultValueSql("CURRENT_TIMESTAMP");
+                entity.Property(x => x.DataAtualizacao).HasColumnName("data_atualizacao").HasDefaultValueSql("CURRENT_TIMESTAMP");
             });
         }
     }

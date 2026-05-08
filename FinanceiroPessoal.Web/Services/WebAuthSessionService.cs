@@ -4,6 +4,15 @@ namespace FinanceiroPessoal.Web.Services;
 
 public class WebAuthSessionService
 {
+    private readonly Dictionary<string, (string Senha, string Nome)> _usuarios = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["admin@financeiro.local"] = ("123456", "Administrador")
+    };
+    private readonly Dictionary<string, List<string>> _tabelasPorUsuario = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["admin@financeiro.local"] = new List<string> { "categorias", "contas", "pessoas", "lancamentos" }
+    };
+
     private readonly AuthService _authService;
 
     public WebAuthSessionService(AuthService authService)
@@ -77,6 +86,33 @@ public class WebAuthSessionService
         IsAuthenticated = true;
         PushChallengePending = false;
         return true;
+    }
+
+    public bool LoginWithPassword(string email, string senha)
+    {
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha)) return false;
+        if (!_usuarios.TryGetValue(email.Trim(), out var dados)) return false;
+
+        IsAuthenticated = dados.Senha == senha;
+        return IsAuthenticated;
+    }
+
+    public string RegisterUser(string nome, string email, string senha)
+    {
+        if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
+            return "Preencha nome, e-mail e senha.";
+        if (_usuarios.ContainsKey(email)) return "E-mail já cadastrado.";
+
+        _usuarios[email] = (senha, nome);
+        var safe = email.Replace("@", "_").Replace(".", "_");
+        _tabelasPorUsuario[email] = new List<string>
+        {
+            $"categorias_{safe}",
+            $"contas_{safe}",
+            $"pessoas_{safe}",
+            $"lancamentos_{safe}"
+        };
+        return "Usuário cadastrado com tabelas exclusivas criadas.";
     }
 
     public void Logout()
