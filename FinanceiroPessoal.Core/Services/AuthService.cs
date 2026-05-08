@@ -53,6 +53,27 @@ namespace FinanceiroPessoal.Core.Services
             }
         }
 
+
+
+        private static readonly Dictionary<string, (string Nome, string Senha)> _usuarios =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        public (bool ok, string mensagem) CadastrarUsuario(string nome, string email, string senha)
+        {
+            if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
+            {
+                return (false, "Preencha nome, e-mail e senha.");
+            }
+
+            var emailNormalizado = email.Trim();
+            if (_usuarios.ContainsKey(emailNormalizado))
+            {
+                return (false, "E-mail já cadastrado.");
+            }
+
+            _usuarios[emailNormalizado] = (nome.Trim(), senha);
+            return (true, "Usuário cadastrado com sucesso.");
+        }
         public string GerarUriQrCode(string base32, string usuario = "Financeiro Pessoal")
         {
             return $"otpauth://totp/{Uri.EscapeDataString(usuario)}" +
