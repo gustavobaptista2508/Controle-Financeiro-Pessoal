@@ -1,0 +1,13 @@
+<MudCard Class="finance-card">
+    <MudCardContent>
+        <MudText Typo="Typo.caption" Class="text-muted">@Title</MudText>
+        <MudText Typo="Typo.h5" Class="fw-bold">@Value</MudText>
+        <MudText Typo="Typo.body2">@Subtitle</MudText>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string Value { get; set; } = string.Empty;
+    [Parameter] public string Subtitle { get; set; } = string.Empty;
+}

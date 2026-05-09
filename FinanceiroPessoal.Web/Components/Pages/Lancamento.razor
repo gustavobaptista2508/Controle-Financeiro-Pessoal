@@ -1,156 +1,70 @@
 @page "/lancamentos"
-@using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @using FinanceiroPessoal.Core.Services
 @inject LancamentoService LancamentoService
 
 <PageTitle>Lançamentos</PageTitle>
 
-<h2 class="mb-1">Consulta de Lançamentos</h2>
-<p class="text-muted">Home > Lançamentos > Consulta</p>
-
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="btn btn-primary btn-mobile-full" href="/lancamentos/novo">Novo</a>
-    <a class="btn btn-outline-secondary btn-mobile-full" href="/">Voltar para página principal</a>
-</div>
-
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">Descrição</label>
-                <input class="form-control" @bind="filtroDescricao" placeholder="Buscar por descrição" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Status</label>
-                <select class="form-select" @bind="filtroStatus">
-                    <option value="Todos">Todos</option>
-                    <option value="Pendente">Pendente</option>
-                    <option value="Pago">Pago</option>
-                    <option value="Atrasado">Atrasado</option>
-                    <option value="Parcial">Parcial</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Tipo</label>
-                <select class="form-select" @bind="filtroTipo">
-                    <option value="Todos">Todos</option>
-                    <option value="Entrada">Entrada</option>
-                    <option value="Saída">Saída</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-2 d-grid">
-                <button class="btn btn-primary btn-mobile-full" @onclick="AplicarFiltros">Buscar</button>
-            </div>
-            <div class="col-12 col-md-2 d-grid">
-                <button class="btn btn-outline-secondary btn-mobile-full" @onclick="LimparFiltros">Limpar filtros</button>
-            </div>
-        </div>
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
+    <div>
+        <MudText Typo="Typo.h5">Consulta de Lançamentos</MudText>
+        <MudText Typo="Typo.body2">Gestão inteligente de entradas e saídas.</MudText>
     </div>
-</div>
+    <MudButton Href="/lancamentos/novo" Variant="Variant.Filled" Color="Color.Primary">Novo lançamento</MudButton>
+</MudStack>
 
-@if (carregando)
-{
-    <p>Carregando lançamentos...</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th style="width: 140px; text-align: center;">Status</th>
-                    <th style="width: 60px;">Id</th>
-                    <th style="width: 90px;">Tipo</th>
-                    <th style="width: 280px;">Descrição</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Categoria</th>
-                    <th>Conta</th>
-                    <th>Pessoa</th>
-                    <th>Competência</th>
-                    <th style="width: 280px;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in LinhasFiltradas)
-                {
-                    <tr class="@(item.ContaIdFatura > 0 ? "table-primary" : string.Empty)">
-                        <td class="text-center">
-                            <span class="badge @GetStatusClass(item.StatusIcone)">@GetStatusIcon(item.StatusIcone) @item.StatusIcone</span>
-                        </td>
-                        <td>@item.Id</td>
-                        <td>@item.Tipo</td>
-                        <td>@item.Descricao</td>
-                        <td>@item.Valor.ToString("N2")</td>
-                        <td>@(item.Vencimento?.ToString("dd/MM/yyyy") ?? "")</td>
-                        <td>@item.Categoria</td>
-                        <td>@item.Conta</td>
-                        <td>@item.Pessoa</td>
-                        <td>@item.Competencia</td>
-                        <td class="acoes-linha">
-                            @if (item.ContaIdFatura > 0)
-                            {
-                                <a class="btn btn-sm btn-outline-primary" href="@GetExtratoUrl(item)">Abrir extrato</a>
-                            }
-                            else if (!item.EhPago)
-                            {
-                                <button class="btn btn-sm btn-success" @onclick="() => MarcarComoPago(item.Id)">Marcar como pago</button>
-                            }
-                            <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => Excluir(item.Id)" disabled="@(item.ContaIdFatura > 0)">Excluir</button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" md="4">
+            <MudTextField Label="Descrição" @bind-Value="filtroDescricao" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" Label="Status" @bind-Value="filtroStatus">
+                <MudSelectItem Value="@("Todos")">Todos</MudSelectItem>
+                <MudSelectItem Value="@("Pendente")">Pendente</MudSelectItem>
+                <MudSelectItem Value="@("Pago")">Pago</MudSelectItem>
+                <MudSelectItem Value="@("Atrasado")">Atrasado</MudSelectItem>
+                <MudSelectItem Value="@("Parcial")">Parcial</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" Label="Tipo" @bind-Value="filtroTipo">
+                <MudSelectItem Value="@("Todos")">Todos</MudSelectItem>
+                <MudSelectItem Value="@("Entrada")">Entrada</MudSelectItem>
+                <MudSelectItem Value="@("Saída")">Saída</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+<MudTable Items="LinhasFiltradas" Hover="true" Dense="true" Bordered="false" Striped="true">
+    <HeaderContent>
+        <MudTh>Status</MudTh><MudTh>Descrição</MudTh><MudTh>Valor</MudTh><MudTh>Vencimento</MudTh><MudTh>Categoria</MudTh><MudTh>Ações</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd><MudChip T="string" Color="@GetStatusColor(context.StatusIcone)">@context.StatusIcone</MudChip></MudTd>
+        <MudTd>@context.Descricao</MudTd>
+        <MudTd>@context.Valor.ToString("C")</MudTd>
+        <MudTd>@context.Vencimento?.ToString("dd/MM/yyyy")</MudTd>
+        <MudTd>@context.Categoria</MudTd>
+        <MudTd>
+            <MudButton Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Disabled="@context.EhPago" OnClick="@(() => MarcarComoPago(context.Id))">Pagar</MudButton>
+            <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Text" OnClick="@(() => Excluir(context.Id))">Excluir</MudButton>
+        </MudTd>
+    </RowTemplate>
+</MudTable>
 
 @code {
-    private bool carregando = true;
     private List<LancamentoLinhaDto> linhas = new();
     private string filtroDescricao = string.Empty;
     private string filtroStatus = "Todos";
     private string filtroTipo = "Todos";
-
     private IEnumerable<LancamentoLinhaDto> LinhasFiltradas => linhas.Where(AtendeFiltros);
-
-    protected override async Task OnInitializedAsync()
-    {
-        await Recarregar();
-    }
+    protected override async Task OnInitializedAsync() => await Recarregar();
 
     private async Task Recarregar()
     {
-        carregando = true;
-
         var lancamentos = await LancamentoService.ObterTodos();
-
-        var normais = lancamentos.Where(x => x.Conta?.Tipo != "Cartão").ToList();
-        var cartoes = lancamentos.Where(x => x.Conta?.Tipo == "Cartão").ToList();
-
-        var faturas = cartoes
-            .GroupBy(x => new { x.ContaId, Nome = x.Conta?.Nome ?? "Cartão" })
-            .Select(g => new LancamentoLinhaDto
-            {
-                Id = -(g.Key.ContaId ?? 0),
-                Tipo = "Saída",
-                Descricao = $"Fatura {g.Key.Nome}  •  {g.Count()} lançamento(s)",
-                Valor = g.Sum(x => x.Valor),
-                Vencimento = g.Max(x => x.DataVencimento),
-                StatusIcone = g.All(x => x.Status == "Pago") ? "Pago" :
-                              g.Any(x => x.Status == "Pago") ? "Parcial" :
-                              g.Any(x => x.Status == "Atrasado") ? "Atrasado" : "Pendente",
-                Categoria = "Cartão de Crédito",
-                Conta = g.Key.Nome,
-                Pessoa = string.Empty,
-                Competencia = string.Empty,
-                ContaIdFatura = g.Key.ContaId ?? 0,
-                NomeCartao = g.Key.Nome,
-                EhPago = g.All(x => x.Status == "Pago")
-            })
-            .ToList();
-
-        var dadosNormais = normais.Select(x => new LancamentoLinhaDto
+        linhas = lancamentos.Select(x => new LancamentoLinhaDto
         {
             Id = x.Id,
             Tipo = x.Tipo == global::FinanceiroPessoal.Core.Models.TipoLancamento.Entrada ? "Entrada" : "Saída",
@@ -159,89 +73,25 @@ else
             Vencimento = x.DataVencimento,
             StatusIcone = x.Status,
             Categoria = x.Categoria?.Nome ?? string.Empty,
-            Conta = x.Conta?.Nome ?? string.Empty,
-            Pessoa = x.Pessoa?.Nome ?? string.Empty,
-            Competencia = x.Competencia,
-            ContaIdFatura = 0,
-            NomeCartao = string.Empty,
             EhPago = string.Equals(x.Status, "Pago", StringComparison.OrdinalIgnoreCase)
-        }).ToList();
-
-        linhas = dadosNormais
-            .Concat(faturas)
-            .OrderBy(x => x.Vencimento ?? DateTime.MaxValue)
-            .ToList();
-
-        carregando = false;
+        }).OrderBy(x => x.Vencimento ?? DateTime.MaxValue).ToList();
     }
 
-    private bool AtendeFiltros(LancamentoLinhaDto linha)
+    private bool AtendeFiltros(LancamentoLinhaDto l) =>
+        (string.IsNullOrWhiteSpace(filtroDescricao) || l.Descricao.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase)) &&
+        (filtroStatus == "Todos" || string.Equals(l.StatusIcone, filtroStatus, StringComparison.OrdinalIgnoreCase)) &&
+        (filtroTipo == "Todos" || string.Equals(l.Tipo, filtroTipo, StringComparison.OrdinalIgnoreCase));
+
+    private async Task MarcarComoPago(int id) { await LancamentoService.MarcarComoPago(id); await Recarregar(); }
+    private async Task Excluir(int id) { await LancamentoService.Excluir(id); await Recarregar(); }
+
+    private static MudBlazor.Color GetStatusColor(string? status) => status?.Trim().ToLowerInvariant() switch
     {
-        if (!string.IsNullOrWhiteSpace(filtroDescricao) &&
-            !linha.Descricao.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        if (filtroStatus != "Todos" && !string.Equals(linha.StatusIcone, filtroStatus, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        if (filtroTipo != "Todos" && !string.Equals(linha.Tipo, filtroTipo, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private void AplicarFiltros()
-    {
-        StateHasChanged();
-    }
-
-    private void LimparFiltros()
-    {
-        filtroDescricao = string.Empty;
-        filtroStatus = "Todos";
-        filtroTipo = "Todos";
-    }
-
-    private async Task MarcarComoPago(int id)
-    {
-        await LancamentoService.MarcarComoPago(id);
-        await Recarregar();
-    }
-
-    private async Task Excluir(int id)
-    {
-        await LancamentoService.Excluir(id);
-        await Recarregar();
-    }
-
-    private static string GetStatusClass(string? status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "pago" => "bg-success",
-        "atrasado" => "bg-danger",
-        "parcial" => "bg-info text-dark",
-        _ => "bg-warning text-dark"
+        "pago" => MudBlazor.Color.Success,
+        "atrasado" => MudBlazor.Color.Error,
+        "parcial" => MudBlazor.Color.Info,
+        _ => MudBlazor.Color.Warning
     };
-
-    private static string GetStatusIcon(string? status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "pago" => "✅",
-        "atrasado" => "⛔",
-        "parcial" => "🧾",
-        _ => "⏳"
-    };
-
-    private static string GetExtratoUrl(LancamentoLinhaDto item)
-    {
-        var referencia = item.Vencimento ?? DateTime.Today;
-        var nome = Uri.EscapeDataString(item.NomeCartao);
-        return $"/cartoes/extrato/{item.ContaIdFatura}/{referencia.Year}/{referencia.Month}?NomeCartao={nome}";
-    }
 
     private sealed class LancamentoLinhaDto
     {
@@ -252,11 +102,6 @@ else
         public DateTime? Vencimento { get; set; }
         public string StatusIcone { get; set; } = "Pendente";
         public string Categoria { get; set; } = string.Empty;
-        public string Conta { get; set; } = string.Empty;
-        public string Pessoa { get; set; } = string.Empty;
-        public string? Competencia { get; set; }
-        public int ContaIdFatura { get; set; }
-        public string NomeCartao { get; set; } = string.Empty;
         public bool EhPago { get; set; }
     }
 }
