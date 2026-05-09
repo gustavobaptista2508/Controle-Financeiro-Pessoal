@@ -48,7 +48,7 @@
         <MudTd>@context.Vencimento?.ToString("dd/MM/yyyy")</MudTd>
         <MudTd>@context.Categoria</MudTd>
         <MudTd>
-            <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Success" Variant="Variant.Text" Disabled="@context.EhPago || _pagandoIds.Contains(context.Id)" OnClick="@(() => MarcarComoPago(context.Id))">Pagar</MudButton>
+            <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Success" Variant="Variant.Text" Disabled="@(context.EhPago || _pagandoIds.Contains(context.Id))" OnClick="@(() => MarcarComoPago(context.Id))">Pagar</MudButton>
             <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Error" Variant="Variant.Text" OnClick="@(() => Excluir(context.Id))">Excluir</MudButton>
         </MudTd>
     </RowTemplate>

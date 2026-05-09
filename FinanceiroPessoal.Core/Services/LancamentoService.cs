@@ -56,7 +56,7 @@ public class LancamentoService
     public async Task<decimal> CalcularSaldoConta(string? pessoa = null, string? status = null, string? tipo = null,
                                  DateTime? dataInicio = null, DateTime? dataFim = null)
     {
-        return await _repository.CalcularSaldoConta(pessoa, status, tipo, dataInicio, dataFim);
+        return await _repository.CalcularSaldoConta(pessoa ?? "", status ?? "", tipo ?? "", dataInicio, dataFim);
     }
 
     public async Task<List<Lancamento>> Filtrar(string? pessoa, string? status, string? tipo,

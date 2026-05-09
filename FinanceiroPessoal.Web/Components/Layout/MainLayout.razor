@@ -26,17 +26,19 @@
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
             <MudSpacer />
 
-            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" OffsetY="true" Class="user-menu">
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
                 <ActivatorContent>
                     <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
                         <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials()</MudAvatar>
                         <MudText Typo="Typo.body2">@GetDisplayName()</MudText>
                     </MudButton>
                 </ActivatorContent>
-                <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle">Meu Perfil</MudMenuItem>
-                <MudMenuItem Icon="@Icons.Material.Filled.Settings">Configurações</MudMenuItem>
-                <MudDivider />
-                <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
+                <ChildContent>
+                    <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle">Meu Perfil</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Settings">Configurações</MudMenuItem>
+                    <MudDivider />
+                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
+                </ChildContent>
             </MudMenu>
         </MudAppBar>
 

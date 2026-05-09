@@ -23,8 +23,8 @@
                 <MudItem xs="12" md="3"><MudNumericField Label="Valor" Variant="Variant.Outlined" @bind-Value="lancamento.Valor" FullWidth="true" /></MudItem>
                 <MudItem xs="12" md="3">
                     <MudSelect T="TipoLancamento" Label="Tipo" Variant="Variant.Outlined" @bind-Value="lancamento.Tipo">
-                        <MudSelectItem Value="TipoLancamento.Entrada">Entrada</MudSelectItem>
-                        <MudSelectItem Value="TipoLancamento.Saida">Saída</MudSelectItem>
+                        <MudSelectItem Value="@TipoLancamento.Entrada">Entrada</MudSelectItem>
+                        <MudSelectItem Value="@TipoLancamento.Saida">Saída</MudSelectItem>
                     </MudSelect>
                 </MudItem>
 
@@ -47,7 +47,7 @@
                 </MudItem>
                 <MudItem xs="12" md="4">
                     <MudSelect T="string" Label="Status" Variant="Variant.Outlined" @bind-Value="lancamento.Status">
-                        <MudSelectItem Value="Pendente">Pendente</MudSelectItem><MudSelectItem Value="Pago">Pago</MudSelectItem><MudSelectItem Value="Atrasado">Atrasado</MudSelectItem>
+                        <MudSelectItem Value="@("Pendente")">Pendente</MudSelectItem><MudSelectItem Value="@("Pago")">Pago</MudSelectItem><MudSelectItem Value="@("Atrasado")">Atrasado</MudSelectItem>
                     </MudSelect>
                 </MudItem>
                 <MudItem xs="12" md="2"><MudNumericField Label="Parcelas" Variant="Variant.Outlined" @bind-Value="quantidadeParcelas" Min="1" Disabled="@Id.HasValue" /></MudItem>
