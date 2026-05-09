@@ -9,7 +9,7 @@
         <MudTextField Label="Nome" Variant="Variant.Outlined" @bind-Value="nome" FullWidth="true" />
         <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" Class="mt-2" />
         <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Class="mt-2" />
-        <MudButton Class="mt-4" Color="Color.Secondary" Variant="Variant.Filled" FullWidth="true" OnClick="Cadastrar">Cadastrar</MudButton>
+        <MudButton Class="mt-4" Color="MudBlazor.Color.Secondary" Variant="Variant.Filled" FullWidth="true" OnClick="Cadastrar">Cadastrar</MudButton>
         @if (!string.IsNullOrWhiteSpace(msg)) { <MudAlert Severity="Severity.Success" Class="mt-3">@msg</MudAlert> }
     </MudPaper>
 </MudContainer>

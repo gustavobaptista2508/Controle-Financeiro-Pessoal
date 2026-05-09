@@ -2,6 +2,7 @@ using ApexCharts;
 using FinanceiroPessoal.Core.Repositories;
 using FinanceiroPessoal.Core.Services;
 using FinanceiroPessoal.Web;
+using FinanceiroPessoal.Web.Services;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using MudBlazor.Services;

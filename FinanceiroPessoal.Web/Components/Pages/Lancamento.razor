@@ -4,12 +4,12 @@
 
 <PageTitle>Lançamentos</PageTitle>
 
-<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="MudBlazor.AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
     <div>
         <MudText Typo="Typo.h5">Consulta de Lançamentos</MudText>
         <MudText Typo="Typo.body2">Gestão inteligente de entradas e saídas.</MudText>
     </div>
-    <MudButton Href="/lancamentos/novo" Variant="Variant.Filled" Color="Color.Primary">Novo lançamento</MudButton>
+    <MudButton Href="/lancamentos/novo" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">Novo lançamento</MudButton>
 </MudStack>
 
 <MudPaper Class="pa-4 mb-4">
@@ -47,8 +47,8 @@
         <MudTd>@context.Vencimento?.ToString("dd/MM/yyyy")</MudTd>
         <MudTd>@context.Categoria</MudTd>
         <MudTd>
-            <MudButton Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Disabled="@context.EhPago" OnClick="@(() => MarcarComoPago(context.Id))">Pagar</MudButton>
-            <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Text" OnClick="@(() => Excluir(context.Id))">Excluir</MudButton>
+            <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Success" Variant="Variant.Text" Disabled="@context.EhPago" OnClick="@(() => MarcarComoPago(context.Id))">Pagar</MudButton>
+            <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Error" Variant="Variant.Text" OnClick="@(() => Excluir(context.Id))">Excluir</MudButton>
         </MudTd>
     </RowTemplate>
 </MudTable>
