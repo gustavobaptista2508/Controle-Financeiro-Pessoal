@@ -1,16 +1,23 @@
-@page "/home"
-@inject NavigationManager Navigation
+@page "/"
 
-<PageTitle>Dashboard</PageTitle>
+<PageTitle>GranaOK</PageTitle>
 
-<div class="container py-5 text-center">
-    <p class="text-muted mb-3">Redirecionando para o Dashboard...</p>
-    <a class="btn btn-primary" href="/">Ir agora</a>
-</div>
-
-@code {
-    protected override void OnInitialized()
-    {
-        Navigation.NavigateTo("/", forceLoad: false);
-    }
-}
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
+    <MudGrid AlignItems="AlignItems.Center">
+        <MudItem xs="12" md="6">
+            <MudText Typo="Typo.h3" Class="mb-3">GranaOK: seu sistema financeiro pessoal</MudText>
+            <MudText Typo="Typo.body1" Class="mb-4">Controle entradas, despesas e metas com experiência moderna, rápida e responsiva.</MudText>
+            <MudStack Row="true" Spacing="2">
+                <MudButton Href="/login" Variant="Variant.Filled" Color="Color.Primary">Entrar</MudButton>
+                <MudButton Href="/usuarios/cadastro" Variant="Variant.Outlined" Color="Color.Secondary">Criar conta</MudButton>
+                <MudButton Href="/dashboard" Variant="Variant.Text" Color="Color.Secondary">Ver demonstração</MudButton>
+            </MudStack>
+        </MudItem>
+        <MudItem xs="12" md="6">
+            <MudPaper Class="hero">
+                <MudText Typo="Typo.h5">Visual fintech com foco em produtividade</MudText>
+                <MudText>Sidebar, topbar profissional, dashboard com indicadores e análises de despesas.</MudText>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>

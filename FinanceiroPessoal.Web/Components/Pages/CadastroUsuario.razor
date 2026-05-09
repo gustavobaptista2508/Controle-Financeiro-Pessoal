@@ -1,25 +1,17 @@
 @page "/usuarios/cadastro"
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 
-<PageTitle>Cadastro de usuário</PageTitle>
-<div class="container mt-4" style="max-width:520px;">
-    <h3>Cadastrar usuário</h3>
-    <div class="mb-2"><label>Nome</label><input class="form-control" @bind="nome" /></div>
-    <div class="mb-2"><label>E-mail</label><input class="form-control" @bind="email" /></div>
-    <div class="mb-3"><label>Senha</label><input class="form-control" type="password" @bind="senha" /></div>
-    <button class="btn btn-success" @onclick="Cadastrar">Cadastrar</button>
-    @if (!string.IsNullOrWhiteSpace(msg)) { <div class="alert alert-info mt-3">@msg</div> }
-</div>
+<PageTitle>Cadastro</PageTitle>
 
-@code {
-    private string nome = string.Empty;
-    private string email = string.Empty;
-    private string senha = string.Empty;
-    private string? msg;
+<MudContainer MaxWidth="MaxWidth.Small" Class="auth-page">
+    <MudPaper Class="pa-6">
+        <MudText Typo="Typo.h5">Criar conta</MudText>
+        <MudTextField Label="Nome" Variant="Variant.Outlined" @bind-Value="nome" FullWidth="true" />
+        <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" Class="mt-2" />
+        <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Class="mt-2" />
+        <MudButton Class="mt-4" Color="Color.Secondary" Variant="Variant.Filled" FullWidth="true" OnClick="Cadastrar">Cadastrar</MudButton>
+        @if (!string.IsNullOrWhiteSpace(msg)) { <MudAlert Severity="Severity.Success" Class="mt-3">@msg</MudAlert> }
+    </MudPaper>
+</MudContainer>
 
-    private void Cadastrar()
-    {
-        var r = Session.RegisterUser(nome, email, senha);
-        msg = r;
-    }
-}
+@code { string nome=""; string email=""; string senha=""; string? msg; void Cadastrar()=> msg=Session.RegisterUser(nome,email,senha); }
