@@ -1,30 +1,43 @@
 @inherits LayoutComponentBase
+@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
+@inject NavigationManager Navigation
 
 <MudThemeProvider Theme="_theme" />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
 <MudLayout>
-    <MudDrawer Elevation="1" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
+    <MudDrawer Elevation="0" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
         <div class="logo-area">
             <img src="granaok-logo.svg" alt="GranaOK" />
+            <MudText Typo="Typo.subtitle2" Class="brand-caption">Controle Financeiro Inteligente</MudText>
         </div>
-        <MudNavMenu>
-            <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard" Match="NavLinkMatch.All">Dashboard</MudNavLink>
+        <MudNavMenu Class="sidebar-menu">
+            <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.SpaceDashboard" Match="NavLinkMatch.All">Dashboard</MudNavLink>
             <MudNavLink Href="/lancamentos" Icon="@Icons.Material.Filled.ReceiptLong">Lançamentos</MudNavLink>
-            <MudNavLink Href="/lancamentos/novo" Icon="@Icons.Material.Filled.AddCircle">Novo lançamento</MudNavLink>
+            <MudNavLink Href="/lancamentos/novo" Icon="@Icons.Material.Filled.AddCircleOutline">Novo lançamento</MudNavLink>
             <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
-            <MudNavLink Href="/usuarios/cadastro" Icon="@Icons.Material.Filled.PersonAdd">Cadastro</MudNavLink>
+            <MudNavLink Href="/usuarios/cadastro" Icon="@Icons.Material.Filled.PersonAddAlt1">Cadastro</MudNavLink>
         </MudNavMenu>
     </MudDrawer>
 
     <MudMainContent>
-        <MudAppBar Elevation="0" Dense="true" Class="topbar">
+        <MudAppBar Elevation="0" Dense="false" Class="topbar">
             <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-            <MudText Typo="Typo.h6">GranaOK</MudText>
             <MudSpacer />
-            <MudText Typo="Typo.body2" Class="me-2 d-none d-md-flex">Visão financeira inteligente</MudText>
-            <MudAvatar Color="MudBlazor.Color.Primary">GO</MudAvatar>
+
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" OffsetY="true" Class="user-menu">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
+                        <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials()</MudAvatar>
+                        <MudText Typo="Typo.body2">@GetDisplayName()</MudText>
+                    </MudButton>
+                </ActivatorContent>
+                <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle">Meu Perfil</MudMenuItem>
+                <MudMenuItem Icon="@Icons.Material.Filled.Settings">Configurações</MudMenuItem>
+                <MudDivider />
+                <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
+            </MudMenu>
         </MudAppBar>
 
         <MudContainer MaxWidth="MaxWidth.False" Class="content-area">
@@ -41,13 +54,37 @@
         PaletteLight = new PaletteLight
         {
             Primary = "#00C853",
-            Secondary = "#003B7A",
-            Background = "#F4F8FC",
+            Secondary = "#052C65",
+            Background = "#F4F7FB",
             Surface = "#FFFFFF",
             AppbarBackground = "#FFFFFF",
-            AppbarText = "#003B7A"
+            AppbarText = "#052C65",
+            DrawerBackground = "#052C65",
+            DrawerText = "#E7EEF8",
+            DrawerIcon = "#C8D7EE"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "16px"
         }
     };
 
     private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private string GetDisplayName() => Session.CurrentUserName ?? "Usuário";
+
+    private string GetInitials()
+    {
+        var name = GetDisplayName();
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "GO";
+        if (parts.Length == 1) return parts[0][..1].ToUpperInvariant();
+        return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant();
+    }
+
+    private void Logout()
+    {
+        Session.Logout();
+        Navigation.NavigateTo("/login");
+    }
 }
