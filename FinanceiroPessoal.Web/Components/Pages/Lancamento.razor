@@ -5,105 +5,27 @@
 
 <PageTitle>Lançamentos</PageTitle>
 
-<h2 class="mb-1">Consulta de Lançamentos</h2>
-<p class="text-muted">Home > Lançamentos > Consulta</p>
+<MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
+    <div><MudText Typo="Typo.h5">Consulta de Lançamentos</MudText><MudText Typo="Typo.body2">Gestão inteligente de entradas e saídas.</MudText></div>
+    <MudButton Href="/lancamentos/novo" Variant="Variant.Filled" Color="Color.Primary">Novo lançamento</MudButton>
+</MudStack>
 
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="btn btn-primary btn-mobile-full" href="/lancamentos/novo">Novo</a>
-    <a class="btn btn-outline-secondary btn-mobile-full" href="/">Voltar para página principal</a>
-</div>
+<MudPaper Class="pa-4 mb-4">
+    <MudGrid>
+        <MudItem xs="12" md="4"><MudTextField Label="Descrição" @bind-Value="filtroDescricao" Variant="Variant.Outlined" /></MudItem>
+        <MudItem xs="12" md="3"><MudSelect T="string" Label="Status" @bind-Value="filtroStatus"><MudSelectItem Value="Todos">Todos</MudSelectItem><MudSelectItem Value="Pendente">Pendente</MudSelectItem><MudSelectItem Value="Pago">Pago</MudSelectItem><MudSelectItem Value="Atrasado">Atrasado</MudSelectItem><MudSelectItem Value="Parcial">Parcial</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12" md="3"><MudSelect T="string" Label="Tipo" @bind-Value="filtroTipo"><MudSelectItem Value="Todos">Todos</MudSelectItem><MudSelectItem Value="Entrada">Entrada</MudSelectItem><MudSelectItem Value="Saída">Saída</MudSelectItem></MudSelect></MudItem>
+    </MudGrid>
+</MudPaper>
 
-<div class="card mb-3">
-    <div class="card-body">
-        <div class="row g-2 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">Descrição</label>
-                <input class="form-control" @bind="filtroDescricao" placeholder="Buscar por descrição" />
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Status</label>
-                <select class="form-select" @bind="filtroStatus">
-                    <option value="Todos">Todos</option>
-                    <option value="Pendente">Pendente</option>
-                    <option value="Pago">Pago</option>
-                    <option value="Atrasado">Atrasado</option>
-                    <option value="Parcial">Parcial</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label class="form-label">Tipo</label>
-                <select class="form-select" @bind="filtroTipo">
-                    <option value="Todos">Todos</option>
-                    <option value="Entrada">Entrada</option>
-                    <option value="Saída">Saída</option>
-                </select>
-            </div>
-            <div class="col-12 col-md-2 d-grid">
-                <button class="btn btn-primary btn-mobile-full" @onclick="AplicarFiltros">Buscar</button>
-            </div>
-            <div class="col-12 col-md-2 d-grid">
-                <button class="btn btn-outline-secondary btn-mobile-full" @onclick="LimparFiltros">Limpar filtros</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-@if (carregando)
-{
-    <p>Carregando lançamentos...</p>
-}
-else
-{
-    <div class="table-responsive">
-        <table class="table table-striped table-hover align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th style="width: 140px; text-align: center;">Status</th>
-                    <th style="width: 60px;">Id</th>
-                    <th style="width: 90px;">Tipo</th>
-                    <th style="width: 280px;">Descrição</th>
-                    <th>Valor</th>
-                    <th>Vencimento</th>
-                    <th>Categoria</th>
-                    <th>Conta</th>
-                    <th>Pessoa</th>
-                    <th>Competência</th>
-                    <th style="width: 280px;">Ações</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in LinhasFiltradas)
-                {
-                    <tr class="@(item.ContaIdFatura > 0 ? "table-primary" : string.Empty)">
-                        <td class="text-center">
-                            <span class="badge @GetStatusClass(item.StatusIcone)">@GetStatusIcon(item.StatusIcone) @item.StatusIcone</span>
-                        </td>
-                        <td>@item.Id</td>
-                        <td>@item.Tipo</td>
-                        <td>@item.Descricao</td>
-                        <td>@item.Valor.ToString("N2")</td>
-                        <td>@(item.Vencimento?.ToString("dd/MM/yyyy") ?? "")</td>
-                        <td>@item.Categoria</td>
-                        <td>@item.Conta</td>
-                        <td>@item.Pessoa</td>
-                        <td>@item.Competencia</td>
-                        <td class="acoes-linha">
-                            @if (item.ContaIdFatura > 0)
-                            {
-                                <a class="btn btn-sm btn-outline-primary" href="@GetExtratoUrl(item)">Abrir extrato</a>
-                            }
-                            else if (!item.EhPago)
-                            {
-                                <button class="btn btn-sm btn-success" @onclick="() => MarcarComoPago(item.Id)">Marcar como pago</button>
-                            }
-                            <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => Excluir(item.Id)" disabled="@(item.ContaIdFatura > 0)">Excluir</button>
-                        </td>
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-}
+<MudTable Items="LinhasFiltradas" Hover="true" Dense="true" Bordered="false" Striped="true">
+    <HeaderContent><MudTh>Status</MudTh><MudTh>Descrição</MudTh><MudTh>Valor</MudTh><MudTh>Vencimento</MudTh><MudTh>Categoria</MudTh><MudTh>Ações</MudTh></HeaderContent>
+    <RowTemplate>
+        <MudTd><MudChip Color="@GetStatusColor(context.StatusIcone)">@context.StatusIcone</MudChip></MudTd>
+        <MudTd>@context.Descricao</MudTd><MudTd>@context.Valor.ToString("C")</MudTd><MudTd>@context.Vencimento?.ToString("dd/MM/yyyy")</MudTd><MudTd>@context.Categoria</MudTd>
+        <MudTd><MudButton Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Disabled="@context.EhPago" OnClick="@(()=>MarcarComoPago(context.Id))">Pagar</MudButton><MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Text" OnClick="@(()=>Excluir(context.Id))">Excluir</MudButton></MudTd>
+    </RowTemplate>
+</MudTable>
 
 @code {
     private bool carregando = true;
@@ -220,20 +142,12 @@ else
         await Recarregar();
     }
 
-    private static string GetStatusClass(string? status) => status?.Trim().ToLowerInvariant() switch
+    private static Color GetStatusColor(string? status) => status?.Trim().ToLowerInvariant() switch
     {
-        "pago" => "bg-success",
-        "atrasado" => "bg-danger",
-        "parcial" => "bg-info text-dark",
-        _ => "bg-warning text-dark"
-    };
-
-    private static string GetStatusIcon(string? status) => status?.Trim().ToLowerInvariant() switch
-    {
-        "pago" => "✅",
-        "atrasado" => "⛔",
-        "parcial" => "🧾",
-        _ => "⏳"
+        "pago" => Color.Success,
+        "atrasado" => Color.Error,
+        "parcial" => Color.Info,
+        _ => Color.Warning
     };
 
     private static string GetExtratoUrl(LancamentoLinhaDto item)
