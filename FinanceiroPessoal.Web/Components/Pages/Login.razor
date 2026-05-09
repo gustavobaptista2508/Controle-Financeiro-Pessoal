@@ -3,30 +3,15 @@
 @inject NavigationManager Nav
 
 <PageTitle>Login</PageTitle>
-<div class="container mt-4" style="max-width:450px;">
-    <h3>Entrar</h3>
-    <div class="mb-3"><label>E-mail</label><input class="form-control" @bind="email" /></div>
-    <div class="mb-3"><label>Senha</label><input class="form-control" type="password" @bind="senha" /></div>
-    @if (!string.IsNullOrWhiteSpace(erro))
-    {
-        <div class="alert alert-danger">@erro</div>
-    }
-    <button class="btn btn-primary w-100" @onclick="Entrar">Entrar</button>
-</div>
 
-@code {
-    private string email = string.Empty;
-    private string senha = string.Empty;
-    private string? erro;
+<MudContainer MaxWidth="MaxWidth.Small" Class="auth-page">
+    <MudPaper Class="pa-6">
+        <MudText Typo="Typo.h5" GutterBottom="true">Entrar no GranaOK</MudText>
+        <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" />
+        <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Class="mt-3" />
+        @if (!string.IsNullOrWhiteSpace(erro)) { <MudAlert Severity="Severity.Error" Class="mt-3">@erro</MudAlert> }
+        <MudButton Class="mt-4" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true" OnClick="Entrar">Entrar</MudButton>
+    </MudPaper>
+</MudContainer>
 
-    private void Entrar()
-    {
-        if (!Session.LoginWithPassword(email, senha))
-        {
-            erro = "E-mail ou senha inválidos.";
-            return;
-        }
-
-        Nav.NavigateTo("/");
-    }
-}
+@code { string email=""; string senha=""; string? erro; void Entrar(){ if(!Session.LoginWithPassword(email,senha)){erro="E-mail ou senha inválidos.";return;} Nav.NavigateTo("/"); } }

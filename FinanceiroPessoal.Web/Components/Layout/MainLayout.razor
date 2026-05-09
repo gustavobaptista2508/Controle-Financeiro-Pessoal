@@ -1,41 +1,53 @@
 @inherits LayoutComponentBase
 
-<div class="container-fluid min-vh-100 py-2 py-md-3">
-    <div class="row g-0 flex-nowrap rounded-4 overflow-hidden border">
-        <aside class="col-12 col-md-3 col-xl-2 p-0 bg-primary bg-gradient text-white d-none d-md-flex flex-column">
-            <NavMenu />
-        </aside>
+<MudThemeProvider Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-        <div class="col bg-light p-0 d-flex flex-column">
-            <header class="navbar navbar-expand bg-white border-bottom px-3 py-2 shadow-sm">
-                <button class="btn btn-link text-dark p-0 me-3" title="Menu">
-                    <i class="bi bi-list fs-4"></i>
-                </button>
-                <div class="ms-auto d-flex align-items-center gap-3">
-                    <i class="bi bi-search"></i>
-                    <i class="bi bi-bell"></i>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge rounded-pill text-bg-dark px-3 py-2">GU</span>
-                        <div class="d-none d-sm-block lh-1">
-                            <strong class="d-block">Gustavo</strong>
-                            <small class="text-muted">Perfil</small>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <main class="p-3 p-md-4">
-                @Body
-            </main>
+<MudLayout>
+    <MudDrawer Elevation="1" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
+        <div class="logo-area">
+            <img src="granaok-logo.svg" alt="GranaOK" />
         </div>
-    </div>
-</div>
+        <MudNavMenu>
+            <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.Dashboard" Match="NavLinkMatch.All">Dashboard</MudNavLink>
+            <MudNavLink Href="/lancamentos" Icon="@Icons.Material.Filled.ReceiptLong">Lançamentos</MudNavLink>
+            <MudNavLink Href="/lancamentos/novo" Icon="@Icons.Material.Filled.AddCircle">Novo lançamento</MudNavLink>
+            <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+            <MudNavLink Href="/usuarios/cadastro" Icon="@Icons.Material.Filled.PersonAdd">Cadastro</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
 
+    <MudMainContent>
+        <MudAppBar Elevation="0" Dense="true" Class="topbar">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudText Typo="Typo.h6">GranaOK</MudText>
+            <MudSpacer />
+            <MudText Typo="Typo.body2" Class="me-2 d-none d-md-flex">Visão financeira inteligente</MudText>
+            <MudAvatar Color="MudBlazor.Color.Primary">GO</MudAvatar>
+        </MudAppBar>
 
-<div class="mobile-nav d-md-none fixed-bottom bg-white border-top shadow-sm">
-    <div class="nav nav-pills nav-justified py-1">
-        <a class="nav-link" href="/"><i class="bi bi-house d-block"></i><small>Dashboard</small></a>
-        <a class="nav-link" href="/lancamentos"><i class="bi bi-card-list d-block"></i><small>Lançamentos</small></a>
-        <a class="nav-link" href="/lancamentos/novo"><i class="bi bi-plus-square d-block"></i><small>Novo</small></a>
-    </div>
-</div>
+        <MudContainer MaxWidth="MaxWidth.False" Class="content-area">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#00C853",
+            Secondary = "#003B7A",
+            Background = "#F4F8FC",
+            Surface = "#FFFFFF",
+            AppbarBackground = "#FFFFFF",
+            AppbarText = "#003B7A"
+        }
+    };
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+}
