@@ -1,78 +1,70 @@
 @page "/lancamentos"
-@using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @using FinanceiroPessoal.Core.Services
 @inject LancamentoService LancamentoService
 
 <PageTitle>Lançamentos</PageTitle>
 
 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4" Wrap="Wrap.Wrap">
-    <div><MudText Typo="Typo.h5">Consulta de Lançamentos</MudText><MudText Typo="Typo.body2">Gestão inteligente de entradas e saídas.</MudText></div>
+    <div>
+        <MudText Typo="Typo.h5">Consulta de Lançamentos</MudText>
+        <MudText Typo="Typo.body2">Gestão inteligente de entradas e saídas.</MudText>
+    </div>
     <MudButton Href="/lancamentos/novo" Variant="Variant.Filled" Color="Color.Primary">Novo lançamento</MudButton>
 </MudStack>
 
 <MudPaper Class="pa-4 mb-4">
     <MudGrid>
-        <MudItem xs="12" md="4"><MudTextField Label="Descrição" @bind-Value="filtroDescricao" Variant="Variant.Outlined" /></MudItem>
-        <MudItem xs="12" md="3"><MudSelect T="string" Label="Status" @bind-Value="filtroStatus"><MudSelectItem Value="Todos">Todos</MudSelectItem><MudSelectItem Value="Pendente">Pendente</MudSelectItem><MudSelectItem Value="Pago">Pago</MudSelectItem><MudSelectItem Value="Atrasado">Atrasado</MudSelectItem><MudSelectItem Value="Parcial">Parcial</MudSelectItem></MudSelect></MudItem>
-        <MudItem xs="12" md="3"><MudSelect T="string" Label="Tipo" @bind-Value="filtroTipo"><MudSelectItem Value="Todos">Todos</MudSelectItem><MudSelectItem Value="Entrada">Entrada</MudSelectItem><MudSelectItem Value="Saída">Saída</MudSelectItem></MudSelect></MudItem>
+        <MudItem xs="12" md="4">
+            <MudTextField Label="Descrição" @bind-Value="filtroDescricao" Variant="Variant.Outlined" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" Label="Status" @bind-Value="filtroStatus">
+                <MudSelectItem Value="@("Todos")">Todos</MudSelectItem>
+                <MudSelectItem Value="@("Pendente")">Pendente</MudSelectItem>
+                <MudSelectItem Value="@("Pago")">Pago</MudSelectItem>
+                <MudSelectItem Value="@("Atrasado")">Atrasado</MudSelectItem>
+                <MudSelectItem Value="@("Parcial")">Parcial</MudSelectItem>
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" Label="Tipo" @bind-Value="filtroTipo">
+                <MudSelectItem Value="@("Todos")">Todos</MudSelectItem>
+                <MudSelectItem Value="@("Entrada")">Entrada</MudSelectItem>
+                <MudSelectItem Value="@("Saída")">Saída</MudSelectItem>
+            </MudSelect>
+        </MudItem>
     </MudGrid>
 </MudPaper>
 
 <MudTable Items="LinhasFiltradas" Hover="true" Dense="true" Bordered="false" Striped="true">
-    <HeaderContent><MudTh>Status</MudTh><MudTh>Descrição</MudTh><MudTh>Valor</MudTh><MudTh>Vencimento</MudTh><MudTh>Categoria</MudTh><MudTh>Ações</MudTh></HeaderContent>
+    <HeaderContent>
+        <MudTh>Status</MudTh><MudTh>Descrição</MudTh><MudTh>Valor</MudTh><MudTh>Vencimento</MudTh><MudTh>Categoria</MudTh><MudTh>Ações</MudTh>
+    </HeaderContent>
     <RowTemplate>
         <MudTd><MudChip Color="@GetStatusColor(context.StatusIcone)">@context.StatusIcone</MudChip></MudTd>
-        <MudTd>@context.Descricao</MudTd><MudTd>@context.Valor.ToString("C")</MudTd><MudTd>@context.Vencimento?.ToString("dd/MM/yyyy")</MudTd><MudTd>@context.Categoria</MudTd>
-        <MudTd><MudButton Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Disabled="@context.EhPago" OnClick="@(()=>MarcarComoPago(context.Id))">Pagar</MudButton><MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Text" OnClick="@(()=>Excluir(context.Id))">Excluir</MudButton></MudTd>
+        <MudTd>@context.Descricao</MudTd>
+        <MudTd>@context.Valor.ToString("C")</MudTd>
+        <MudTd>@context.Vencimento?.ToString("dd/MM/yyyy")</MudTd>
+        <MudTd>@context.Categoria</MudTd>
+        <MudTd>
+            <MudButton Size="Size.Small" Color="Color.Success" Variant="Variant.Text" Disabled="@context.EhPago" OnClick="@(() => MarcarComoPago(context.Id))">Pagar</MudButton>
+            <MudButton Size="Size.Small" Color="Color.Error" Variant="Variant.Text" OnClick="@(() => Excluir(context.Id))">Excluir</MudButton>
+        </MudTd>
     </RowTemplate>
 </MudTable>
 
 @code {
-    private bool carregando = true;
     private List<LancamentoLinhaDto> linhas = new();
     private string filtroDescricao = string.Empty;
     private string filtroStatus = "Todos";
     private string filtroTipo = "Todos";
-
     private IEnumerable<LancamentoLinhaDto> LinhasFiltradas => linhas.Where(AtendeFiltros);
-
-    protected override async Task OnInitializedAsync()
-    {
-        await Recarregar();
-    }
+    protected override async Task OnInitializedAsync() => await Recarregar();
 
     private async Task Recarregar()
     {
-        carregando = true;
-
         var lancamentos = await LancamentoService.ObterTodos();
-
-        var normais = lancamentos.Where(x => x.Conta?.Tipo != "Cartão").ToList();
-        var cartoes = lancamentos.Where(x => x.Conta?.Tipo == "Cartão").ToList();
-
-        var faturas = cartoes
-            .GroupBy(x => new { x.ContaId, Nome = x.Conta?.Nome ?? "Cartão" })
-            .Select(g => new LancamentoLinhaDto
-            {
-                Id = -(g.Key.ContaId ?? 0),
-                Tipo = "Saída",
-                Descricao = $"Fatura {g.Key.Nome}  •  {g.Count()} lançamento(s)",
-                Valor = g.Sum(x => x.Valor),
-                Vencimento = g.Max(x => x.DataVencimento),
-                StatusIcone = g.All(x => x.Status == "Pago") ? "Pago" :
-                              g.Any(x => x.Status == "Pago") ? "Parcial" :
-                              g.Any(x => x.Status == "Atrasado") ? "Atrasado" : "Pendente",
-                Categoria = "Cartão de Crédito",
-                Conta = g.Key.Nome,
-                Pessoa = string.Empty,
-                Competencia = string.Empty,
-                ContaIdFatura = g.Key.ContaId ?? 0,
-                NomeCartao = g.Key.Nome,
-                EhPago = g.All(x => x.Status == "Pago")
-            })
-            .ToList();
-
-        var dadosNormais = normais.Select(x => new LancamentoLinhaDto
+        linhas = lancamentos.Select(x => new LancamentoLinhaDto
         {
             Id = x.Id,
             Tipo = x.Tipo == global::FinanceiroPessoal.Core.Models.TipoLancamento.Entrada ? "Entrada" : "Saída",
@@ -81,66 +73,17 @@
             Vencimento = x.DataVencimento,
             StatusIcone = x.Status,
             Categoria = x.Categoria?.Nome ?? string.Empty,
-            Conta = x.Conta?.Nome ?? string.Empty,
-            Pessoa = x.Pessoa?.Nome ?? string.Empty,
-            Competencia = x.Competencia,
-            ContaIdFatura = 0,
-            NomeCartao = string.Empty,
             EhPago = string.Equals(x.Status, "Pago", StringComparison.OrdinalIgnoreCase)
-        }).ToList();
-
-        linhas = dadosNormais
-            .Concat(faturas)
-            .OrderBy(x => x.Vencimento ?? DateTime.MaxValue)
-            .ToList();
-
-        carregando = false;
+        }).OrderBy(x => x.Vencimento ?? DateTime.MaxValue).ToList();
     }
 
-    private bool AtendeFiltros(LancamentoLinhaDto linha)
-    {
-        if (!string.IsNullOrWhiteSpace(filtroDescricao) &&
-            !linha.Descricao.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
+    private bool AtendeFiltros(LancamentoLinhaDto l) =>
+        (string.IsNullOrWhiteSpace(filtroDescricao) || l.Descricao.Contains(filtroDescricao, StringComparison.OrdinalIgnoreCase)) &&
+        (filtroStatus == "Todos" || string.Equals(l.StatusIcone, filtroStatus, StringComparison.OrdinalIgnoreCase)) &&
+        (filtroTipo == "Todos" || string.Equals(l.Tipo, filtroTipo, StringComparison.OrdinalIgnoreCase));
 
-        if (filtroStatus != "Todos" && !string.Equals(linha.StatusIcone, filtroStatus, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        if (filtroTipo != "Todos" && !string.Equals(linha.Tipo, filtroTipo, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private void AplicarFiltros()
-    {
-        StateHasChanged();
-    }
-
-    private void LimparFiltros()
-    {
-        filtroDescricao = string.Empty;
-        filtroStatus = "Todos";
-        filtroTipo = "Todos";
-    }
-
-    private async Task MarcarComoPago(int id)
-    {
-        await LancamentoService.MarcarComoPago(id);
-        await Recarregar();
-    }
-
-    private async Task Excluir(int id)
-    {
-        await LancamentoService.Excluir(id);
-        await Recarregar();
-    }
+    private async Task MarcarComoPago(int id) { await LancamentoService.MarcarComoPago(id); await Recarregar(); }
+    private async Task Excluir(int id) { await LancamentoService.Excluir(id); await Recarregar(); }
 
     private static Color GetStatusColor(string? status) => status?.Trim().ToLowerInvariant() switch
     {
@@ -149,13 +92,6 @@
         "parcial" => Color.Info,
         _ => Color.Warning
     };
-
-    private static string GetExtratoUrl(LancamentoLinhaDto item)
-    {
-        var referencia = item.Vencimento ?? DateTime.Today;
-        var nome = Uri.EscapeDataString(item.NomeCartao);
-        return $"/cartoes/extrato/{item.ContaIdFatura}/{referencia.Year}/{referencia.Month}?NomeCartao={nome}";
-    }
 
     private sealed class LancamentoLinhaDto
     {
@@ -166,11 +102,6 @@
         public DateTime? Vencimento { get; set; }
         public string StatusIcone { get; set; } = "Pendente";
         public string Categoria { get; set; } = string.Empty;
-        public string Conta { get; set; } = string.Empty;
-        public string Pessoa { get; set; } = string.Empty;
-        public string? Competencia { get; set; }
-        public int ContaIdFatura { get; set; }
-        public string NomeCartao { get; set; } = string.Empty;
         public bool EhPago { get; set; }
     }
 }

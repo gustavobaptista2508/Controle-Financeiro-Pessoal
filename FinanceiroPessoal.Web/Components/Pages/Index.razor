@@ -16,10 +16,10 @@
 
     @if (resumo is not null)
     {
-        <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Entradas" Value="@resumo.TotalEntradas.ToString(\"C\")" Subtitle="@($\"{resumo.QuantidadeEntradas} lançamentos\")" /></MudItem>
-        <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Saídas" Value="@resumo.TotalSaidas.ToString(\"C\")" Subtitle="@($\"{resumo.QuantidadeSaidas} lançamentos\")" /></MudItem>
-        <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Pendentes" Value="@resumo.TotalPendente.ToString(\"C\")" Subtitle="@($\"{resumo.QuantidadePendentes} aguardando\")" /></MudItem>
-        <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Saldo do mês" Value="@resumo.SaldoMes.ToString(\"C\")" Subtitle="Competência atual" /></MudItem>
+        <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Entradas" Value="@resumo.TotalEntradas.ToString("C")" Subtitle="@($"{resumo.QuantidadeEntradas} lançamentos")" /></MudItem>
+        <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Saídas" Value="@resumo.TotalSaidas.ToString("C")" Subtitle="@($"{resumo.QuantidadeSaidas} lançamentos")" /></MudItem>
+        <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Pendentes" Value="@resumo.TotalPendente.ToString("C")" Subtitle="@($"{resumo.QuantidadePendentes} aguardando")" /></MudItem>
+        <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Saldo do mês" Value="@resumo.SaldoMes.ToString("C")" Subtitle="Competência atual" /></MudItem>
     }
 
     <MudItem xs="12" md="6">
