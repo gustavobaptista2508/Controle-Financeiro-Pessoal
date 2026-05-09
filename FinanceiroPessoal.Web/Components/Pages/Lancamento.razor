@@ -41,7 +41,7 @@
         <MudTh>Status</MudTh><MudTh>Descrição</MudTh><MudTh>Valor</MudTh><MudTh>Vencimento</MudTh><MudTh>Categoria</MudTh><MudTh>Ações</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd><MudChip Color="@GetStatusColor(context.StatusIcone)">@context.StatusIcone</MudChip></MudTd>
+        <MudTd><MudChip T="string" Color="@GetStatusColor(context.StatusIcone)">@context.StatusIcone</MudChip></MudTd>
         <MudTd>@context.Descricao</MudTd>
         <MudTd>@context.Valor.ToString("C")</MudTd>
         <MudTd>@context.Vencimento?.ToString("dd/MM/yyyy")</MudTd>
@@ -85,12 +85,12 @@
     private async Task MarcarComoPago(int id) { await LancamentoService.MarcarComoPago(id); await Recarregar(); }
     private async Task Excluir(int id) { await LancamentoService.Excluir(id); await Recarregar(); }
 
-    private static Color GetStatusColor(string? status) => status?.Trim().ToLowerInvariant() switch
+    private static MudBlazor.Color GetStatusColor(string? status) => status?.Trim().ToLowerInvariant() switch
     {
-        "pago" => Color.Success,
-        "atrasado" => Color.Error,
-        "parcial" => Color.Info,
-        _ => Color.Warning
+        "pago" => MudBlazor.Color.Success,
+        "atrasado" => MudBlazor.Color.Error,
+        "parcial" => MudBlazor.Color.Info,
+        _ => MudBlazor.Color.Warning
     };
 
     private sealed class LancamentoLinhaDto
