@@ -2,6 +2,7 @@
 @using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @using FinanceiroPessoal.Core.Services
 @inject LancamentoService LancamentoService
+@inject ISnackbar Snackbar
 
 <PageTitle>Extrato do Cartão</PageTitle>
 
@@ -44,7 +45,8 @@ else
                     <td>
                         @if (item.Status != "Pago")
                         {
-                            <button class="btn btn-sm btn-success" @onclick="() => MarcarComoPago(item.Id)">Marcar como pago</button>
+                            <button class="btn btn-sm btn-success" disabled="@_pagandoIds.Contains(item.Id)" @onclick="() => MarcarComoPago(item.Id)">Marcar como pago</button>
+                            <button class="btn btn-sm btn-outline-primary ms-2" @onclick="() => AbrirExtrato(item)">Abrir extrato</button>
                         }
                     </td>
                 </tr>
@@ -53,6 +55,21 @@ else
         </table>
     </div>
 }
+
+<MudDialog @bind-Visible="_dialogAberto" Options="_dialogOptions">
+    <DialogContent>
+        @if (_itemSelecionado is not null)
+        {
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.h6">@_itemSelecionado.Descricao</MudText>
+                <MudText Typo="Typo.body2">@ObterParcelaTexto(_itemSelecionado)</MudText>
+                <MudText Typo="Typo.body2">@_itemSelecionado.Valor.ToString("C")</MudText>
+                <MudText Typo="Typo.body2">Vencimento: @_itemSelecionado.DataVencimento?.ToString("dd/MM/yyyy")</MudText>
+                <MudText Typo="Typo.body2">Competência: @(_itemSelecionado.Competencia ?? "-")</MudText>
+            </MudStack>
+        }
+    </DialogContent>
+</MudDialog>
 
 @code {
     [Parameter] public int ContaId { get; set; }
@@ -65,14 +82,25 @@ else
     private decimal total;
     private decimal pago;
     private decimal pendente;
+    private readonly HashSet<int> _pagandoIds = new();
+    private bool _dialogAberto;
+    private ModelLancamento? _itemSelecionado;
+    private readonly DialogOptions _dialogOptions = new() { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
 
     protected override async Task OnInitializedAsync()
     {
         var inicio = new DateTime(Ano, Mes, 1);
         var fim = inicio.AddMonths(1).AddDays(-1);
 
-        var todos = await LancamentoService.Filtrar("", "Todos", "Saída", inicio, fim);
-        itens = todos.Where(x => x.ContaId == ContaId).OrderBy(x => x.DataVencimento).ToList();
+        var competenciaMes = $"{Mes:00}/{Ano}";
+        var todos = await LancamentoService.ObterTodos();
+        itens = todos
+            .Where(x => x.ContaId == ContaId && x.Tipo == FinanceiroPessoal.Core.Models.TipoLancamento.Saida)
+            .Where(x =>
+                string.Equals((x.Competencia ?? string.Empty).Trim(), competenciaMes, StringComparison.OrdinalIgnoreCase) ||
+                (x.DataVencimento.HasValue && x.DataVencimento.Value.Month == Mes && x.DataVencimento.Value.Year == Ano))
+            .OrderBy(x => x.DataVencimento)
+            .ToList();
 
         total = itens.Sum(x => x.Valor);
         pago = itens.Where(x => x.Status == "Pago").Sum(x => x.Valor);
@@ -83,9 +111,40 @@ else
 
     private async Task MarcarComoPago(int id)
     {
-        await LancamentoService.MarcarComoPago(id);
-        await OnInitializedAsync();
-        StateHasChanged();
+        if (_pagandoIds.Contains(id))
+            return;
+
+        try
+        {
+            _pagandoIds.Add(id);
+            await LancamentoService.MarcarComoPago(id, DateTime.Today);
+            await OnInitializedAsync();
+            Snackbar.Add("Lançamento marcado como pago", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Falha ao atualizar o pagamento. Tente novamente.", Severity.Error);
+        }
+        finally
+        {
+            _pagandoIds.Remove(id);
+            StateHasChanged();
+        }
+    }
+
+    private void AbrirExtrato(ModelLancamento item)
+    {
+        _itemSelecionado = item;
+        _dialogAberto = true;
+    }
+
+    private static string ObterParcelaTexto(ModelLancamento item)
+    {
+        const string marcador = "Parcela ";
+        var descricao = item.Descricao ?? string.Empty;
+        var idx = descricao.IndexOf(marcador, StringComparison.OrdinalIgnoreCase);
+        if (idx < 0) return "Parcela única";
+        return descricao[(idx + marcador.Length)..].Trim();
     }
 
     private static string LinhaStatus(string? status) => status switch

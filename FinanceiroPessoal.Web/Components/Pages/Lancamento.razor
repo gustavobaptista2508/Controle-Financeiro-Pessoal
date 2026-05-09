@@ -1,6 +1,7 @@
 @page "/lancamentos"
 @using FinanceiroPessoal.Core.Services
 @inject LancamentoService LancamentoService
+@inject ISnackbar Snackbar
 
 <PageTitle>Lançamentos</PageTitle>
 
@@ -47,7 +48,7 @@
         <MudTd>@context.Vencimento?.ToString("dd/MM/yyyy")</MudTd>
         <MudTd>@context.Categoria</MudTd>
         <MudTd>
-            <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Success" Variant="Variant.Text" Disabled="@context.EhPago" OnClick="@(() => MarcarComoPago(context.Id))">Pagar</MudButton>
+            <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Success" Variant="Variant.Text" Disabled="@(context.EhPago || _pagandoIds.Contains(context.Id))" OnClick="@(() => MarcarComoPago(context.Id))">Pagar</MudButton>
             <MudButton Size="MudBlazor.Size.Small" Color="MudBlazor.Color.Error" Variant="Variant.Text" OnClick="@(() => Excluir(context.Id))">Excluir</MudButton>
         </MudTd>
     </RowTemplate>
@@ -55,6 +56,7 @@
 
 @code {
     private List<LancamentoLinhaDto> linhas = new();
+    private readonly HashSet<int> _pagandoIds = new();
     private string filtroDescricao = string.Empty;
     private string filtroStatus = "Todos";
     private string filtroTipo = "Todos";
@@ -82,7 +84,28 @@
         (filtroStatus == "Todos" || string.Equals(l.StatusIcone, filtroStatus, StringComparison.OrdinalIgnoreCase)) &&
         (filtroTipo == "Todos" || string.Equals(l.Tipo, filtroTipo, StringComparison.OrdinalIgnoreCase));
 
-    private async Task MarcarComoPago(int id) { await LancamentoService.MarcarComoPago(id); await Recarregar(); }
+    private async Task MarcarComoPago(int id)
+    {
+        if (_pagandoIds.Contains(id))
+            return;
+
+        try
+        {
+            _pagandoIds.Add(id);
+            await LancamentoService.MarcarComoPago(id, DateTime.Today);
+            await Recarregar();
+            Snackbar.Add("Lançamento marcado como pago", Severity.Success);
+        }
+        catch
+        {
+            Snackbar.Add("Não foi possível marcar o lançamento como pago. Tente novamente.", Severity.Error);
+        }
+        finally
+        {
+            _pagandoIds.Remove(id);
+            StateHasChanged();
+        }
+    }
     private async Task Excluir(int id) { await LancamentoService.Excluir(id); await Recarregar(); }
 
     private static MudBlazor.Color GetStatusColor(string? status) => status?.Trim().ToLowerInvariant() switch

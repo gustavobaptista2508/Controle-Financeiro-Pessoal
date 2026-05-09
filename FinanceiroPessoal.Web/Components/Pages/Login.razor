@@ -4,14 +4,24 @@
 
 <PageTitle>Login</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="auth-page">
-    <MudPaper Class="pa-6">
-        <MudText Typo="Typo.h5" GutterBottom="true">Entrar no GranaOK</MudText>
-        <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" />
-        <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Class="mt-3" />
+<MudContainer MaxWidth="MaxWidth.False" Class="auth-shell">
+    <MudPaper Elevation="2" Class="auth-card pa-8">
+        <MudText Typo="Typo.h4" Class="mb-1">Bem-vindo ao GranaOK</MudText>
+        <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Entre para acessar seu painel financeiro.</MudText>
+
+        <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" Margin="Margin.Dense" />
+        <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+
+        <MudCheckBox T="bool" @bind-Value="lembrarMe" Label="Lembrar-me" Class="mt-2" />
+
         @if (!string.IsNullOrWhiteSpace(erro)) { <MudAlert Severity="Severity.Error" Class="mt-3">@erro</MudAlert> }
-        <MudButton Class="mt-4" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true" OnClick="Entrar">Entrar</MudButton>
+
+        <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true" OnClick="Entrar">Entrar</MudButton>
+
+        <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
+            <MudLink Href="/usuarios/cadastro">Criar conta</MudLink>
+        </MudStack>
     </MudPaper>
 </MudContainer>
 
-@code { string email=""; string senha=""; string? erro; void Entrar(){ if(!Session.LoginWithPassword(email,senha)){erro="E-mail ou senha inválidos.";return;} Nav.NavigateTo("/"); } }
+@code { string email=""; string senha=""; bool lembrarMe; string? erro; void Entrar(){ if(!Session.LoginWithPassword(email,senha)){erro="E-mail ou senha inválidos.";return;} Nav.NavigateTo("/"); } }
