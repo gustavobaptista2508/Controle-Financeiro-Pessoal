@@ -1,8 +1,9 @@
-@using Microsoft.AspNetCore.WebUtilities
 @page "/login"
+@using System.ComponentModel.DataAnnotations
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @inject NavigationManager Nav
-@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
+@inject IHttpContextAccessor HttpContextAccessor
+@inject ISnackbar Snackbar
 
 <PageTitle>Login</PageTitle>
 
@@ -11,14 +12,23 @@
         <MudText Typo="Typo.h4" Class="mb-1">Bem-vindo ao GranaOK</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Entre para acessar seu painel financeiro.</MudText>
 
-        <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" Margin="Margin.Dense" />
-        <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+        <EditForm Model="model" OnValidSubmit="EntrarAsync">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <MudCheckBox T="bool" @bind-Value="lembrarMe" Label="Lembrar-me" Class="mt-2" />
+            <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined" @bind-Value="model.Email" FullWidth="true" Margin="Margin.Dense" />
+            <MudTextField T="string" Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="model.Senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <MudCheckBox T="bool" @bind-Value="model.LembrarMe" Label="Lembrar-me" Class="mt-2" />
 
-        @if (!string.IsNullOrWhiteSpace(erro)) { <MudAlert Severity="Severity.Error" Class="mt-3">@erro</MudAlert> }
+            <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true"
+                       Disabled="_isLoading" Loading="_isLoading" ButtonType="ButtonType.Submit">
+                Entrar
+            </MudButton>
+        </EditForm>
 
-        <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true" OnClick="Entrar">Entrar</MudButton>
+        <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Href="/auth/google" StartIcon="@Icons.Custom.Brands.Google">
+            Entrar com Google
+        </MudButton>
 
         <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
             <MudLink Href="/usuarios/cadastro">Criar conta</MudLink>
@@ -26,4 +36,41 @@
     </MudPaper>
 </MudContainer>
 
-@code { string email=""; string senha=""; bool lembrarMe; string? erro; void Entrar(){ if(!Session.LoginWithPassword(email,senha)){erro="E-mail ou senha inválidos.";return;} var target = QueryHelpers.ParseQuery(new Uri(NavigationManager.Uri).Query).TryGetValue("returnUrl", out var returnUrl) ? returnUrl.ToString() : "/dashboard"; Nav.NavigateTo(target); } }
+@code {
+    private readonly LoginModel model = new();
+    private bool _isLoading;
+
+    private async Task EntrarAsync()
+    {
+        if (_isLoading) return;
+        _isLoading = true;
+        try
+        {
+            var context = HttpContextAccessor.HttpContext;
+            if (context is null)
+            {
+                Snackbar.Add("Não foi possível iniciar sessão.", Severity.Error);
+                return;
+            }
+
+            var result = await Session.LoginWithPasswordAsync(model.Email, model.Senha, model.LembrarMe, context);
+            if (!result.ok)
+            {
+                Snackbar.Add(result.erro ?? "Falha ao autenticar.", Severity.Error);
+                return;
+            }
+
+            Nav.NavigateTo("/dashboard", true);
+        }
+        finally { _isLoading = false; }
+    }
+
+    private sealed class LoginModel
+    {
+        [Required, EmailAddress]
+        public string Email { get; set; } = string.Empty;
+        [Required]
+        public string Senha { get; set; } = string.Empty;
+        public bool LembrarMe { get; set; }
+    }
+}
