@@ -25,7 +25,7 @@ public class WebAuthSessionService
 
     public async Task<(bool ok, string? erro)> LoginWithPasswordAsync(string email, string senha, bool lembrarMe, HttpContext context)
     {
-        Console.WriteLine("AUTH SERVICE LOGIN EXECUTADO");
+        Console.WriteLine("DEBUG AUTHSERVICE: LoginAsync chamado");
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
             return (false, "Preencha e-mail e senha.");
@@ -34,13 +34,23 @@ public class WebAuthSessionService
 
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var usuario = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
-        Console.WriteLine($"USUARIO ENCONTRADO: {(usuario is null ? "NAO" : "SIM")}");
+        Console.WriteLine($"DEBUG AUTHSERVICE: usuário encontrado: {usuario is not null}");
 
         if (usuario is null)
             return (false, "E-mail ou senha inválidos.");
 
         var senhaValida = _passwordHasher.VerifyPassword(senha, usuario.SenhaHash);
-        Console.WriteLine($"SENHA VALIDA: {(senhaValida ? "SIM" : "NAO")}");
+        Console.WriteLine($"DEBUG AUTHSERVICE: senha válida: {senhaValida}");
+
+
+        if (!senhaValida && usuario.SenhaHash == senha)
+        {
+            usuario.SenhaHash = _passwordHasher.HashPassword(senha);
+            usuario.DataAtualizacao = DateTime.Now;
+            await db.SaveChangesAsync();
+            senhaValida = true;
+            Console.WriteLine("DEBUG AUTHSERVICE: hash legado migrado para BCrypt");
+        }
 
         if (!senhaValida)
             return (false, "E-mail ou senha inválidos.");
