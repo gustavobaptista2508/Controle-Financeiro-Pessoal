@@ -12,29 +12,30 @@
         <MudText Typo="Typo.h4" Class="mb-1">Criar conta</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Comece agora seu controle financeiro premium.</MudText>
 
-        <EditForm EditContext="@editContext"
+        <EditForm EditContext="@cadastroEditContext"
                   OnValidSubmit="@HandleCadastro"
                   FormName="cadastroUsuarioForm">
             <DataAnnotationsValidator />
 
-            <MudTextField T="string" Label="Nome" @bind-Value="cadastroModel.Nome" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" />
+            <MudTextField T="string" Label="Nome" @bind-Value="cadastroModel.Nome" For="@(() => cadastroModel.Nome)" Immediate="true" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" />
             <ValidationMessage For="@(() => cadastroModel.Nome)" />
 
-            <MudTextField T="string" Label="E-mail" @bind-Value="cadastroModel.Email" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <MudTextField T="string" Label="E-mail" @bind-Value="cadastroModel.Email" For="@(() => cadastroModel.Email)" Immediate="true" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
             <ValidationMessage For="@(() => cadastroModel.Email)" />
 
-            <MudTextField T="string" Label="Senha" @bind-Value="cadastroModel.Senha" InputType="InputType.Password" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <MudTextField T="string" Label="Senha" @bind-Value="cadastroModel.Senha" For="@(() => cadastroModel.Senha)" InputType="InputType.Password" Immediate="true" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
             <ValidationMessage For="@(() => cadastroModel.Senha)" />
 
-            <MudTextField T="string" Label="Confirmar senha" @bind-Value="cadastroModel.ConfirmarSenha" InputType="InputType.Password" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <MudTextField T="string" Label="Confirmar senha" @bind-Value="cadastroModel.ConfirmarSenha" For="@(() => cadastroModel.ConfirmarSenha)" InputType="InputType.Password" Immediate="true" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
             <ValidationMessage For="@(() => cadastroModel.ConfirmarSenha)" />
 
             <MudButton ButtonType="ButtonType.Submit"
                        Color="Color.Success"
                        Variant="Variant.Filled"
                        FullWidth="true"
+                       Disabled="@isSaving"
                        Class="mt-5 auth-main-button">
-                CADASTRAR
+                @(isSaving ? "CADASTRANDO..." : "CADASTRAR")
             </MudButton>
         </EditForm>
     </MudPaper>
@@ -42,31 +43,44 @@
 
 @code {
     private CadastroUsuarioModel cadastroModel = new();
-    private EditContext editContext = default!;
+    private EditContext cadastroEditContext = default!;
+    private bool isSaving;
 
     protected override void OnInitialized()
     {
-        editContext = new EditContext(cadastroModel);
+        cadastroEditContext = new EditContext(cadastroModel);
     }
 
     private async Task HandleCadastro()
     {
+        if (!cadastroEditContext.Validate())
+            return;
+
         if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
         {
             Snackbar.Add("As senhas não conferem.", Severity.Error);
             return;
         }
 
-        var result = await AuthService.CadastrarAsync(cadastroModel);
+        try
+        {
+            isSaving = true;
+            var result = await AuthService.CadastrarAsync(cadastroModel);
 
-        if (result.Success)
-        {
-            Snackbar.Add("Usuário cadastrado com sucesso.", Severity.Success);
-            Navigation.NavigateTo("/login");
+            if (result.Success)
+            {
+                Snackbar.Add("Cadastro realizado com sucesso.", Severity.Success);
+                cadastroModel = new CadastroUsuarioModel();
+                cadastroEditContext = new EditContext(cadastroModel);
+                Navigation.NavigateTo("/login");
+                return;
+            }
+
+            Snackbar.Add(result.Message ?? "Não foi possível realizar o cadastro.", Severity.Error);
         }
-        else
+        finally
         {
-            Snackbar.Add(result.Message, Severity.Error);
+            isSaving = false;
         }
     }
 
