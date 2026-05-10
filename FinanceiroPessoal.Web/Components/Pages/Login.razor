@@ -4,6 +4,7 @@
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ISnackbar Snackbar
+@inject IConfiguration Configuration
 
 <PageTitle>Login</PageTitle>
 
@@ -26,9 +27,12 @@
             </MudButton>
         </EditForm>
 
-        <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Href="/auth/google" StartIcon="@Icons.Custom.Brands.Google">
-            Entrar com Google
-        </MudButton>
+        @if (_googleAuthConfigured)
+        {
+            <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Href="/auth/google" StartIcon="@Icons.Custom.Brands.Google">
+                Entrar com Google
+            </MudButton>
+        }
 
         <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
             <MudLink Href="/usuarios/cadastro">Criar conta</MudLink>
@@ -39,6 +43,15 @@
 @code {
     private readonly LoginModel model = new();
     private bool _isLoading;
+    private bool _googleAuthConfigured;
+
+    protected override void OnInitialized()
+    {
+        var googleClientId = Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = Configuration["Authentication:Google:ClientSecret"];
+        _googleAuthConfigured = !string.IsNullOrWhiteSpace(googleClientId) &&
+                                !string.IsNullOrWhiteSpace(googleClientSecret);
+    }
 
     private async Task EntrarAsync()
     {
