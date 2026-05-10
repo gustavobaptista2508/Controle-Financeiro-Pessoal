@@ -18,13 +18,13 @@
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined" Immediate="true" @bind-Value="loginModel.Email" FullWidth="true" Margin="Margin.Dense" />
-            <MudTextField T="string" Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" Immediate="true" @bind-Value="loginModel.Senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" For="@(() => loginModel.Email)" @bind-Value="loginModel.Email" FullWidth="true" />
+            <MudTextField T="string" Label="Senha" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" InputType="InputType.Password" For="@(() => loginModel.Senha)" @bind-Value="loginModel.Senha" FullWidth="true" Class="mt-2" />
             <MudCheckBox T="bool" @bind-Value="loginModel.LembrarMe" Label="Lembrar-me" Class="mt-2" />
 
             <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Success" Variant="Variant.Filled" FullWidth="true"
-                       Disabled="_isLoading" Loading="_isLoading" ButtonType="ButtonType.Submit">
-                ENTRAR
+                       Disabled="@isLoading" ButtonType="ButtonType.Submit">
+                @(isLoading ? "ENTRANDO..." : "ENTRAR")
             </MudButton>
         </EditForm>
 
@@ -48,7 +48,7 @@
 @code {
     private LoginModel loginModel = new();
     private EditContext editContext = default!;
-    private bool _isLoading;
+    private bool isLoading;
     private bool _googleAuthConfigured;
 
     protected override void OnInitialized()
@@ -63,8 +63,11 @@
 
     private async Task HandleLogin()
     {
-        if (_isLoading) return;
-        _isLoading = true;
+        if (!editContext.Validate())
+            return;
+
+        if (isLoading) return;
+        isLoading = true;
         try
         {
             var context = HttpContextAccessor.HttpContext;
@@ -83,14 +86,15 @@
 
             Nav.NavigateTo("/dashboard", true);
         }
-        finally { _isLoading = false; }
+        finally { isLoading = false; }
     }
 
     private sealed class LoginModel
     {
-        [Required, EmailAddress]
+        [Required(ErrorMessage = "Informe o e-mail.")]
+        [EmailAddress(ErrorMessage = "E-mail inválido.")]
         public string Email { get; set; } = string.Empty;
-        [Required]
+        [Required(ErrorMessage = "Informe a senha.")]
         public string Senha { get; set; } = string.Empty;
         public bool LembrarMe { get; set; }
     }
