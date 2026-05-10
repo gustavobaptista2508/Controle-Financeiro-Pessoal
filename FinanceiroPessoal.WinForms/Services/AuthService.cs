@@ -55,6 +55,8 @@ namespace FinanceiroPessoal.WinForms.Services
             usuario.DataAtualizacao = DateTime.Now;
             db.SaveChanges();
             UsuarioAtual = usuario;
+            SessaoUsuario.UsuarioId = usuario.Id;
+            SessaoUsuario.Nome = usuario.Nome;
             return usuario;
         }
 
@@ -76,16 +78,16 @@ namespace FinanceiroPessoal.WinForms.Services
 
             db.Usuarios.Add(usuario);
             db.SaveChanges();
-            CriarTabelasDoUsuario(db, usuario.Id);
+            CriarDadosPadraoDoUsuario(db, usuario.Id);
             return (true, "Usuário cadastrado com sucesso.");
         }
 
-        private static void CriarTabelasDoUsuario(FinanceiroDbContext db, int usuarioId)
+        private static void CriarDadosPadraoDoUsuario(FinanceiroDbContext db, int usuarioId)
         {
-            db.Database.ExecuteSqlRaw($"CREATE TABLE IF NOT EXISTS categorias_u{usuarioId} (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL);");
-            db.Database.ExecuteSqlRaw($"CREATE TABLE IF NOT EXISTS contas_u{usuarioId} (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, tipo TEXT NOT NULL);");
-            db.Database.ExecuteSqlRaw($"CREATE TABLE IF NOT EXISTS pessoas_u{usuarioId} (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL);");
-            db.Database.ExecuteSqlRaw($"CREATE TABLE IF NOT EXISTS lancamentos_u{usuarioId} (id INTEGER PRIMARY KEY AUTOINCREMENT, descricao TEXT NOT NULL, valor REAL NOT NULL, status TEXT, tipo TEXT, dataVencimento TEXT, competencia TEXT);");
+            db.Categorias.Add(new Categoria { Nome = "Geral", UsuarioId = usuarioId });
+            db.Contas.Add(new Conta { Nome = "Conta Principal", Tipo = "Corrente", UsuarioId = usuarioId });
+            db.Pessoas.Add(new Pessoa { Nome = "Sem pessoa", UsuarioId = usuarioId });
+            db.SaveChanges();
         }
 
         private static string GerarSha256(string senha)

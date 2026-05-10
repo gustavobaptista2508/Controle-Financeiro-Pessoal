@@ -12,6 +12,7 @@ namespace FinanceiroPessoal.Core.Data
         public DbSet<Categoria> Categorias => Set<Categoria>();
         public DbSet<Conta> Contas => Set<Conta>();
         public DbSet<Pessoa> Pessoas => Set<Pessoa>();
+        public DbSet<Usuario> Usuarios => Set<Usuario>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -67,6 +68,57 @@ namespace FinanceiroPessoal.Core.Data
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.Nome).HasMaxLength(100).IsRequired();
             });
+
+
+            modelBuilder.Entity<Usuario>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Email).HasMaxLength(150).IsRequired();
+                entity.HasIndex(x => x.Email).IsUnique();
+            });
+
+            modelBuilder.Entity<Lancamento>().HasOne(x => x.Usuario).WithMany(x => x.Lancamentos).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Categoria>().HasOne(x => x.Usuario).WithMany(x => x.Categorias).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Conta>().HasOne(x => x.Usuario).WithMany(x => x.Contas).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<Pessoa>().HasOne(x => x.Usuario).WithMany(x => x.Pessoas).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Lancamento>().HasIndex(x => x.UsuarioId);
+            modelBuilder.Entity<Categoria>().HasIndex(x => x.UsuarioId);
+            modelBuilder.Entity<Conta>().HasIndex(x => x.UsuarioId);
+            modelBuilder.Entity<Pessoa>().HasIndex(x => x.UsuarioId);
+
+            modelBuilder.Entity<Lancamento>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
+            modelBuilder.Entity<Categoria>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
+            modelBuilder.Entity<Conta>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
+            modelBuilder.Entity<Pessoa>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
+        }
+
+        public override int SaveChanges()
+        {
+            PreencherUsuarioId();
+            return base.SaveChanges();
+        }
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+        {
+            PreencherUsuarioId();
+            return base.SaveChangesAsync(cancellationToken);
+        }
+
+        private void PreencherUsuarioId()
+        {
+            var usuarioId = FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId;
+            foreach (var entry in ChangeTracker.Entries().Where(e => e.State == EntityState.Added))
+            {
+                switch (entry.Entity)
+                {
+                    case Lancamento l when l.UsuarioId == 0: l.UsuarioId = usuarioId; break;
+                    case Categoria c when c.UsuarioId == 0: c.UsuarioId = usuarioId; break;
+                    case Conta c when c.UsuarioId == 0: c.UsuarioId = usuarioId; break;
+                    case Pessoa p when p.UsuarioId == 0: p.UsuarioId = usuarioId; break;
+                }
+            }
         }
     }
 }

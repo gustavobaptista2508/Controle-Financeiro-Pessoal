@@ -25,5 +25,8 @@ namespace FinanceiroPessoal.WinForms.Models
 
         public int? PessoaId { get; set; }
         public virtual Pessoa? Pessoa { get; set; }
+
+        public int UsuarioId { get; set; }
+        public virtual Usuario? Usuario { get; set; }
     }
 }

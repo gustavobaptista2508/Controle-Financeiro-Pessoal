@@ -58,6 +58,7 @@ namespace FinanceiroPessoal.Core.Services
 
         private static readonly Dictionary<string, Usuario> _usuarios =
             new(StringComparer.OrdinalIgnoreCase);
+        private static int _sequenceId = 1;
 
         public Usuario? UsuarioAtual { get; private set; }
 
@@ -76,6 +77,7 @@ namespace FinanceiroPessoal.Core.Services
 
             _usuarios[emailNormalizado] = new Usuario
             {
+                Id = _sequenceId++,
                 Nome = nome.Trim(),
                 Email = emailNormalizado,
                 SenhaHash = senha,
@@ -99,6 +101,8 @@ namespace FinanceiroPessoal.Core.Services
 
             usuario.UltimoLogin = DateTime.Now;
             UsuarioAtual = usuario;
+            SessaoUsuario.UsuarioId = usuario.Id;
+            SessaoUsuario.Nome = usuario.Nome;
             return usuario;
         }
         public string GerarUriQrCode(string base32, string usuario = "Financeiro Pessoal")
