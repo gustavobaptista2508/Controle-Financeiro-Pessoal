@@ -77,9 +77,10 @@
 
         try
         {
-            Console.WriteLine($"LOGIN DEBUG - Email: {loginModel.Email}");
-            Console.WriteLine($"LOGIN DEBUG - Senha preenchida: {!string.IsNullOrWhiteSpace(loginModel.Senha)}");
-            Console.WriteLine($"LOGIN DEBUG - LembrarMe: {loginModel.LembrarMe}");
+            Console.WriteLine("LOGIN CHAMADO");
+            Console.WriteLine($"Email recebido: {loginModel.Email}");
+            Console.WriteLine($"Senha preenchida: {!string.IsNullOrEmpty(loginModel.Senha)}");
+            Console.WriteLine($"LembrarMe: {loginModel.LembrarMe}");
 
             var client = HttpClientFactory.CreateClient();
             var response = await client.PostAsJsonAsync("/auth/login", loginModel);

@@ -1,5 +1,7 @@
+using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using System.Security.Claims;
 
@@ -12,28 +14,43 @@ public class WebAuthSessionService
     public string CurrentUserEmail { get; private set; } = string.Empty;
     public event Action? AuthenticationStateChanged;
 
-    private static readonly Dictionary<string, Usuario> _usuarios = new(StringComparer.OrdinalIgnoreCase)
+    private readonly IConfiguration _configuration;
+    private readonly IPasswordHasherService _passwordHasher;
+
+    public WebAuthSessionService(IConfiguration configuration, IPasswordHasherService passwordHasher)
     {
-        ["admin@financeiro.local"] = new Usuario
-        {
-            Id = 1,
-            Nome = "Administrador",
-            Email = "admin@financeiro.local",
-            SenhaHash = BCrypt.Net.BCrypt.HashPassword("123456"),
-            Ativo = true
-        }
-    };
+        _configuration = configuration;
+        _passwordHasher = passwordHasher;
+    }
 
     public async Task<(bool ok, string? erro)> LoginWithPasswordAsync(string email, string senha, bool lembrarMe, HttpContext context)
     {
+        Console.WriteLine("AUTH SERVICE LOGIN EXECUTADO");
+
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
             return (false, "Preencha e-mail e senha.");
 
-        if (!_usuarios.TryGetValue(email.Trim(), out var usuario) || !usuario.Ativo)
+        await using var db = CreateDbContext();
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var usuario = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
+        Console.WriteLine($"USUARIO ENCONTRADO: {(usuario is null ? "NAO" : "SIM")}");
+
+        if (usuario is null)
             return (false, "E-mail ou senha inválidos.");
 
-        if (!BCrypt.Net.BCrypt.Verify(senha, usuario.SenhaHash))
+        var senhaValida = _passwordHasher.VerifyPassword(senha, usuario.SenhaHash);
+        Console.WriteLine($"SENHA VALIDA: {(senhaValida ? "SIM" : "NAO")}");
+
+        if (!senhaValida)
             return (false, "E-mail ou senha inválidos.");
+
+        if (!usuario.Ativo)
+            return (false, "Usuário inativo.");
+
+        usuario.UltimoLogin = DateTime.Now;
+        usuario.DataAtualizacao = DateTime.Now;
+        await db.SaveChangesAsync();
 
         await SignInAsync(usuario, lembrarMe, context);
         Login(usuario.Nome, usuario.Email);
@@ -42,17 +59,33 @@ public class WebAuthSessionService
 
     public async Task LoginWithGoogleAsync(string email, string nome, HttpContext context)
     {
-        if (!_usuarios.TryGetValue(email, out var usuario))
+        await using var db = CreateDbContext();
+
+        var normalizedEmail = email.Trim().ToLowerInvariant();
+        var usuario = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
+
+        if (usuario is null)
         {
             usuario = new Usuario
             {
-                Id = _usuarios.Count + 1,
                 Nome = nome,
-                Email = email,
+                Email = normalizedEmail,
                 SenhaHash = string.Empty,
-                Ativo = true
+                Ativo = true,
+                EmailConfirmado = true,
+                DataCriacao = DateTime.Now,
+                DataAtualizacao = DateTime.Now,
+                UltimoLogin = DateTime.Now
             };
-            _usuarios[email] = usuario;
+
+            db.Usuarios.Add(usuario);
+            await db.SaveChangesAsync();
+        }
+        else
+        {
+            usuario.UltimoLogin = DateTime.Now;
+            usuario.DataAtualizacao = DateTime.Now;
+            await db.SaveChangesAsync();
         }
 
         await SignInAsync(usuario, true, context);
@@ -83,24 +116,13 @@ public class WebAuthSessionService
         AuthenticationStateChanged?.Invoke();
     }
 
-    public string RegisterUser(string nome, string email, string senha)
+
+    private MySqlDbContext CreateDbContext()
     {
-        if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
-            return "Preencha nome, e-mail e senha.";
+        var connectionString = _configuration.GetConnectionString("MySqlConnection")
+            ?? throw new InvalidOperationException("Conexão MySQL não configurada.");
 
-        var key = email.Trim().ToLowerInvariant();
-        if (_usuarios.ContainsKey(key)) return "E-mail já cadastrado.";
-
-        _usuarios[key] = new Usuario
-        {
-            Id = _usuarios.Count + 1,
-            Nome = nome.Trim(),
-            Email = key,
-            SenhaHash = BCrypt.Net.BCrypt.HashPassword(senha),
-            Ativo = true
-        };
-
-        return "Usuário cadastrado com sucesso.";
+        return new MySqlDbContext(connectionString);
     }
 
     private static async Task SignInAsync(Usuario usuario, bool lembrarMe, HttpContext context)

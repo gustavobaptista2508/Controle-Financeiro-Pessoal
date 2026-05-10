@@ -9,14 +9,20 @@ namespace FinanceiroPessoal.Web.Services;
 public class UsuarioCadastroService
 {
     private readonly IConfiguration _configuration;
+    private readonly IPasswordHasherService _passwordHasher;
 
-    public UsuarioCadastroService(IConfiguration configuration)
+    public UsuarioCadastroService(IConfiguration configuration, IPasswordHasherService passwordHasher)
     {
         _configuration = configuration;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro)
     {
+        Console.WriteLine("CADASTRO CHAMADO");
+        Console.WriteLine($"Email recebido: {cadastro.Email}");
+        Console.WriteLine($"Senha preenchida: {!string.IsNullOrEmpty(cadastro.Senha)}");
+
         string nome = cadastro.Nome.Trim();
         string email = cadastro.Email.Trim().ToLowerInvariant();
         string senha = cadastro.Senha;
@@ -44,7 +50,7 @@ public class UsuarioCadastroService
         {
             Nome = nome,
             Email = email,
-            SenhaHash = BCrypt.Net.BCrypt.HashPassword(senha),
+            SenhaHash = _passwordHasher.HashPassword(senha),
             Ativo = true,
             EmailConfirmado = true,
             DataCriacao = DateTime.Now,
@@ -72,6 +78,21 @@ public class UsuarioCadastroService
 
         await db.SaveChangesAsync();
 
+        await GarantirAdminComHashAsync(db);
+
         return (true, "Usuário cadastrado com sucesso.");
+    }
+    private async Task GarantirAdminComHashAsync(MySqlDbContext db)
+    {
+        var admin = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == "admin@granaok.com");
+        if (admin is null)
+            return;
+
+        if (admin.SenhaHash == "123456")
+        {
+            admin.SenhaHash = _passwordHasher.HashPassword("123456");
+            admin.DataAtualizacao = DateTime.Now;
+            await db.SaveChangesAsync();
+        }
     }
 }
