@@ -7,5 +7,8 @@
         public string Tipo { get; set; } = "Outro";
 
         public ICollection<Lancamento> Lancamentos { get; set; } = new List<Lancamento>();
+
+        public int UsuarioId { get; set; }
+        public virtual Usuario? Usuario { get; set; }
     }
 }
