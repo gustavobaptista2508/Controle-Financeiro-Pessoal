@@ -1,5 +1,9 @@
 @page "/usuarios/cadastro"
-@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
+@using Microsoft.AspNetCore.Components.Forms
+@using FinanceiroPessoal.Web.Models
+@inject FinanceiroPessoal.Web.Services.UsuarioCadastroService AuthService
+@inject ISnackbar Snackbar
+@inject NavigationManager Navigation
 
 <PageTitle>Cadastro</PageTitle>
 
@@ -8,19 +12,62 @@
         <MudText Typo="Typo.h4" Class="mb-1">Criar conta</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Comece agora seu controle financeiro premium.</MudText>
 
-        <MudTextField Label="Nome" Variant="Variant.Outlined" @bind-Value="nome" FullWidth="true" Margin="Margin.Dense" />
-        <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
-        <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
-        <MudTextField Label="Confirmar senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="confirmacaoSenha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+        <EditForm EditContext="@editContext"
+                  OnValidSubmit="@HandleCadastro"
+                  FormName="cadastroUsuarioForm">
+            <DataAnnotationsValidator />
 
-        @if (!string.IsNullOrWhiteSpace(erro)) { <MudAlert Severity="Severity.Error" Class="mt-3">@erro</MudAlert> }
-        @if (!string.IsNullOrWhiteSpace(msg)) { <MudAlert Severity="Severity.Success" Class="mt-3">@msg</MudAlert> }
+            <MudTextField T="string" Label="Nome" @bind-Value="cadastroModel.Nome" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" />
+            <ValidationMessage For="@(() => cadastroModel.Nome)" />
 
-        <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true" OnClick="Cadastrar">Cadastrar</MudButton>
+            <MudTextField T="string" Label="E-mail" @bind-Value="cadastroModel.Email" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <ValidationMessage For="@(() => cadastroModel.Email)" />
+
+            <MudTextField T="string" Label="Senha" @bind-Value="cadastroModel.Senha" InputType="InputType.Password" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <ValidationMessage For="@(() => cadastroModel.Senha)" />
+
+            <MudTextField T="string" Label="Confirmar senha" @bind-Value="cadastroModel.ConfirmarSenha" InputType="InputType.Password" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <ValidationMessage For="@(() => cadastroModel.ConfirmarSenha)" />
+
+            <MudButton ButtonType="ButtonType.Submit"
+                       Color="Color.Success"
+                       Variant="Variant.Filled"
+                       FullWidth="true"
+                       Class="mt-5 auth-main-button">
+                CADASTRAR
+            </MudButton>
+        </EditForm>
     </MudPaper>
 </MudContainer>
 
 @code {
-    string nome=""; string email=""; string senha=""; string confirmacaoSenha=""; string? msg; string? erro;
-    void Cadastrar(){ msg=null; erro=null; if(senha!=confirmacaoSenha){erro="A confirmação de senha não confere.";return;} msg=Session.RegisterUser(nome,email,senha); }
+    private CadastroUsuarioModel cadastroModel = new();
+    private EditContext editContext = default!;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(cadastroModel);
+    }
+
+    private async Task HandleCadastro()
+    {
+        if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
+        {
+            Snackbar.Add("As senhas não conferem.", Severity.Error);
+            return;
+        }
+
+        var result = await AuthService.CadastrarAsync(cadastroModel);
+
+        if (result.Success)
+        {
+            Snackbar.Add("Usuário cadastrado com sucesso.", Severity.Success);
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            Snackbar.Add(result.Message, Severity.Error);
+        }
+    }
+
 }

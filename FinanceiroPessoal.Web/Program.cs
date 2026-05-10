@@ -53,6 +53,7 @@ if (googleAuthConfigured)
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<WebAuthSessionService>();
+builder.Services.AddScoped<UsuarioCadastroService>();
 builder.Services.AddScoped<AuthService>();
 
 var app = builder.Build();
