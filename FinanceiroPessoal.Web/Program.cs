@@ -10,6 +10,8 @@ using MudBlazor.Services;
 using FinanceiroPessoal.Web.Models;
 using System.Security.Claims;
 using System.Globalization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -92,13 +94,18 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 
-app.MapPost("/auth/login", async (LoginRequest request, WebAuthSessionService session, HttpContext context) =>
+app.MapPost("/auth/login", async (
+    [FromBody] LoginRequest request,
+    [FromServices] WebAuthSessionService session,
+    HttpContext context) =>
 {
     var result = await session.LoginWithPasswordAsync(request.Email, request.Senha, request.LembrarMe, context);
     return result.ok ? Results.Ok() : Results.BadRequest(new { message = result.erro ?? "Falha ao autenticar." });
 });
 
-app.MapPost("/auth/register", async (CadastroRequest request, UsuarioCadastroService cadastroService) =>
+app.MapPost("/auth/register", async (
+    [FromBody] CadastroRequest request,
+    [FromServices] UsuarioCadastroService cadastroService) =>
 {
     var result = await cadastroService.CadastrarAsync(new FinanceiroPessoal.Web.Models.CadastroUsuarioModel
     {
@@ -111,7 +118,7 @@ app.MapPost("/auth/register", async (CadastroRequest request, UsuarioCadastroSer
     return result.Success ? Results.Ok() : Results.BadRequest(new { message = result.Message });
 });
 
-app.MapPost("/auth/logout", async (WebAuthSessionService session, HttpContext context) =>
+app.MapPost("/auth/logout", async ([FromServices] WebAuthSessionService session, HttpContext context) =>
 {
     await session.LogoutAsync(context);
     return Results.Ok();
@@ -126,7 +133,7 @@ if (googleAuthConfigured)
         await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, properties);
     });
 
-    app.MapGet("/auth/google/callback", async (HttpContext context, WebAuthSessionService session) =>
+    app.MapGet("/auth/google/callback", async (HttpContext context, [FromServices] WebAuthSessionService session) =>
     {
         var principal = context.User;
         var email = principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
@@ -148,7 +155,7 @@ app.MapRazorComponents<App>()
 
 
 
-app.MapPost("/api/pluggy/connect-token", async (HttpContext ctx, IPluggyService pluggy) =>
+app.MapPost("/api/pluggy/connect-token", async (HttpContext ctx, [FromServices] IPluggyService pluggy) =>
 {
     if (!(ctx.User.Identity?.IsAuthenticated ?? false)) return Results.Unauthorized();
     var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
@@ -156,7 +163,7 @@ app.MapPost("/api/pluggy/connect-token", async (HttpContext ctx, IPluggyService 
     return Results.Ok(new ConnectTokenResponse(token));
 }).RequireAuthorization();
 
-app.MapPost("/api/pluggy/items", (HttpContext ctx, SaveItemRequest req, PluggyStore store) =>
+app.MapPost("/api/pluggy/items", (HttpContext ctx, [FromBody] SaveItemRequest req, [FromServices] PluggyStore store) =>
 {
     var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
     var ex = store.Conexoes.FirstOrDefault(x => x.UsuarioId == usuarioId && x.ItemId == req.ItemId);
@@ -169,21 +176,35 @@ app.MapPost("/api/pluggy/items", (HttpContext ctx, SaveItemRequest req, PluggySt
     return Results.Ok(ex);
 }).RequireAuthorization();
 
-app.MapGet("/api/pluggy/items/{itemId}/accounts", async (HttpContext ctx, string itemId, IPluggyService pluggy, PluggyStore store) =>
+app.MapGet("/api/pluggy/items/{itemId}/accounts", async (
+    HttpContext ctx,
+    [FromRoute] string itemId,
+    [FromServices] IPluggyService pluggy,
+    [FromServices] PluggyStore store) =>
 {
     var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
     if (!store.Conexoes.Any(x => x.UsuarioId == usuarioId && x.ItemId == itemId)) return Results.Forbid();
     return Results.Ok(await pluggy.SyncAccountsAsync(usuarioId, itemId));
 }).RequireAuthorization();
 
-app.MapPost("/api/pluggy/accounts/{accountId}/transactions/sync", async (HttpContext ctx, string accountId, SyncTransactionsRequest req, IPluggyService pluggy, PluggyStore store) =>
+app.MapPost("/api/pluggy/accounts/{accountId}/transactions/sync", async (
+    HttpContext ctx,
+    [FromRoute] string accountId,
+    [FromBody] SyncTransactionsRequest req,
+    [FromServices] IPluggyService pluggy,
+    [FromServices] PluggyStore store) =>
 {
     var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
     if (!store.Contas.Any(x => x.UsuarioId == usuarioId && x.ExternalAccountId == accountId)) return Results.Forbid();
     return Results.Ok(await pluggy.SyncTransactionsAsync(usuarioId, accountId, req.DataInicial, req.DataFinal));
 }).RequireAuthorization();
 
-app.MapPost("/api/pluggy/transactions/{transacaoId:int}/transformar-lancamento", async (HttpContext ctx, int transacaoId, ConvertTransactionRequest req, PluggyStore store, LancamentoService lancamentoService) =>
+app.MapPost("/api/pluggy/transactions/{transacaoId:int}/transformar-lancamento", async (
+    HttpContext ctx,
+    [FromRoute] int transacaoId,
+    [FromBody] ConvertTransactionRequest req,
+    [FromServices] PluggyStore store,
+    [FromServices] LancamentoService lancamentoService) =>
 {
     var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
     var tx = store.Transacoes.FirstOrDefault(x => x.Id == transacaoId && x.UsuarioId == usuarioId);
@@ -198,6 +219,6 @@ app.MapPost("/api/pluggy/transactions/{transacaoId:int}/transformar-lancamento",
 
 app.Run();
 
-internal sealed record LoginRequest(string Email, string Senha, bool LembrarMe);
+public sealed record LoginRequest(string Email, string Senha, bool LembrarMe);
 
-internal sealed record CadastroRequest(string Nome, string Email, string Senha, string ConfirmarSenha);
+public sealed record CadastroRequest(string Nome, string Email, string Senha, string ConfirmarSenha);
