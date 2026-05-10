@@ -2,57 +2,54 @@
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @inject NavigationManager Navigation
 
-<MudThemeProvider Theme="_theme">
-    <MudDialogProvider>
-        <MudSnackbarProvider>
-            <MudPopoverProvider>
+<CascadingValue Value="_theme">
+    <MudThemeProvider Theme="_theme" />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
+    <MudPopoverProvider />
 
-<MudLayout>
-    <MudDrawer Elevation="0" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
-        <div class="logo-area">
-            <img src="granaok-logo.svg" alt="GranaOK" />
-            <MudText Typo="Typo.subtitle2" Class="brand-caption">Controle Financeiro Inteligente</MudText>
-        </div>
-        <MudNavMenu Class="sidebar-menu">
-            <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.SpaceDashboard" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-            <MudNavLink Href="/lancamentos" Icon="@Icons.Material.Filled.ReceiptLong">Lançamentos</MudNavLink>
-            <MudNavLink Href="/lancamentos/novo" Icon="@Icons.Material.Filled.AddCircleOutline">Novo lançamento</MudNavLink>
-            <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
-            <MudNavLink Href="/usuarios/cadastro" Icon="@Icons.Material.Filled.PersonAddAlt1">Cadastro</MudNavLink>
-        </MudNavMenu>
-    </MudDrawer>
+    <MudLayout>
+        <MudDrawer Elevation="0" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
+            <div class="logo-area">
+                <img src="granaok-logo.svg" alt="GranaOK" />
+                <MudText Typo="Typo.subtitle2" Class="brand-caption">Controle Financeiro Inteligente</MudText>
+            </div>
+            <MudNavMenu Class="sidebar-menu">
+                <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.SpaceDashboard" Match="NavLinkMatch.All">Dashboard</MudNavLink>
+                <MudNavLink Href="/lancamentos" Icon="@Icons.Material.Filled.ReceiptLong">Lançamentos</MudNavLink>
+                <MudNavLink Href="/lancamentos/novo" Icon="@Icons.Material.Filled.AddCircleOutline">Novo lançamento</MudNavLink>
+                <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+                <MudNavLink Href="/usuarios/cadastro" Icon="@Icons.Material.Filled.PersonAddAlt1">Cadastro</MudNavLink>
+            </MudNavMenu>
+        </MudDrawer>
 
-    <MudMainContent>
-        <MudAppBar Elevation="0" Dense="false" Class="topbar">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-            <MudSpacer />
+        <MudMainContent>
+            <MudAppBar Elevation="0" Dense="false" Class="topbar">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+                <MudSpacer />
 
-            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
-                <ActivatorContent>
-                    <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
-                        <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials()</MudAvatar>
-                        <MudText Typo="Typo.body2">@GetDisplayName()</MudText>
-                    </MudButton>
-                </ActivatorContent>
-                <ChildContent>
-                    <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle">Meu Perfil</MudMenuItem>
-                    <MudMenuItem Icon="@Icons.Material.Filled.Settings">Configurações</MudMenuItem>
-                    <MudDivider />
-                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
-                </ChildContent>
-            </MudMenu>
-        </MudAppBar>
+                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
+                    <ActivatorContent>
+                        <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
+                            <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials()</MudAvatar>
+                            <MudText Typo="Typo.body2">@GetDisplayName()</MudText>
+                        </MudButton>
+                    </ActivatorContent>
+                    <ChildContent>
+                        <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle">Meu Perfil</MudMenuItem>
+                        <MudMenuItem Icon="@Icons.Material.Filled.Settings">Configurações</MudMenuItem>
+                        <MudDivider />
+                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
+                    </ChildContent>
+                </MudMenu>
+            </MudAppBar>
 
-        <MudContainer MaxWidth="MaxWidth.False" Class="content-area">
-            @Body
-        </MudContainer>
-    </MudMainContent>
-</MudLayout>
-
-            </MudPopoverProvider>
-        </MudSnackbarProvider>
-    </MudDialogProvider>
-</MudThemeProvider>
+            <MudContainer MaxWidth="MaxWidth.False" Class="content-area">
+                @Body
+            </MudContainer>
+        </MudMainContent>
+    </MudLayout>
+</CascadingValue>
 
 @code {
     private bool _drawerOpen = true;
