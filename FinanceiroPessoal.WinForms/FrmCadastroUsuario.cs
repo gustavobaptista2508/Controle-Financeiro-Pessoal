@@ -1,4 +1,4 @@
-using FinanceiroPessoal.WinForms.Services;
+using FinanceiroPessoal.Core.Services;
 
 namespace FinanceiroPessoal.WinForms;
 
