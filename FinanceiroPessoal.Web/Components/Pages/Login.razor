@@ -22,7 +22,7 @@
             <MudTextField T="string" Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" Immediate="true" @bind-Value="loginModel.Senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
             <MudCheckBox T="bool" @bind-Value="loginModel.LembrarMe" Label="Lembrar-me" Class="mt-2" />
 
-            <MudButton Class="mt-5 auth-main-button" Color="Color.Success" Variant="Variant.Filled" FullWidth="true"
+            <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Success" Variant="Variant.Filled" FullWidth="true"
                        Disabled="_isLoading" Loading="_isLoading" ButtonType="ButtonType.Submit">
                 ENTRAR
             </MudButton>
@@ -36,9 +36,7 @@
         }
         else
         {
-            <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Disabled="true" StartIcon="@Icons.Custom.Brands.Google">
-                Google não configurado
-            </MudButton>
+            <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Disabled="true" StartIcon="@Icons.Custom.Brands.Google">Google não configurado</MudButton>
         }
 
         <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
