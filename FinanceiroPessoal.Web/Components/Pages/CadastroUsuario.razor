@@ -1,4 +1,5 @@
 @page "/usuarios/cadastro"
+@rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Forms
 @using FinanceiroPessoal.Web.Models
 @inject FinanceiroPessoal.Web.Services.UsuarioCadastroService AuthService
@@ -12,21 +13,19 @@
         <MudText Typo="Typo.h4" Class="mb-1">Criar conta</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Comece agora seu controle financeiro premium.</MudText>
 
-        <EditForm EditContext="@cadastroEditContext"
-                  OnValidSubmit="@HandleCadastro"
-                  FormName="cadastroUsuarioForm">
+        <EditForm Model="@cadastroModel" OnValidSubmit="@HandleCadastro" FormName="cadastroUsuarioForm">
             <DataAnnotationsValidator />
 
-            <MudTextField T="string" Label="Nome" @bind-Value="cadastroModel.Nome" For="@(() => cadastroModel.Nome)" Immediate="true" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" />
+            <InputText class="form-control" @bind-Value="cadastroModel.Nome" placeholder="Nome" />
             <ValidationMessage For="@(() => cadastroModel.Nome)" />
 
-            <MudTextField T="string" Label="E-mail" @bind-Value="cadastroModel.Email" For="@(() => cadastroModel.Email)" Immediate="true" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <InputText class="form-control mt-2" @bind-Value="cadastroModel.Email" placeholder="E-mail" />
             <ValidationMessage For="@(() => cadastroModel.Email)" />
 
-            <MudTextField T="string" Label="Senha" @bind-Value="cadastroModel.Senha" For="@(() => cadastroModel.Senha)" InputType="InputType.Password" Immediate="true" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <InputText class="form-control mt-2" type="password" @bind-Value="cadastroModel.Senha" placeholder="Senha" />
             <ValidationMessage For="@(() => cadastroModel.Senha)" />
 
-            <MudTextField T="string" Label="Confirmar senha" @bind-Value="cadastroModel.ConfirmarSenha" For="@(() => cadastroModel.ConfirmarSenha)" InputType="InputType.Password" Immediate="true" Variant="Variant.Outlined" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <InputText class="form-control mt-2" type="password" @bind-Value="cadastroModel.ConfirmarSenha" placeholder="Confirmar senha" />
             <ValidationMessage For="@(() => cadastroModel.ConfirmarSenha)" />
 
             <MudButton ButtonType="ButtonType.Submit"
@@ -42,20 +41,11 @@
 </MudContainer>
 
 @code {
-    private CadastroUsuarioModel cadastroModel = new();
-    private EditContext cadastroEditContext = default!;
+    private readonly CadastroUsuarioModel cadastroModel = new();
     private bool isSaving;
-
-    protected override void OnInitialized()
-    {
-        cadastroEditContext = new EditContext(cadastroModel);
-    }
 
     private async Task HandleCadastro()
     {
-        if (!cadastroEditContext.Validate())
-            return;
-
         if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
         {
             Snackbar.Add("As senhas não conferem.", Severity.Error);
@@ -65,13 +55,16 @@
         try
         {
             isSaving = true;
+
+            Console.WriteLine($"CADASTRO DEBUG - Nome: {cadastroModel.Nome}");
+            Console.WriteLine($"CADASTRO DEBUG - Email: {cadastroModel.Email}");
+            Console.WriteLine($"CADASTRO DEBUG - Senha preenchida: {!string.IsNullOrWhiteSpace(cadastroModel.Senha)}");
+
             var result = await AuthService.CadastrarAsync(cadastroModel);
 
             if (result.Success)
             {
                 Snackbar.Add("Cadastro realizado com sucesso.", Severity.Success);
-                cadastroModel = new CadastroUsuarioModel();
-                cadastroEditContext = new EditContext(cadastroModel);
                 Navigation.NavigateTo("/login");
                 return;
             }
@@ -83,5 +76,4 @@
             isSaving = false;
         }
     }
-
 }

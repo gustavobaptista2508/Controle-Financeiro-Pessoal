@@ -81,6 +81,13 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
+
+app.MapPost("/auth/login", async (LoginRequest request, WebAuthSessionService session, HttpContext context) =>
+{
+    var result = await session.LoginWithPasswordAsync(request.Email, request.Senha, request.LembrarMe, context);
+    return result.ok ? Results.Ok() : Results.BadRequest(new { message = result.erro ?? "Falha ao autenticar." });
+});
+
 if (googleAuthConfigured)
 {
     app.MapGet("/auth/google", async (HttpContext context) =>
@@ -111,3 +118,5 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+internal sealed record LoginRequest(string Email, string Senha, bool LembrarMe);
