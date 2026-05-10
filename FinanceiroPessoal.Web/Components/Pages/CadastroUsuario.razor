@@ -17,16 +17,9 @@
             <DataAnnotationsValidator />
 
             <InputText class="form-control" @bind-Value="cadastroModel.Nome" placeholder="Nome" />
-            <ValidationMessage For="@(() => cadastroModel.Nome)" />
-
             <InputText class="form-control mt-2" @bind-Value="cadastroModel.Email" placeholder="E-mail" />
-            <ValidationMessage For="@(() => cadastroModel.Email)" />
-
             <InputText class="form-control mt-2" type="password" @bind-Value="cadastroModel.Senha" placeholder="Senha" />
-            <ValidationMessage For="@(() => cadastroModel.Senha)" />
-
             <InputText class="form-control mt-2" type="password" @bind-Value="cadastroModel.ConfirmarSenha" placeholder="Confirmar senha" />
-            <ValidationMessage For="@(() => cadastroModel.ConfirmarSenha)" />
 
             <MudButton ButtonType="ButtonType.Submit"
                        Color="Color.Success"
@@ -46,8 +39,14 @@
 
     private async Task HandleCadastro()
     {
+        Console.WriteLine("DEBUG CADASTRO: HandleCadastro chamado");
+        Console.WriteLine($"DEBUG CADASTRO Nome: {cadastroModel.Nome}");
+        Console.WriteLine($"DEBUG CADASTRO Email: {cadastroModel.Email}");
+        Console.WriteLine($"DEBUG CADASTRO Senha preenchida: {!string.IsNullOrWhiteSpace(cadastroModel.Senha)}");
+
         if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
         {
+            Console.WriteLine("DEBUG CADASTRO: senhas não conferem");
             Snackbar.Add("As senhas não conferem.", Severity.Error);
             return;
         }
@@ -55,20 +54,16 @@
         try
         {
             isSaving = true;
-
-            Console.WriteLine($"CADASTRO DEBUG - Nome: {cadastroModel.Nome}");
-            Console.WriteLine($"CADASTRO DEBUG - Email: {cadastroModel.Email}");
-            Console.WriteLine($"CADASTRO DEBUG - Senha preenchida: {!string.IsNullOrWhiteSpace(cadastroModel.Senha)}");
-
             var result = await AuthService.CadastrarAsync(cadastroModel);
+            Console.WriteLine($"DEBUG CADASTRO Resultado: {result.Success}");
 
             if (result.Success)
             {
-                Snackbar.Add("Cadastro realizado com sucesso.", Severity.Success);
-                Navigation.NavigateTo("/login");
+                Navigation.NavigateTo("/login", forceLoad: true);
                 return;
             }
 
+            Console.WriteLine($"DEBUG CADASTRO Erro: {result.Message}");
             Snackbar.Add(result.Message ?? "Não foi possível realizar o cadastro.", Severity.Error);
         }
         finally

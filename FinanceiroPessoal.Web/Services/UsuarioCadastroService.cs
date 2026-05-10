@@ -1,3 +1,4 @@
+using System.Linq;
 using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Models;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +20,9 @@ public class UsuarioCadastroService
 
     public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro)
     {
-        Console.WriteLine("CADASTRO CHAMADO");
-        Console.WriteLine($"Email recebido: {cadastro.Email}");
-        Console.WriteLine($"Senha preenchida: {!string.IsNullOrEmpty(cadastro.Senha)}");
+        Console.WriteLine("DEBUG CADASTRO SERVICE: chamado");
+        Console.WriteLine($"DEBUG CADASTRO SERVICE: email recebido {cadastro.Email}");
+        Console.WriteLine($"DEBUG CADASTRO SERVICE: senha preenchida {!string.IsNullOrEmpty(cadastro.Senha)}");
 
         string nome = cadastro.Nome.Trim();
         string email = cadastro.Email.Trim().ToLowerInvariant();
@@ -32,12 +33,14 @@ public class UsuarioCadastroService
         if (!email.Contains('@')) return (false, "E-mail inválido.");
         if (string.IsNullOrWhiteSpace(senha) || senha.Length < 6) return (false, "A senha deve ter no mínimo 6 caracteres.");
 
-        var connectionString = _configuration.GetConnectionString("MySqlConnection");
+        var connectionString = _configuration.GetConnectionString("DefaultConnection")
+            ?? _configuration.GetConnectionString("MySqlConnection");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            return (false, "Conexão com banco de dados não configurada.");
+            return (false, "Conexão com banco de dados não configurada (DefaultConnection/MySqlConnection).");
         }
 
+        Console.WriteLine($"DEBUG MYSQL: ConnectionString carregada para cadastro (host): {ExtractServer(connectionString)}");
         await using var db = new MySqlDbContext(connectionString);
 
         var emailJaExiste = await db.Usuarios.IgnoreQueryFilters().AnyAsync(u => u.Email == email);
@@ -58,7 +61,9 @@ public class UsuarioCadastroService
         };
 
         db.Usuarios.Add(usuario);
-        await db.SaveChangesAsync();
+        var linhas = await db.SaveChangesAsync();
+        Console.WriteLine($"DEBUG CADASTRO SERVICE: linhas salvas {linhas}");
+        Console.WriteLine($"DEBUG CADASTRO SERVICE: UsuarioId criado: {usuario.Id}");
 
         db.Contas.Add(new Conta
         {
@@ -82,6 +87,14 @@ public class UsuarioCadastroService
 
         return (true, "Usuário cadastrado com sucesso.");
     }
+    private static string ExtractServer(string connectionString)
+    {
+        const string key = "Server=";
+        var part = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries)
+            .FirstOrDefault(x => x.TrimStart().StartsWith(key, StringComparison.OrdinalIgnoreCase));
+        return part ?? "server=indefinido";
+    }
+
     private async Task GarantirAdminComHashAsync(MySqlDbContext db)
     {
         var admin = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == "admin@granaok.com");
