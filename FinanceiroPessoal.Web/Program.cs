@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Localization;
 using MudBlazor.Services;
+using FinanceiroPessoal.Web.Models;
+using System.Security.Claims;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -20,6 +22,12 @@ builder.Services.AddApexCharts();
 builder.Services.AddMudServices();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorization();
+builder.Services.AddMemoryCache();
+builder.Services.Configure<PluggyOptions>(builder.Configuration.GetSection("Pluggy"));
+builder.Services.AddSingleton<PluggyStore>();
+builder.Services.AddHttpClient<IPluggyAuthService, PluggyAuthService>();
+builder.Services.AddHttpClient<IPluggyService, PluggyService>();
+
 
 var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
 var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
@@ -116,6 +124,56 @@ if (googleAuthConfigured)
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+
+
+app.MapPost("/api/pluggy/connect-token", async (HttpContext ctx, IPluggyService pluggy) =>
+{
+    if (!(ctx.User.Identity?.IsAuthenticated ?? false)) return Results.Unauthorized();
+    var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
+    var token = await pluggy.CreateConnectTokenAsync(usuarioId);
+    return Results.Ok(new ConnectTokenResponse(token));
+}).RequireAuthorization();
+
+app.MapPost("/api/pluggy/items", (HttpContext ctx, SaveItemRequest req, PluggyStore store) =>
+{
+    var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
+    var ex = store.Conexoes.FirstOrDefault(x => x.UsuarioId == usuarioId && x.ItemId == req.ItemId);
+    if (ex is null)
+    {
+        ex = new ConexaoBancaria { Id = store.Conexoes.Count + 1, UsuarioId = usuarioId, ItemId = req.ItemId, NomeInstituicao = req.InstitutionName ?? req.ConnectorName, Status = req.Status ?? "UPDATED" };
+        store.Conexoes.Add(ex);
+    }
+    else { ex.Status = req.Status ?? ex.Status; ex.NomeInstituicao = req.InstitutionName ?? ex.NomeInstituicao; ex.DataAtualizacao = DateTime.UtcNow; }
+    return Results.Ok(ex);
+}).RequireAuthorization();
+
+app.MapGet("/api/pluggy/items/{itemId}/accounts", async (HttpContext ctx, string itemId, IPluggyService pluggy, PluggyStore store) =>
+{
+    var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
+    if (!store.Conexoes.Any(x => x.UsuarioId == usuarioId && x.ItemId == itemId)) return Results.Forbid();
+    return Results.Ok(await pluggy.SyncAccountsAsync(usuarioId, itemId));
+}).RequireAuthorization();
+
+app.MapPost("/api/pluggy/accounts/{accountId}/transactions/sync", async (HttpContext ctx, string accountId, SyncTransactionsRequest req, IPluggyService pluggy, PluggyStore store) =>
+{
+    var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
+    if (!store.Contas.Any(x => x.UsuarioId == usuarioId && x.ExternalAccountId == accountId)) return Results.Forbid();
+    return Results.Ok(await pluggy.SyncTransactionsAsync(usuarioId, accountId, req.DataInicial, req.DataFinal));
+}).RequireAuthorization();
+
+app.MapPost("/api/pluggy/transactions/{transacaoId:int}/transformar-lancamento", async (HttpContext ctx, int transacaoId, ConvertTransactionRequest req, PluggyStore store, LancamentoService lancamentoService) =>
+{
+    var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
+    var tx = store.Transacoes.FirstOrDefault(x => x.Id == transacaoId && x.UsuarioId == usuarioId);
+    if (tx is null) return Results.NotFound();
+    if (tx.LancamentoId.HasValue) return Results.BadRequest("Transação já conciliada.");
+    var similar = (await lancamentoService.ObterTodos()).FirstOrDefault(x => x.UsuarioId == usuarioId && x.DataVencimento?.Date == tx.DataTransacao.Date && x.Valor == Math.Abs(tx.Valor) && x.Descricao.Contains(tx.Descricao, StringComparison.OrdinalIgnoreCase));
+    if (similar is not null && !req.IgnorarDuplicidade && !req.LancamentoIdVinculo.HasValue) return Results.Conflict(new { mensagem = "Possível duplicidade", lancamentoId = similar.Id });
+    if (req.LancamentoIdVinculo.HasValue){ tx.LancamentoId=req.LancamentoIdVinculo; tx.Conciliado=true; return Results.Ok(tx);}    
+    var novo = new FinanceiroPessoal.Core.Models.Lancamento { Descricao = tx.Descricao, Valor = Math.Abs(tx.Valor), Tipo = tx.Valor > 0 ? FinanceiroPessoal.Core.Models.TipoLancamento.Entrada : FinanceiroPessoal.Core.Models.TipoLancamento.Saida, Status = "Pago", DataPagamento = tx.DataTransacao, DataVencimento = tx.DataTransacao, Competencia = $"{tx.DataTransacao:MM/yyyy}", ContaId = req.ContaId, CategoriaId = req.CategoriaId, UsuarioId = usuarioId };
+    await lancamentoService.Adicionar(novo); tx.LancamentoId = novo.Id; tx.Conciliado = true; return Results.Ok(tx);
+}).RequireAuthorization();
 
 app.Run();
 

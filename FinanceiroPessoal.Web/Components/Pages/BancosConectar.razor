@@ -1,0 +1,7 @@
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@page "/bancos/conectar"
+@inject IHttpClientFactory ClientFactory
+<MudText Typo="Typo.h5">Conectar banco</MudText>
+<MudButton OnClick="GerarToken" Variant="Variant.Filled" Color="Color.Primary">Conectar banco</MudButton>
+@if(!string.IsNullOrWhiteSpace(token)){<MudAlert Severity="Severity.Info">ConnectToken: @token</MudAlert>}
+@code{string? token; async Task GerarToken(){ var c=ClientFactory.CreateClient(); var r=await c.PostAsync("/api/pluggy/connect-token",null); if(r.IsSuccessStatusCode){ var o=await r.Content.ReadFromJsonAsync<FinanceiroPessoal.Web.Models.ConnectTokenResponse>(); token=o?.ConnectToken;}}}
