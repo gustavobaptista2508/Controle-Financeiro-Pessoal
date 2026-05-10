@@ -80,7 +80,7 @@
         try
         {
             var client = HttpClientFactory.CreateClient();
-            var loginEndpoint = Nav.ToAbsoluteUri("/auth/login");
+            var loginEndpoint = Navigation.ToAbsoluteUri("/auth/login");
             var response = await client.PostAsJsonAsync(loginEndpoint, loginModel);
 
             if (!response.IsSuccessStatusCode)
@@ -92,7 +92,7 @@
             }
 
             Console.WriteLine("DEBUG LOGIN Resultado: true");
-            Nav.NavigateTo("/dashboard", forceLoad: true);
+            Navigation.NavigateTo("/dashboard", forceLoad: true);
         }
         catch (Exception ex)
         {
