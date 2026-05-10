@@ -1,0 +1,47 @@
+@page "/pessoas"
+@rendermode InteractiveServer
+@using FinanceiroPessoal.Core.Models
+@using FinanceiroPessoal.Core.Services
+@inject CadastroAuxiliarService CadastroAuxiliarService
+
+<PageTitle>Pessoas</PageTitle>
+<h3>Pessoas</h3>
+
+<div class="card mb-3"><div class="card-body">
+    <EditForm Model="this" OnValidSubmit="Salvar">
+        <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-8">
+                <label class="form-label">Nome da pessoa</label>
+                <input class="form-control" @bind="nome" />
+            </div>
+            <div class="col-12 col-md-4"><button type="submit" class="btn btn-success w-100">Cadastrar</button></div>
+        </div>
+    </EditForm>
+    @if (!string.IsNullOrWhiteSpace(mensagem)) { <div class="alert alert-info mt-3 mb-0">@mensagem</div> }
+</div></div>
+
+<ul class="list-group">
+@foreach (var item in pessoas) { <li class="list-group-item">@item.Nome</li> }
+</ul>
+
+@code {
+    private List<Pessoa> pessoas = new();
+    private string nome = string.Empty;
+    private string? mensagem;
+
+    protected override async Task OnInitializedAsync() => await Carregar();
+
+    private async Task Salvar()
+    {
+        try
+        {
+            await CadastroAuxiliarService.AdicionarPessoaAsync(nome);
+            nome = string.Empty;
+            mensagem = "Pessoa cadastrada com sucesso.";
+            await Carregar();
+        }
+        catch (Exception ex) { mensagem = ex.Message; }
+    }
+
+    private async Task Carregar() => pessoas = await CadastroAuxiliarService.ObterPessoas();
+}

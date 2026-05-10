@@ -39,5 +39,19 @@ namespace FinanceiroPessoal.Core.Repositories
             await _context.SaveChangesAsync();
             return categoria;
         }
+
+        public async Task<Pessoa> AdicionarPessoaAsync(Pessoa pessoa)
+        {
+            _context.Pessoas.Add(pessoa);
+            await _context.SaveChangesAsync();
+            return pessoa;
+        }
+
+        public async Task<Conta> AdicionarContaAsync(Conta conta)
+        {
+            _context.Contas.Add(conta);
+            await _context.SaveChangesAsync();
+            return conta;
+        }
     }
 }

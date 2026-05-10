@@ -1,4 +1,5 @@
-﻿using OtpNet;
+﻿using FinanceiroPessoal.Core.Models;
+using OtpNet;
 using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
@@ -53,6 +54,53 @@ namespace FinanceiroPessoal.Core.Services
             }
         }
 
+
+
+        private static readonly Dictionary<string, Usuario> _usuarios =
+            new(StringComparer.OrdinalIgnoreCase);
+
+        public Usuario? UsuarioAtual { get; private set; }
+
+        public (bool ok, string mensagem) CadastrarUsuario(string nome, string email, string senha)
+        {
+            if (string.IsNullOrWhiteSpace(nome) || string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
+            {
+                return (false, "Preencha nome, e-mail e senha.");
+            }
+
+            var emailNormalizado = email.Trim();
+            if (_usuarios.ContainsKey(emailNormalizado))
+            {
+                return (false, "E-mail já cadastrado.");
+            }
+
+            _usuarios[emailNormalizado] = new Usuario
+            {
+                Nome = nome.Trim(),
+                Email = emailNormalizado,
+                SenhaHash = senha,
+                Ativo = true
+            };
+            return (true, "Usuário cadastrado com sucesso.");
+        }
+
+        public Usuario? LoginUsuario(string email, string senha)
+        {
+            var emailNormalizado = email.Trim();
+            if (!_usuarios.TryGetValue(emailNormalizado, out var usuario))
+            {
+                return null;
+            }
+
+            if (!usuario.Ativo || !string.Equals(usuario.SenhaHash, senha, StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            usuario.UltimoLogin = DateTime.Now;
+            UsuarioAtual = usuario;
+            return usuario;
+        }
         public string GerarUriQrCode(string base32, string usuario = "Financeiro Pessoal")
         {
             return $"otpauth://totp/{Uri.EscapeDataString(usuario)}" +

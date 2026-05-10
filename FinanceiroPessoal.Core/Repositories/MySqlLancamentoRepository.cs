@@ -62,7 +62,7 @@ namespace FinanceiroPessoal.Core.Repositories
             if (lancamento != null)
             {
                 lancamento.Status = "Pago";
-                lancamento.DataPagamento = dataPagamento ?? DateTime.Now;
+                lancamento.DataPagamento = (dataPagamento ?? DateTime.Today).Date;
                 await _context.SaveChangesAsync();
             }
         }

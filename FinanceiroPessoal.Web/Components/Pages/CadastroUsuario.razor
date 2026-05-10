@@ -1,25 +1,26 @@
 @page "/usuarios/cadastro"
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 
-<PageTitle>Cadastro de usuário</PageTitle>
-<div class="container mt-4" style="max-width:520px;">
-    <h3>Cadastrar usuário</h3>
-    <div class="mb-2"><label>Nome</label><input class="form-control" @bind="nome" /></div>
-    <div class="mb-2"><label>E-mail</label><input class="form-control" @bind="email" /></div>
-    <div class="mb-3"><label>Senha</label><input class="form-control" type="password" @bind="senha" /></div>
-    <button class="btn btn-success" @onclick="Cadastrar">Cadastrar</button>
-    @if (!string.IsNullOrWhiteSpace(msg)) { <div class="alert alert-info mt-3">@msg</div> }
-</div>
+<PageTitle>Cadastro</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="auth-shell">
+    <MudPaper Elevation="2" Class="auth-card pa-8">
+        <MudText Typo="Typo.h4" Class="mb-1">Criar conta</MudText>
+        <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Comece agora seu controle financeiro premium.</MudText>
+
+        <MudTextField Label="Nome" Variant="Variant.Outlined" @bind-Value="nome" FullWidth="true" Margin="Margin.Dense" />
+        <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+        <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+        <MudTextField Label="Confirmar senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="confirmacaoSenha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+
+        @if (!string.IsNullOrWhiteSpace(erro)) { <MudAlert Severity="Severity.Error" Class="mt-3">@erro</MudAlert> }
+        @if (!string.IsNullOrWhiteSpace(msg)) { <MudAlert Severity="Severity.Success" Class="mt-3">@msg</MudAlert> }
+
+        <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true" OnClick="Cadastrar">Cadastrar</MudButton>
+    </MudPaper>
+</MudContainer>
 
 @code {
-    private string nome = string.Empty;
-    private string email = string.Empty;
-    private string senha = string.Empty;
-    private string? msg;
-
-    private void Cadastrar()
-    {
-        var r = Session.RegisterUser(nome, email, senha);
-        msg = r;
-    }
+    string nome=""; string email=""; string senha=""; string confirmacaoSenha=""; string? msg; string? erro;
+    void Cadastrar(){ msg=null; erro=null; if(senha!=confirmacaoSenha){erro="A confirmação de senha não confere.";return;} msg=Session.RegisterUser(nome,email,senha); }
 }

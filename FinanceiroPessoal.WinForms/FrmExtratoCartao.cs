@@ -77,32 +77,39 @@ namespace FinanceiroPessoal.WinForms
             Close();
         }
 
-        private async void btnMarcarPago_Click(object sender, EventArgs e)
+                private async void btnMarcarPago_Click(object sender, EventArgs e)
         {
-            var confirm = MessageBox.Show(
-                $"Marcar toda a fatura de {_nomeCartao} como paga?",
-                "Confirmar pagamento",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
+            try
+            {
+                var confirm = MessageBox.Show(
+                    $"Marcar toda a fatura de {_nomeCartao} como paga?",
+                    "Confirmar pagamento",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
 
-            if (confirm != DialogResult.Yes) return;
+                if (confirm != DialogResult.Yes) return;
 
-            // Reutiliza MarcarComoPago existente para cada lançamento
-            var todos = await _service.Filtrar("", "Todos", "Saída",
-                new DateTime(_referencia.Year, _referencia.Month, 1),
-                new DateTime(_referencia.Year, _referencia.Month, 1).AddMonths(1).AddDays(-1));
+                // Reutiliza MarcarComoPago existente para cada lançamento
+                var todos = await _service.Filtrar("", "Todos", "Saída",
+                    new DateTime(_referencia.Year, _referencia.Month, 1),
+                    new DateTime(_referencia.Year, _referencia.Month, 1).AddMonths(1).AddDays(-1));
 
-            var pendentes = todos
-                .Where(x => x.ContaId == _contaId && x.Status != "Pago")
-                .ToList();
+                var pendentes = todos
+                    .Where(x => x.ContaId == _contaId && x.Status != "Pago")
+                    .ToList();
 
-            foreach (var l in pendentes)
-                await _service.MarcarComoPago(l.Id);
+                foreach (var l in pendentes.Where(x => x.Id > 0))
+                    await _service.MarcarComoPago(l.Id);
 
-            await CarregarExtrato();
+                await CarregarExtrato();
 
-            MessageBox.Show("Fatura marcada como paga!", "Sucesso",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Fatura marcada como paga!", "Sucesso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Erro ao marcar fatura como paga", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private async void FrmExtratoCartao_Load_1(object sender, EventArgs e)

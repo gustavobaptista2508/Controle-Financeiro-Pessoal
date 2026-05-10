@@ -1,41 +1,92 @@
 @inherits LayoutComponentBase
+@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
+@inject NavigationManager Navigation
 
-<div class="container-fluid min-vh-100 py-2 py-md-3">
-    <div class="row g-0 flex-nowrap rounded-4 overflow-hidden border">
-        <aside class="col-12 col-md-3 col-xl-2 p-0 bg-primary bg-gradient text-white d-none d-md-flex flex-column">
-            <NavMenu />
-        </aside>
+<MudThemeProvider Theme="_theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
-        <div class="col bg-light p-0 d-flex flex-column">
-            <header class="navbar navbar-expand bg-white border-bottom px-3 py-2 shadow-sm">
-                <button class="btn btn-link text-dark p-0 me-3" title="Menu">
-                    <i class="bi bi-list fs-4"></i>
-                </button>
-                <div class="ms-auto d-flex align-items-center gap-3">
-                    <i class="bi bi-search"></i>
-                    <i class="bi bi-bell"></i>
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="badge rounded-pill text-bg-dark px-3 py-2">GU</span>
-                        <div class="d-none d-sm-block lh-1">
-                            <strong class="d-block">Gustavo</strong>
-                            <small class="text-muted">Perfil</small>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <main class="p-3 p-md-4">
-                @Body
-            </main>
+<MudLayout>
+    <MudDrawer Elevation="0" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
+        <div class="logo-area">
+            <img src="granaok-logo.svg" alt="GranaOK" />
+            <MudText Typo="Typo.subtitle2" Class="brand-caption">Controle Financeiro Inteligente</MudText>
         </div>
-    </div>
-</div>
+        <MudNavMenu Class="sidebar-menu">
+            <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.SpaceDashboard" Match="NavLinkMatch.All">Dashboard</MudNavLink>
+            <MudNavLink Href="/lancamentos" Icon="@Icons.Material.Filled.ReceiptLong">Lançamentos</MudNavLink>
+            <MudNavLink Href="/lancamentos/novo" Icon="@Icons.Material.Filled.AddCircleOutline">Novo lançamento</MudNavLink>
+            <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+            <MudNavLink Href="/usuarios/cadastro" Icon="@Icons.Material.Filled.PersonAddAlt1">Cadastro</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
 
+    <MudMainContent>
+        <MudAppBar Elevation="0" Dense="false" Class="topbar">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudSpacer />
 
-<div class="mobile-nav d-md-none fixed-bottom bg-white border-top shadow-sm">
-    <div class="nav nav-pills nav-justified py-1">
-        <a class="nav-link" href="/"><i class="bi bi-house d-block"></i><small>Dashboard</small></a>
-        <a class="nav-link" href="/lancamentos"><i class="bi bi-card-list d-block"></i><small>Lançamentos</small></a>
-        <a class="nav-link" href="/lancamentos/novo"><i class="bi bi-plus-square d-block"></i><small>Novo</small></a>
-    </div>
-</div>
+            <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
+                        <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials()</MudAvatar>
+                        <MudText Typo="Typo.body2">@GetDisplayName()</MudText>
+                    </MudButton>
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle">Meu Perfil</MudMenuItem>
+                    <MudMenuItem Icon="@Icons.Material.Filled.Settings">Configurações</MudMenuItem>
+                    <MudDivider />
+                    <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
+        </MudAppBar>
+
+        <MudContainer MaxWidth="MaxWidth.False" Class="content-area">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private readonly MudTheme _theme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#00C853",
+            Secondary = "#052C65",
+            Background = "#F4F7FB",
+            Surface = "#FFFFFF",
+            AppbarBackground = "#FFFFFF",
+            AppbarText = "#052C65",
+            DrawerBackground = "#052C65",
+            DrawerText = "#E7EEF8",
+            DrawerIcon = "#C8D7EE"
+        },
+        LayoutProperties = new LayoutProperties
+        {
+            DefaultBorderRadius = "16px"
+        }
+    };
+
+    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
+
+    private string GetDisplayName() => Session.CurrentUserName ?? "Usuário";
+
+    private string GetInitials()
+    {
+        var name = GetDisplayName();
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length == 0) return "GO";
+        if (parts.Length == 1) return parts[0][..1].ToUpperInvariant();
+        return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant();
+    }
+
+    private void Logout()
+    {
+        Session.Logout();
+        Navigation.NavigateTo("/login");
+    }
+}

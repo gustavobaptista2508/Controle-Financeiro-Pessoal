@@ -34,19 +34,33 @@ public class FrmCategorias : Form
 
     private async void BtnNovo_Click(object? sender, EventArgs e)
     {
-        using var frm = new FrmCadastroCategorias();
-        if (frm.ShowDialog() == DialogResult.OK)
-            await CarregarCategorias();
+        try
+        {
+            using var frm = new FrmCadastroCategorias();
+            if (frm.ShowDialog() == DialogResult.OK)
+                await CarregarCategorias();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao abrir cadastro de categoria: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private async Task CarregarCategorias()
     {
-        await using var db = new FinanceiroDbContext();
-        var categorias = await db.Categorias
-            .OrderBy(c => c.Nome)
-            .Select(c => new { c.Id, c.Nome })
-            .ToListAsync();
+        try
+        {
+            await using var db = new FinanceiroDbContext();
+            var categorias = await db.Categorias
+                .OrderBy(c => c.Nome)
+                .Select(c => new { c.Id, c.Nome })
+                .ToListAsync();
 
-        _grid.DataSource = categorias;
+            _grid.DataSource = categorias;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Erro ao carregar categorias: {ex.Message}", "Erro", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 }

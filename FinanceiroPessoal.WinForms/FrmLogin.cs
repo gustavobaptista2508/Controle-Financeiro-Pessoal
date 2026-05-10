@@ -1,10 +1,10 @@
-using FinanceiroPessoal.WinForms.Services;
+using FinanceiroPessoal.Core.Services;
 
 namespace FinanceiroPessoal.WinForms;
 
 public partial class FrmLogin : Form
 {
-    private readonly UsuarioAuthService _authService = new();
+    private readonly AuthService _authService = new();
 
     public FrmLogin()
     {
@@ -16,7 +16,7 @@ public partial class FrmLogin : Form
         var email = txtEmail.Text.Trim();
         var senha = txtSenha.Text;
 
-        var usuario = _authService.Login(email, senha);
+        var usuario = _authService.LoginUsuario(email, senha);
 
         if (usuario is null)
         {

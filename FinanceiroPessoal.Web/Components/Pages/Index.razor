@@ -1,185 +1,55 @@
-﻿@page "/"
+@using ApexCharts
+@page "/dashboard"
 @rendermode InteractiveServer
 @using FinanceiroPessoal.Core.Models
-@using FinanceiroPessoal.Core.Repositories
 @using FinanceiroPessoal.Core.Services
-@using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @inject DashboardService DashboardService
-@inject IJSRuntime JS
 
 <PageTitle>Dashboard</PageTitle>
 
-<div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-3"><div><h2 class="mb-1 page-title">Dashboard</h2><div class="text-muted">Visão geral das suas finanças</div></div><a class="btn btn-success btn-mobile-full" href="/lancamentos/novo">+ Novo lançamento</a></div>
-    
+<MudContainer MaxWidth="MaxWidth.False" Class="dashboard-shell">
+    <MudGrid Spacing="3">
+        <MudItem xs="12">
+            <MudPaper Class="hero pa-6">
+                <MudText Typo="Typo.h4">Seu controle financeiro em tempo real</MudText>
+                <MudText>Fluxo de caixa, despesas por categoria e visão mensal em um painel SaaS moderno.</MudText>
+            </MudPaper>
+        </MudItem>
 
-    <div class="d-flex justify-content-center align-items-center gap-3 mb-4">
-        <button class="btn btn-outline-secondary btn-mobile-full" @onclick="MesAnterior" aria-label="Mês anterior">
-            <span aria-hidden="true">&#8592;</span>
-        </button>
-        <span class="fw-semibold fs-5">@MesCompetenciaTexto</span>
-        <button class="btn btn-outline-secondary btn-mobile-full" @onclick="ProximoMes" aria-label="Próximo mês">
-            <span aria-hidden="true">&#8594;</span>
-        </button>
-    </div>
+        @if (resumo is not null)
+        {
+            <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Entradas" Value="@resumo.TotalEntradas.ToString("C")" Subtitle="@($"{resumo.QuantidadeEntradas} lançamentos")" /></MudItem>
+            <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Saídas" Value="@resumo.TotalSaidas.ToString("C")" Subtitle="@($"{resumo.QuantidadeSaidas} lançamentos")" /></MudItem>
+            <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Saldo" Value="@resumo.SaldoMes.ToString("C")" Subtitle="Competência atual" /></MudItem>
+            <MudItem xs="12" sm="6" md="3"><FinanceCard Title="Pendentes" Value="@resumo.TotalPendente.ToString("C")" Subtitle="@($"{resumo.QuantidadePendentes} aguardando")" /></MudItem>
+        }
 
-    
-
-    @if (resumo == null)
-    {
-        <p>Carregando...</p>
-    }
-    else
-    {
-        <!-- Cards de resumo -->
-        <div class="row">
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card dashboard-stat bg-success mb-3">
-                    <div class="card-header text-dark">Entradas</div>
-                    <div class="card-body">
-                        <h5 class="card-title text-dark">@resumo.TotalEntradas.ToString("C")</h5>
-                        <p class="card-text text-dark">@resumo.QuantidadeEntradas lançamentos</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card dashboard-stat bg-danger mb-3">
-                    <div class="card-header text-dark">Saídas Pagas</div>
-                    <div class="card-body">
-                        <h5 class="card-title text-dark">@resumo.TotalSaidas.ToString("C")</h5>
-                        <p class="card-text text-dark">@resumo.QuantidadeSaidas lançamentos</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card dashboard-stat bg-warning mb-3">
-                    <div class="card-header text-dark">Pendentes</div>
-                    <div class="card-body">
-                        <h5 class="card-title text-dark">@resumo.TotalPendente.ToString("C")</h5>
-                        <p class="card-text text-dark">@resumo.QuantidadePendentes lançamentos</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-12 col-sm-6 col-xl-3">
-                <div class="card dashboard-stat bg-primary mb-3">
-                    <div class="card-header text-dark">Saldo do Mês</div>
-                    <div class="card-body">
-                        <h5 class="card-title text-dark">@resumo.SaldoMes.ToString("C")</h5>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="row mt-4">
-            <!-- Gráfico: Gastos por categoria -->
-            <div class="col-12 col-xl-6">
-                <div class="card">
-                    <div class="card-header">
-                        Gastos por Categoria
-                    </div>
-                    <div class="card-body">
-                        <ApexChart TItem="GastoCategoriaDto"
-                                   Title=""
-                                   Options="gastosOptions"
-                                   Height="320">
-                            <ApexPointSeries TItem="GastoCategoriaDto"
-                                             Items="gastosPorCategoria"
-                                             Name="Valor"
-                                             SeriesType="SeriesType.Bar"
-                                             XValue="@(e => e.Categoria)"
-                                             YValue="@(e => e.Valor)" />
-                        </ApexChart>
-                        @if (proximosVencimentos.Count == 0)
-                        {
-                            <p class="text-muted mb-0 mt-2">Sem próximos vencimentos pendentes.</p>
-                        }
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gráfico: Próximos vencimentos (últimos 5) como barras -->
-            <div class="col-12 col-xl-6">
-                <div class="card">
-                    <div class="card-header">
-                        Próximos Vencimentos
-                    </div>
-                    <div class="card-body">
-                        <ApexChart TItem="ProximoVencimentoDto"
-                                   Options="proximosOptions"
-                                   Height="320">
-                            <ApexPointSeries TItem="ProximoVencimentoDto"
-                                             Items="proximosVencimentos"
-                                             Name="Valor"
-                                             SeriesType="SeriesType.Bar"
-                                             XValue="@(e => e.Descricao)"
-                                             YValue="@(e => e.Valor)" />
-                        </ApexChart>
-                        @if (proximosVencimentos.Count == 0)
-                        {
-                            <p class="text-muted mb-0 mt-2">Sem próximos vencimentos pendentes.</p>
-                        }
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
-</div>
+        <MudItem xs="12" md="7">
+            <MudPaper Class="pa-4 chart-card">
+                <MudText Typo="Typo.h6" Class="mb-2">Despesas por categoria</MudText>
+                <ApexChart TItem="GastoCategoriaDto" Options="gastosOptions" Height="340">
+                    <ApexPointSeries TItem="GastoCategoriaDto" Items="gastosPorCategoria" Name="Valor" SeriesType="SeriesType.Donut" XValue="@(e => e.Categoria)" YValue="@(e => e.Valor)" />
+                </ApexChart>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="5">
+            <MudPaper Class="pa-5 landing-callout h-100 d-flex flex-column justify-center">
+                <MudText Typo="Typo.h5">Planeje. Poupe. Cresça.</MudText>
+                <MudText Class="mb-4">Tome decisões financeiras com clareza usando seus dados em tempo real.</MudText>
+                <MudButton Href="/lancamentos" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">Ver lançamentos</MudButton>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
+</MudContainer>
 
 @code {
     private DashboardResumo? resumo;
     private List<GastoCategoriaDto> gastosPorCategoria = new();
-    private List<ProximoVencimentoDto> proximosVencimentos = new();
-    private List<ModelLancamento> vencemHoje = new();
-    private List<ModelLancamento> atrasados = new();
-    private DateTime mesCompetencia = new(DateTime.Today.Year, DateTime.Today.Month, 1);
-
-    private string MesCompetenciaTexto => mesCompetencia.ToString("MMMM yyyy", new System.Globalization.CultureInfo("pt-BR"));
-
-    // Opções dos gráficos
-    private ApexChartOptions<GastoCategoriaDto> gastosOptions = new()
-    {
-        Chart = new Chart { Toolbar = new Toolbar { Show = false } },
-        Xaxis = new XAxis { Labels = new XAxisLabels { Show = true } },
-        Yaxis = new List<YAxis> { new YAxis { Labels = new YAxisLabels { Formatter = "function(val) { return 'R$ ' + val.toFixed(2); }" } } }
-    };
-
-    private ApexChartOptions<ProximoVencimentoDto> proximosOptions = new()
-    {
-        Chart = new Chart { Toolbar = new Toolbar { Show = false } },
-        Xaxis = new XAxis { Labels = new XAxisLabels { Show = true } },
-        Yaxis = new List<YAxis> { new YAxis { Labels = new YAxisLabels { Formatter = "function(val) { return 'R$ ' + val.toFixed(2); }" } } }
-    };
+    private readonly ApexChartOptions<GastoCategoriaDto> gastosOptions = new();
 
     protected override async Task OnInitializedAsync()
     {
-        await CarregarDashboard();
-
-        // Vencem hoje
+        resumo = await DashboardService.ObterResumo(DateTime.Today);
+        gastosPorCategoria = await DashboardService.ObterGastosPorCategoria(DateTime.Today);
     }
-
-    private async Task CarregarDashboard()
-    {
-        var dataReferencia = mesCompetencia;
-
-        resumo = await DashboardService.ObterResumo(dataReferencia);
-        gastosPorCategoria = await DashboardService.ObterGastosPorCategoria(dataReferencia);
-        proximosVencimentos = (await DashboardService.ObterProximosVencimentos(5)).ToList();
-    }
-
-    private async Task MesAnterior()
-    {
-        mesCompetencia = mesCompetencia.AddMonths(-1);
-        await CarregarDashboard();
-    }
-
-    private async Task ProximoMes()
-    {
-        mesCompetencia = mesCompetencia.AddMonths(1);
-        await CarregarDashboard();
-    }
-
-    // Injetamos o repositório diretamente para dados complementares
-    [Inject] private ILancamentoRepository LancRepository { get; set; } = default!;
-
-    private ILancamentoRepository GetRepository() => LancRepository;
 }

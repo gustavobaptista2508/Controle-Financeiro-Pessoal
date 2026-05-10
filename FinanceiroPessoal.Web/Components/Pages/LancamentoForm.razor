@@ -9,189 +9,65 @@
 
 <PageTitle>@(Id.HasValue ? "Editar Lançamento" : "Cadastro de Lançamento")</PageTitle>
 
-<h2 class="mb-1">@(Id.HasValue ? "Editar Lançamento" : "Novo Lançamento")</h2>
-<p class="text-muted">Home > Lançamentos > @(Id.HasValue ? "Editar" : "Novo")</p>
+<MudContainer MaxWidth="MaxWidth.Large" Class="py-4">
+    <MudStack Spacing="1" Class="mb-3">
+        <MudText Typo="Typo.h4">@(Id.HasValue ? "Editar Lançamento" : "Novo Lançamento")</MudText>
+        <MudText Typo="Typo.body2" Class="text-muted">Home > Lançamentos > @(Id.HasValue ? "Editar" : "Novo")</MudText>
+    </MudStack>
 
-<div class="d-flex flex-wrap gap-2 mb-3">
-    <a class="btn btn-outline-primary btn-mobile-full" href="/lancamentos">Voltar para lançamentos</a>
-    <a class="btn btn-outline-secondary btn-mobile-full" href="/">Voltar para página principal</a>
-</div>
+    <MudPaper Class="pa-6 form-premium" Elevation="1">
+        <EditForm FormName="lancamento-form" Model="lancamento" OnValidSubmit="SalvarLancamento">
+            <DataAnnotationsValidator />
+            <MudGrid Spacing="3">
+                <MudItem xs="12" md="6"><MudTextField Label="Descrição" Variant="Variant.Outlined" @bind-Value="lancamento.Descricao" FullWidth="true" /></MudItem>
+                <MudItem xs="12" md="3"><MudNumericField Label="Valor" Variant="Variant.Outlined" @bind-Value="lancamento.Valor" FullWidth="true" /></MudItem>
+                <MudItem xs="12" md="3">
+                    <MudSelect T="TipoLancamento" Label="Tipo" Variant="Variant.Outlined" @bind-Value="lancamento.Tipo">
+                        <MudSelectItem Value="@TipoLancamento.Entrada">Entrada</MudSelectItem>
+                        <MudSelectItem Value="@TipoLancamento.Saida">Saída</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
 
-<EditForm FormName="lancamento-form" Model="lancamento" OnValidSubmit="SalvarLancamento">
-    <DataAnnotationsValidator />
+                <MudItem xs="12" md="4"><MudDatePicker Label="Vencimento" Variant="Variant.Outlined" @bind-Date="lancamento.DataVencimento" /></MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="int?" Label="Categoria" Variant="Variant.Outlined" @bind-Value="lancamento.CategoriaId">
+                        @foreach (var categoria in categorias) { <MudSelectItem Value="@((int?)categoria.Id)">@categoria.Nome</MudSelectItem> }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="int?" Label="Conta" Variant="Variant.Outlined" @bind-Value="lancamento.ContaId">
+                        @foreach (var conta in contas) { <MudSelectItem Value="@((int?)conta.Id)">@conta.Nome</MudSelectItem> }
+                    </MudSelect>
+                </MudItem>
 
-    <div class="row g-3">
-        <div class="col-md-6">
-            <label class="form-label">Descrição</label>
-            <InputText class="form-control" @bind-Value="lancamento.Descricao" />
-        </div>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="int?" Label="Pessoa" Variant="Variant.Outlined" @bind-Value="lancamento.PessoaId">
+                        @foreach (var pessoa in pessoas) { <MudSelectItem Value="@((int?)pessoa.Id)">@pessoa.Nome</MudSelectItem> }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="4">
+                    <MudSelect T="string" Label="Status" Variant="Variant.Outlined" @bind-Value="lancamento.Status">
+                        <MudSelectItem Value="@("Pendente")">Pendente</MudSelectItem><MudSelectItem Value="@("Pago")">Pago</MudSelectItem><MudSelectItem Value="@("Atrasado")">Atrasado</MudSelectItem>
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="12" md="2"><MudNumericField Label="Parcelas" Variant="Variant.Outlined" @bind-Value="quantidadeParcelas" Min="1" Disabled="@Id.HasValue" /></MudItem>
+                <MudItem xs="12" md="2"><MudTextField Label="Competência" Variant="Variant.Outlined" @bind-Value="lancamento.Competencia" Placeholder="Ex: 05/2026" FullWidth="true" /></MudItem>
+                <MudItem xs="12"><MudTextField Label="Observações" Variant="Variant.Outlined" @bind-Value="lancamento.Observacoes" Lines="3" FullWidth="true" /></MudItem>
+            </MudGrid>
 
-        <div class="col-md-3">
-            <label class="form-label">Valor</label>
-            <InputNumber class="form-control" @bind-Value="lancamento.Valor" />
-        </div>
-
-        <div class="col-md-3">
-            <label class="form-label">Tipo</label>
-            <InputSelect class="form-select" @bind-Value="lancamento.Tipo">
-                <option value="@TipoLancamento.Entrada">Entrada</option>
-                <option value="@TipoLancamento.Saida">Saída</option>
-            </InputSelect>
-        </div>
-
-        <div class="col-md-4">
-            <label class="form-label">Vencimento</label>
-            <InputDate class="form-control" @bind-Value="lancamento.DataVencimento" />
-        </div>
-
-
-        <div class="col-md-4">
-            <label class="form-label">Categoria</label>
-            <InputSelect class="form-select" @bind-Value="lancamento.CategoriaId">
-                <option value="">Selecione...</option>
-                @foreach (var categoria in categorias)
-                {
-                    <option value="@categoria.Id">@categoria.Nome</option>
-                }
-            </InputSelect>
-        </div>
-
-        <div class="col-md-4">
-            <label class="form-label">Conta</label>
-            <InputSelect class="form-select" @bind-Value="lancamento.ContaId">
-                <option value="">Selecione...</option>
-                @foreach (var conta in contas)
-                {
-                    <option value="@conta.Id">@conta.Nome</option>
-                }
-            </InputSelect>
-        </div>
-
-        <div class="col-md-4">
-            <label class="form-label">Pessoa</label>
-            <InputSelect class="form-select" @bind-Value="lancamento.PessoaId">
-                <option value="">Selecione...</option>
-                @foreach (var pessoa in pessoas)
-                {
-                    <option value="@pessoa.Id">@pessoa.Nome</option>
-                }
-            </InputSelect>
-        </div>
-
-        <div class="col-md-4">
-            <label class="form-label">Status</label>
-            <InputSelect class="form-select" @bind-Value="lancamento.Status">
-                <option>Pendente</option>
-                <option>Pago</option>
-                <option>Atrasado</option>
-            </InputSelect>
-        </div>
-
-        <div class="col-md-2">
-            <label class="form-label">Parcelas</label>
-            <InputNumber class="form-control" @bind-Value="quantidadeParcelas" min="1" disabled="@Id.HasValue" />
-        </div>
-
-        <div class="col-md-2">
-            <label class="form-label">Competência</label>
-            <InputText class="form-control" @bind-Value="lancamento.Competencia" placeholder="Ex: 05/2026" />
-        </div>
-
-        <div class="col-12">
-            <label class="form-label">Observações</label>
-            <InputTextArea class="form-control" @bind-Value="lancamento.Observacoes" rows="3" />
-        </div>
-    </div>
-
-    <div class="mt-4 d-flex gap-2">
-        <button type="submit" class="btn btn-success btn-mobile-full">Salvar</button>
-        <a class="btn btn-outline-secondary btn-mobile-full" href="/lancamentos">Cancelar</a>
-    </div>
-</EditForm>
-
-@if (!string.IsNullOrWhiteSpace(mensagem))
-{
-    <div class="alert alert-info mt-3">@mensagem</div>
-}
+            <MudStack Row="true" Spacing="2" Class="mt-6" Wrap="Wrap.Wrap">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">Salvar</MudButton>
+                <MudButton Href="/lancamentos" Variant="Variant.Outlined" Color="MudBlazor.Color.Default">Cancelar</MudButton>
+            </MudStack>
+        </EditForm>
+    </MudPaper>
+</MudContainer>
 
 @code {
-    [Parameter]
-    public int? Id { get; set; }
-
-    [SupplyParameterFromForm]
-    private ModelLancamento lancamento { get; set; } = new();
-    private int quantidadeParcelas = 1;
-    private string? mensagem;
-    private List<Categoria> categorias = new();
-    private List<Conta> contas = new();
-    private List<Pessoa> pessoas = new();
-
-    protected override async Task OnInitializedAsync()
-    {
-        categorias = await CadastroAuxiliarService.ObterCategorias();
-        contas = await CadastroAuxiliarService.ObterContas();
-        pessoas = await CadastroAuxiliarService.ObterPessoas();
-
-        if (Id.HasValue)
-        {
-            var existente = await LancamentoService.ObterPorId(Id.Value);
-            if (existente is not null)
-            {
-                lancamento = existente;
-            }
-        }
-    }
-
-    private async Task SalvarLancamento()
-    {
-        if (Id.HasValue)
-        {
-            await LancamentoService.Atualizar(lancamento);
-            mensagem = "Lançamento atualizado com sucesso.";
-        }
-        else
-        {
-            var parcelas = Math.Max(1, quantidadeParcelas);
-            var competenciaBase = ObterCompetenciaBase();
-            var vencimentoBase = lancamento.DataVencimento?.Date ?? DateTime.Today;
-
-            for (var parcela = 1; parcela <= parcelas; parcela++)
-            {
-                var novoLancamento = new ModelLancamento
-                {
-                    Descricao = parcelas > 1
-                        ? $"{lancamento.Descricao} - Parcela {parcela} de {parcelas}"
-                        : lancamento.Descricao,
-                    Valor = lancamento.Valor,
-                    DataVencimento = vencimentoBase.AddMonths(parcela - 1),
-                    DataPagamento = parcela == 1 && lancamento.Status == "Pago" ? DateTime.Now : null,
-                    Status = parcela == 1 ? lancamento.Status : "Pendente",
-                    Observacoes = lancamento.Observacoes,
-                    Competencia = competenciaBase.AddMonths(parcela - 1).ToString("MM/yyyy"),
-                    Tipo = lancamento.Tipo,
-                    CategoriaId = lancamento.CategoriaId,
-                    ContaId = lancamento.ContaId,
-                    PessoaId = lancamento.PessoaId
-                };
-
-                await LancamentoService.Adicionar(novoLancamento);
-            }
-
-            mensagem = "Lançamento cadastrado com sucesso.";
-        }
-
-        Navigation.NavigateTo("/lancamentos");
-    }
-    private DateTime ObterCompetenciaBase()
-    {
-        var competenciaTexto = (lancamento.Competencia ?? string.Empty).Trim();
-
-        if (DateTime.TryParseExact($"01/{competenciaTexto}", "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var competencia))
-        {
-            return competencia;
-        }
-
-        return lancamento.DataVencimento?.Date ?? DateTime.Today;
-    }
-
+    [Parameter] public int? Id { get; set; }
+    [SupplyParameterFromForm] private ModelLancamento lancamento { get; set; } = new();
+    private int quantidadeParcelas = 1; private string? mensagem; private List<Categoria> categorias = new(); private List<Conta> contas = new(); private List<Pessoa> pessoas = new();
+    protected override async Task OnInitializedAsync(){ categorias = await CadastroAuxiliarService.ObterCategorias(); contas = await CadastroAuxiliarService.ObterContas(); pessoas = await CadastroAuxiliarService.ObterPessoas(); if (Id.HasValue){ var existente = await LancamentoService.ObterPorId(Id.Value); if (existente is not null){ lancamento = existente; } } }
+    private async Task SalvarLancamento(){ if (Id.HasValue){ await LancamentoService.Atualizar(lancamento); mensagem = "Lançamento atualizado com sucesso."; } else { var parcelas = Math.Max(1, quantidadeParcelas); var competenciaBase = ObterCompetenciaBase(); var vencimentoBase = lancamento.DataVencimento?.Date ?? DateTime.Today; for (var parcela = 1; parcela <= parcelas; parcela++){ var novoLancamento = new ModelLancamento{ Descricao = parcelas > 1 ? $"{lancamento.Descricao} - Parcela {parcela} de {parcelas}" : lancamento.Descricao, Valor = lancamento.Valor, DataVencimento = vencimentoBase.AddMonths(parcela - 1), DataPagamento = parcela == 1 && lancamento.Status == "Pago" ? DateTime.Now : null, Status = parcela == 1 ? lancamento.Status : "Pendente", Observacoes = lancamento.Observacoes, Competencia = competenciaBase.AddMonths(parcela - 1).ToString("MM/yyyy"), Tipo = lancamento.Tipo, CategoriaId = lancamento.CategoriaId, ContaId = lancamento.ContaId, PessoaId = lancamento.PessoaId }; await LancamentoService.Adicionar(novoLancamento);} mensagem = "Lançamento cadastrado com sucesso."; } Navigation.NavigateTo("/lancamentos"); }
+    private DateTime ObterCompetenciaBase(){ var competenciaTexto = (lancamento.Competencia ?? string.Empty).Trim(); var formatos = new[] { "dd/MM/yyyy", "dd/M/yyyy" }; if (DateTime.TryParseExact($"01/{competenciaTexto}", formatos, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var competencia)){ return competencia; } return lancamento.DataVencimento?.Date ?? DateTime.Today; }
 }
