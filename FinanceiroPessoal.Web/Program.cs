@@ -45,8 +45,9 @@ var authBuilder = builder.Services
     .AddCookie(options =>
     {
         options.LoginPath = "/login";
+        options.LogoutPath = "/auth/logout";
         options.AccessDeniedPath = "/login";
-        options.ExpireTimeSpan = TimeSpan.FromDays(14);
+        options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
     });
 
@@ -60,6 +61,7 @@ if (googleAuthConfigured)
 }
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 builder.Services.AddScoped<WebAuthSessionService>();
 builder.Services.AddScoped<UsuarioCadastroService>();
 builder.Services.AddScoped<AuthService>();
@@ -94,6 +96,25 @@ app.MapPost("/auth/login", async (LoginRequest request, WebAuthSessionService se
 {
     var result = await session.LoginWithPasswordAsync(request.Email, request.Senha, request.LembrarMe, context);
     return result.ok ? Results.Ok() : Results.BadRequest(new { message = result.erro ?? "Falha ao autenticar." });
+});
+
+app.MapPost("/auth/register", async (CadastroRequest request, UsuarioCadastroService cadastroService) =>
+{
+    var result = await cadastroService.CadastrarAsync(new FinanceiroPessoal.Web.Models.CadastroUsuarioModel
+    {
+        Nome = request.Nome,
+        Email = request.Email,
+        Senha = request.Senha,
+        ConfirmarSenha = request.ConfirmarSenha
+    });
+
+    return result.Success ? Results.Ok() : Results.BadRequest(new { message = result.Message });
+});
+
+app.MapPost("/auth/logout", async (WebAuthSessionService session, HttpContext context) =>
+{
+    await session.LogoutAsync(context);
+    return Results.Ok();
 });
 
 if (googleAuthConfigured)
@@ -178,3 +199,5 @@ app.MapPost("/api/pluggy/transactions/{transacaoId:int}/transformar-lancamento",
 app.Run();
 
 internal sealed record LoginRequest(string Email, string Senha, bool LembrarMe);
+
+internal sealed record CadastroRequest(string Nome, string Email, string Senha, string ConfirmarSenha);
