@@ -7,6 +7,11 @@ namespace FinanceiroPessoal.Web.Services;
 
 public class WebAuthSessionService
 {
+    public bool IsAuthenticated { get; private set; }
+    public string CurrentUserName { get; private set; } = string.Empty;
+    public string CurrentUserEmail { get; private set; } = string.Empty;
+    public event Action? AuthenticationStateChanged;
+
     private static readonly Dictionary<string, Usuario> _usuarios = new(StringComparer.OrdinalIgnoreCase)
     {
         ["admin@financeiro.local"] = new Usuario
@@ -31,6 +36,7 @@ public class WebAuthSessionService
             return (false, "E-mail ou senha inválidos.");
 
         await SignInAsync(usuario, lembrarMe, context);
+        Login(usuario.Nome, usuario.Email);
         return (true, null);
     }
 
@@ -50,11 +56,31 @@ public class WebAuthSessionService
         }
 
         await SignInAsync(usuario, true, context);
+        Login(usuario.Nome, usuario.Email);
     }
 
     public async Task LogoutAsync(HttpContext context)
     {
         await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        Logout();
+    }
+
+    public void Login(string nome, string email)
+    {
+        IsAuthenticated = true;
+        CurrentUserName = nome;
+        CurrentUserEmail = email;
+
+        AuthenticationStateChanged?.Invoke();
+    }
+
+    public void Logout()
+    {
+        IsAuthenticated = false;
+        CurrentUserName = string.Empty;
+        CurrentUserEmail = string.Empty;
+
+        AuthenticationStateChanged?.Invoke();
     }
 
     public string RegisterUser(string nome, string email, string senha)
