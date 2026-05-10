@@ -1,5 +1,6 @@
 @page "/login"
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
@@ -13,7 +14,7 @@
         <MudText Typo="Typo.h4" Class="mb-1">Bem-vindo ao GranaOK</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Entre para acessar seu painel financeiro.</MudText>
 
-        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin" FormName="loginForm">
+        <EditForm EditContext="@editContext" OnValidSubmit="@HandleLogin" FormName="loginForm">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
@@ -21,7 +22,7 @@
             <MudTextField T="string" Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" Immediate="true" @bind-Value="loginModel.Senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
             <MudCheckBox T="bool" @bind-Value="loginModel.LembrarMe" Label="Lembrar-me" Class="mt-2" />
 
-            <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Success" Variant="Variant.Filled" FullWidth="true"
+            <MudButton Class="mt-5 auth-main-button" Color="Color.Success" Variant="Variant.Filled" FullWidth="true"
                        Disabled="_isLoading" Loading="_isLoading" ButtonType="ButtonType.Submit">
                 ENTRAR
             </MudButton>
@@ -35,7 +36,9 @@
         }
         else
         {
-            <MudText Typo="Typo.caption" Class="mt-3 auth-subtitle">Login Google não configurado</MudText>
+            <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Disabled="true" StartIcon="@Icons.Custom.Brands.Google">
+                Google não configurado
+            </MudButton>
         }
 
         <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
@@ -45,12 +48,15 @@
 </MudContainer>
 
 @code {
-    private readonly LoginModel loginModel = new();
+    private LoginModel loginModel = new();
+    private EditContext editContext = default!;
     private bool _isLoading;
     private bool _googleAuthConfigured;
 
     protected override void OnInitialized()
     {
+        editContext = new EditContext(loginModel);
+
         var googleClientId = Configuration["Authentication:Google:ClientId"];
         var googleClientSecret = Configuration["Authentication:Google:ClientSecret"];
         _googleAuthConfigured = !string.IsNullOrWhiteSpace(googleClientId) &&
