@@ -2,9 +2,10 @@
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @inject NavigationManager Navigation
 
-<MudThemeProvider Theme="_theme" />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider Theme="_theme">
+    <MudDialogProvider>
+        <MudSnackbarProvider>
+            <MudPopoverProvider>
 
 <MudLayout>
     <MudDrawer Elevation="0" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
@@ -47,6 +48,11 @@
         </MudContainer>
     </MudMainContent>
 </MudLayout>
+
+            </MudPopoverProvider>
+        </MudSnackbarProvider>
+    </MudDialogProvider>
+</MudThemeProvider>
 
 @code {
     private bool _drawerOpen = true;
