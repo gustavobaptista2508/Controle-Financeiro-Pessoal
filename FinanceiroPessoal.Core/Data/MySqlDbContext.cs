@@ -18,7 +18,12 @@ namespace FinanceiroPessoal.Core.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseMySql(_connectionString, ServerVersion.AutoDetect(_connectionString));
+                if (string.IsNullOrWhiteSpace(_connectionString))
+                {
+                    throw new InvalidOperationException("Connection string do MySQL não configurada.");
+                }
+
+                optionsBuilder.UseMySql(_connectionString, new MySqlServerVersion(new Version(8, 0, 36)));
             }
         }
     }

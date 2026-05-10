@@ -12,6 +12,7 @@ using System.Security.Claims;
 using System.Globalization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,6 +62,20 @@ if (googleAuthConfigured)
         options.ClientSecret = googleClientSecret!;
     });
 }
+
+
+var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration.GetConnectionString("MySqlConnection");
+
+if (string.IsNullOrWhiteSpace(mysqlConnectionString))
+{
+    throw new InvalidOperationException("ConnectionStrings:DefaultConnection ou ConnectionStrings:MySqlConnection não foi encontrada.");
+}
+
+builder.Services.AddDbContext<FinanceiroPessoal.Core.Data.FinanceiroDbContext>(options =>
+{
+    options.UseMySql(mysqlConnectionString, new MySqlServerVersion(new Version(8, 0, 36)));
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
@@ -124,6 +139,19 @@ app.MapPost("/auth/logout", async ([FromServices] WebAuthSessionService session,
     return Results.Ok();
 });
 
+app.MapGet("/debug/mysql", async ([FromServices] FinanceiroPessoal.Core.Data.FinanceiroDbContext db) =>
+{
+    try
+    {
+        var canConnect = await db.Database.CanConnectAsync();
+        return canConnect ? Results.Ok("MySQL OK") : Results.Problem("Falha ao conectar MySQL");
+    }
+    catch
+    {
+        return Results.Problem("Não foi possível conectar ao banco de dados. Verifique a configuração do MySQL.");
+    }
+});
+
 if (googleAuthConfigured)
 {
     app.MapGet("/auth/google", async (HttpContext context) =>
@@ -145,8 +173,16 @@ if (googleAuthConfigured)
             return;
         }
 
-        await session.LoginWithGoogleAsync(email, nome ?? "Usuário Google", context);
-        context.Response.Redirect("/dashboard");
+        try
+        {
+            await session.LoginWithGoogleAsync(email, nome ?? "Usuário Google", context);
+            context.Response.Redirect("/dashboard");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"DEBUG GOOGLE CALLBACK ERRO: {ex.Message}");
+            context.Response.Redirect("/login?erro=mysql_indisponivel");
+        }
     });
 }
 

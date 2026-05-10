@@ -70,7 +70,7 @@
 
     private async Task HandleLogin()
     {
-        Console.WriteLine("DEBUG LOGIN: HandleLogin foi chamado");
+        Console.WriteLine("DEBUG LOGIN: HandleLogin chamado");
         Console.WriteLine($"DEBUG LOGIN Email: {loginModel.Email}");
         Console.WriteLine($"DEBUG LOGIN Senha preenchida: {!string.IsNullOrWhiteSpace(loginModel.Senha)}");
         Console.WriteLine($"DEBUG LOGIN LembrarMe: {loginModel.LembrarMe}");
@@ -79,9 +79,9 @@
 
         try
         {
-            isLoading = true;
             var client = HttpClientFactory.CreateClient();
-            var response = await client.PostAsJsonAsync("/auth/login", loginModel);
+            var loginEndpoint = Nav.ToAbsoluteUri("/auth/login");
+            var response = await client.PostAsJsonAsync(loginEndpoint, loginModel);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -92,11 +92,11 @@
             }
 
             Console.WriteLine("DEBUG LOGIN Resultado: true");
-            Navigation.NavigateTo("/dashboard", forceLoad: true);
+            Nav.NavigateTo("/dashboard", forceLoad: true);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"DEBUG LOGIN Exception: {ex.Message}");
+            Console.WriteLine($"DEBUG LOGIN Exception: {ex}");
             Snackbar.Add("Falha ao efetuar login.", Severity.Error);
         }
         finally
