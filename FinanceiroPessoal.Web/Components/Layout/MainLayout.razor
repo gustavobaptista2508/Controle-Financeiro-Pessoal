@@ -36,7 +36,7 @@
             </AuthorizeView>
         </MudAppBar>
 
-        <MudDrawer Elevation="1" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
+        <MudDrawer Elevation="1" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Responsive" Breakpoint="Breakpoint.Md" @bind-Open="_drawerOpen" Class="app-sidebar">
             <div class="logo-area">
                 <img src="granaok-logo.svg" alt="GranaOK" />
                 <MudText Typo="Typo.subtitle2" Class="brand-caption">Controle Financeiro Inteligente</MudText>

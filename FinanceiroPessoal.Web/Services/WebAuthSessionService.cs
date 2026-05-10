@@ -118,7 +118,7 @@ public class WebAuthSessionService
         var authProperties = new AuthenticationProperties
         {
             IsPersistent = lembrarMe,
-            ExpiresUtc = lembrarMe ? DateTimeOffset.UtcNow.AddDays(14) : DateTimeOffset.UtcNow.AddHours(8),
+            ExpiresUtc = lembrarMe ? DateTimeOffset.UtcNow.AddDays(30) : DateTimeOffset.UtcNow.AddHours(8),
             AllowRefresh = true
         };
 
