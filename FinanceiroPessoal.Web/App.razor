@@ -1,3 +1,4 @@
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Routing
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -13,9 +14,14 @@
 </head>
 
 <body>
+    <CascadingAuthenticationState>
     <Router AppAssembly="typeof(Program).Assembly">
         <Found Context="routeData">
-            <RouteView RouteData="@routeData" DefaultLayout="typeof(Components.Layout.MainLayout)" />
+            <AuthorizeRouteView RouteData="@routeData" DefaultLayout="typeof(Components.Layout.MainLayout)">
+                <NotAuthorized>
+                    <Components.RedirectToAuth />
+                </NotAuthorized>
+            </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
         </Found>
         <NotFound>
@@ -24,6 +30,7 @@
             </LayoutView>
         </NotFound>
     </Router>
+    </CascadingAuthenticationState>
 
     <script src="_content/Blazor-ApexCharts/js/apexcharts.min.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>

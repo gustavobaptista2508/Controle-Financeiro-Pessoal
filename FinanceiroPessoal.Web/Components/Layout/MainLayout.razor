@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @inject NavigationManager Navigation
+@using Microsoft.AspNetCore.Components.Authorization
 
 <CascadingValue Value="_theme">
     <MudThemeProvider Theme="_theme" />
@@ -9,41 +10,57 @@
     <MudPopoverProvider />
 
     <MudLayout>
+        <MudAppBar Elevation="0" Dense="false" Class="topbar">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudSpacer />
+
+            <AuthorizeView>
+                <Authorized>
+                    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
+                        <ActivatorContent>
+                            <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
+                                <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials()</MudAvatar>
+                                <MudText Typo="Typo.body2">@GetDisplayName()</MudText>
+                            </MudButton>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle">Meu Perfil</MudMenuItem>
+                            <MudMenuItem Icon="@Icons.Material.Filled.Settings">Configurações</MudMenuItem>
+                            <MudDivider />
+                            <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
+                        </ChildContent>
+                    </MudMenu>
+                </Authorized>
+                <NotAuthorized>
+                    <MudButton Href="/login" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">Entrar</MudButton>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudAppBar>
+
         <MudDrawer Elevation="0" Variant="DrawerVariant.Responsive" Open="@_drawerOpen" Class="app-sidebar">
             <div class="logo-area">
                 <img src="granaok-logo.svg" alt="GranaOK" />
                 <MudText Typo="Typo.subtitle2" Class="brand-caption">Controle Financeiro Inteligente</MudText>
             </div>
             <MudNavMenu Class="sidebar-menu">
-                <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.SpaceDashboard" Match="NavLinkMatch.All">Dashboard</MudNavLink>
-                <MudNavLink Href="/lancamentos" Icon="@Icons.Material.Filled.ReceiptLong">Lançamentos</MudNavLink>
-                <MudNavLink Href="/lancamentos/novo" Icon="@Icons.Material.Filled.AddCircleOutline">Novo lançamento</MudNavLink>
-                <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
-                <MudNavLink Href="/usuarios/cadastro" Icon="@Icons.Material.Filled.PersonAddAlt1">Cadastro</MudNavLink>
+                <AuthorizeView>
+                    <Authorized>
+                        <MudNavLink Href="/dashboard" Icon="@Icons.Material.Filled.SpaceDashboard" Match="NavLinkMatch.Prefix">Dashboard</MudNavLink>
+                        <MudNavLink Href="/lancamentos" Icon="@Icons.Material.Filled.ReceiptLong">Lançamentos</MudNavLink>
+                        <MudNavLink Href="/lancamentos/novo" Icon="@Icons.Material.Filled.AddCircleOutline">Novo lançamento</MudNavLink>
+                        <MudNavLink Href="/contas" Icon="@Icons.Material.Filled.AccountBalanceWallet">Contas</MudNavLink>
+                        <MudNavLink Href="/extratocartao" Icon="@Icons.Material.Filled.CreditCard">Cartões</MudNavLink>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudNavLink Href="/" Icon="@Icons.Material.Filled.Home" Match="NavLinkMatch.All">Home</MudNavLink>
+                        <MudNavLink Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+                        <MudNavLink Href="/usuarios/cadastro" Icon="@Icons.Material.Filled.PersonAddAlt1">Cadastro</MudNavLink>
+                    </NotAuthorized>
+                </AuthorizeView>
             </MudNavMenu>
         </MudDrawer>
 
         <MudMainContent>
-            <MudAppBar Elevation="0" Dense="false" Class="topbar">
-                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-                <MudSpacer />
-
-                <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
-                    <ActivatorContent>
-                        <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
-                            <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials()</MudAvatar>
-                            <MudText Typo="Typo.body2">@GetDisplayName()</MudText>
-                        </MudButton>
-                    </ActivatorContent>
-                    <ChildContent>
-                        <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle">Meu Perfil</MudMenuItem>
-                        <MudMenuItem Icon="@Icons.Material.Filled.Settings">Configurações</MudMenuItem>
-                        <MudDivider />
-                        <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
-                    </ChildContent>
-                </MudMenu>
-            </MudAppBar>
-
             <MudContainer MaxWidth="MaxWidth.False" Class="content-area">
                 @Body
             </MudContainer>
@@ -51,45 +68,4 @@
     </MudLayout>
 </CascadingValue>
 
-@code {
-    private bool _drawerOpen = true;
-
-    private readonly MudTheme _theme = new()
-    {
-        PaletteLight = new PaletteLight
-        {
-            Primary = "#00C853",
-            Secondary = "#052C65",
-            Background = "#F4F7FB",
-            Surface = "#FFFFFF",
-            AppbarBackground = "#FFFFFF",
-            AppbarText = "#052C65",
-            DrawerBackground = "#052C65",
-            DrawerText = "#E7EEF8",
-            DrawerIcon = "#C8D7EE"
-        },
-        LayoutProperties = new LayoutProperties
-        {
-            DefaultBorderRadius = "16px"
-        }
-    };
-
-    private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
-
-    private string GetDisplayName() => Session.CurrentUserName ?? "Usuário";
-
-    private string GetInitials()
-    {
-        var name = GetDisplayName();
-        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length == 0) return "GO";
-        if (parts.Length == 1) return parts[0][..1].ToUpperInvariant();
-        return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant();
-    }
-
-    private void Logout()
-    {
-        Session.Logout();
-        Navigation.NavigateTo("/login");
-    }
-}
+@code { private bool _drawerOpen = true; private readonly MudTheme _theme = new(){ PaletteLight = new PaletteLight{ Primary = "#00C853", Secondary = "#052C65", Background = "#F4F7FB", Surface = "#FFFFFF", AppbarBackground = "#FFFFFF", AppbarText = "#052C65", DrawerBackground = "#052C65", DrawerText = "#E7EEF8", DrawerIcon = "#C8D7EE"}, LayoutProperties = new LayoutProperties{ DefaultBorderRadius = "16px"}}; private void ToggleDrawer() => _drawerOpen = !_drawerOpen; private string GetDisplayName() => Session.CurrentUserName ?? "Usuário"; private string GetInitials(){ var name = GetDisplayName(); var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries); if (parts.Length == 0) return "GO"; if (parts.Length == 1) return parts[0][..1].ToUpperInvariant(); return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant(); } private void Logout(){ Session.Logout(); Navigation.NavigateTo("/"); } }

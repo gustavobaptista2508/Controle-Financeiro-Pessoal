@@ -25,6 +25,8 @@ public class WebAuthSessionService
     public bool PushChallengePending { get; private set; }
     public bool IsFirstAccess => !_authService.ChaveExiste();
 
+    public event Action? AuthenticationStateChanged;
+
     public bool LoginWithPassword(string email, string senha)
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha)) return false;
@@ -37,6 +39,7 @@ public class WebAuthSessionService
             CurrentUserName = dados.Nome;
         }
 
+        AuthenticationStateChanged?.Invoke();
         return IsAuthenticated;
     }
 
@@ -49,6 +52,7 @@ public class WebAuthSessionService
 
         _usuarios[key] = (senha, nome.Trim());
         MultiTenantDataStore.InitializeTenant(key);
+        AuthenticationStateChanged?.Invoke();
         return "Usuário cadastrado com base individual criada com sucesso.";
     }
 
@@ -58,5 +62,6 @@ public class WebAuthSessionService
         CurrentUserEmail = null;
         CurrentUserName = null;
         PushChallengePending = false;
+        AuthenticationStateChanged?.Invoke();
     }
 }

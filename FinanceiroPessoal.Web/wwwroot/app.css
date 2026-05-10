@@ -50,3 +50,6 @@ body {
   .content-area { padding: 1rem; }
   .app-sidebar { width: 260px !important; }
 }
+
+
+.home-page .section-title{margin:2rem 0 1rem;color:#052C65}.hero-title{color:#052C65;font-weight:800}.hero-subtitle{color:#4d6786;margin-top:1rem}.hero-mockup,.benefit-card,.how-it-works,.final-cta,.footer{border-radius:18px;box-shadow:0 8px 22px rgba(0,0,0,.05)}.hero-mockup{background:linear-gradient(140deg,#fff,#eef5ff)}.mockup-image{width:100%;max-width:380px;display:block;margin:auto}.benefit-card{height:100%;background:#fff}.how-it-works{background:#fff}.final-cta{background:linear-gradient(135deg,#ecfff3,#eaf2ff);text-align:center}.footer{background:#052C65;color:#fff}
