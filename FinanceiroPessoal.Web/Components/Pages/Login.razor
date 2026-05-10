@@ -1,9 +1,11 @@
 @page "/login"
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @inject NavigationManager Nav
 @inject IHttpContextAccessor HttpContextAccessor
 @inject ISnackbar Snackbar
+@inject IConfiguration Configuration
 
 <PageTitle>Login</PageTitle>
 
@@ -12,23 +14,30 @@
         <MudText Typo="Typo.h4" Class="mb-1">Bem-vindo ao GranaOK</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Entre para acessar seu painel financeiro.</MudText>
 
-        <EditForm Model="model" OnValidSubmit="EntrarAsync">
+        <EditForm EditContext="@editContext" OnValidSubmit="@HandleLogin" FormName="loginForm">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined" @bind-Value="model.Email" FullWidth="true" Margin="Margin.Dense" />
-            <MudTextField T="string" Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="model.Senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
-            <MudCheckBox T="bool" @bind-Value="model.LembrarMe" Label="Lembrar-me" Class="mt-2" />
+            <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined" Immediate="true" @bind-Value="loginModel.Email" FullWidth="true" Margin="Margin.Dense" />
+            <MudTextField T="string" Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" Immediate="true" @bind-Value="loginModel.Senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+            <MudCheckBox T="bool" @bind-Value="loginModel.LembrarMe" Label="Lembrar-me" Class="mt-2" />
 
-            <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true"
+            <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Success" Variant="Variant.Filled" FullWidth="true"
                        Disabled="_isLoading" Loading="_isLoading" ButtonType="ButtonType.Submit">
-                Entrar
+                ENTRAR
             </MudButton>
         </EditForm>
 
-        <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Href="/auth/google" StartIcon="@Icons.Custom.Brands.Google">
-            Entrar com Google
-        </MudButton>
+        @if (_googleAuthConfigured)
+        {
+            <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Href="/auth/google" StartIcon="@Icons.Custom.Brands.Google">
+                Entrar com Google
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Disabled="true" StartIcon="@Icons.Custom.Brands.Google">Google não configurado</MudButton>
+        }
 
         <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
             <MudLink Href="/usuarios/cadastro">Criar conta</MudLink>
@@ -37,10 +46,22 @@
 </MudContainer>
 
 @code {
-    private readonly LoginModel model = new();
+    private LoginModel loginModel = new();
+    private EditContext editContext = default!;
     private bool _isLoading;
+    private bool _googleAuthConfigured;
 
-    private async Task EntrarAsync()
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(loginModel);
+
+        var googleClientId = Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = Configuration["Authentication:Google:ClientSecret"];
+        _googleAuthConfigured = !string.IsNullOrWhiteSpace(googleClientId) &&
+                                !string.IsNullOrWhiteSpace(googleClientSecret);
+    }
+
+    private async Task HandleLogin()
     {
         if (_isLoading) return;
         _isLoading = true;
@@ -53,7 +74,7 @@
                 return;
             }
 
-            var result = await Session.LoginWithPasswordAsync(model.Email, model.Senha, model.LembrarMe, context);
+            var result = await Session.LoginWithPasswordAsync(loginModel.Email, loginModel.Senha, loginModel.LembrarMe, context);
             if (!result.ok)
             {
                 Snackbar.Add(result.erro ?? "Falha ao autenticar.", Severity.Error);

@@ -21,11 +21,18 @@ builder.Services.AddMudServices();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorization();
 
-builder.Services
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+var googleAuthConfigured = !string.IsNullOrWhiteSpace(googleClientId) &&
+                           !string.IsNullOrWhiteSpace(googleClientSecret);
+
+var authBuilder = builder.Services
     .AddAuthentication(options =>
     {
         options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = googleAuthConfigured
+            ? GoogleDefaults.AuthenticationScheme
+            : CookieAuthenticationDefaults.AuthenticationScheme;
     })
     .AddCookie(options =>
     {
@@ -33,12 +40,16 @@ builder.Services
         options.AccessDeniedPath = "/login";
         options.ExpireTimeSpan = TimeSpan.FromDays(14);
         options.SlidingExpiration = true;
-    })
-    .AddGoogle(options =>
-    {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? string.Empty;
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? string.Empty;
     });
+
+if (googleAuthConfigured)
+{
+    authBuilder.AddGoogle(options =>
+    {
+        options.ClientId = googleClientId!;
+        options.ClientSecret = googleClientSecret!;
+    });
+}
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<WebAuthSessionService>();
@@ -69,28 +80,31 @@ app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/auth/google", async (HttpContext context) =>
+if (googleAuthConfigured)
 {
-    var redirectUri = "/auth/google/callback";
-    var properties = new AuthenticationProperties { RedirectUri = redirectUri };
-    await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, properties);
-});
-
-app.MapGet("/auth/google/callback", async (HttpContext context, WebAuthSessionService session) =>
-{
-    var principal = context.User;
-    var email = principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
-    var nome = principal.Identity?.Name ?? email;
-
-    if (string.IsNullOrWhiteSpace(email))
+    app.MapGet("/auth/google", async (HttpContext context) =>
     {
-        context.Response.Redirect("/login?erro=google_email_invalido");
-        return;
-    }
+        var redirectUri = "/auth/google/callback";
+        var properties = new AuthenticationProperties { RedirectUri = redirectUri };
+        await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, properties);
+    });
 
-    await session.LoginWithGoogleAsync(email, nome ?? "Usuário Google", context);
-    context.Response.Redirect("/dashboard");
-});
+    app.MapGet("/auth/google/callback", async (HttpContext context, WebAuthSessionService session) =>
+    {
+        var principal = context.User;
+        var email = principal.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        var nome = principal.Identity?.Name ?? email;
+
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            context.Response.Redirect("/login?erro=google_email_invalido");
+            return;
+        }
+
+        await session.LoginWithGoogleAsync(email, nome ?? "Usuário Google", context);
+        context.Response.Redirect("/dashboard");
+    });
+}
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
