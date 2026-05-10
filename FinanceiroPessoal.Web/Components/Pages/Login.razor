@@ -14,13 +14,13 @@
         <MudText Typo="Typo.h4" Class="mb-1">Bem-vindo ao GranaOK</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Entre para acessar seu painel financeiro.</MudText>
 
-        <EditForm EditContext="@editContext" OnValidSubmit="@HandleLogin" FormName="loginForm">
+        <EditForm EditContext="@loginEditContext" OnValidSubmit="@HandleLogin" FormName="loginForm">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
             <MudTextField T="string" Label="E-mail" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" For="@(() => loginModel.Email)" @bind-Value="loginModel.Email" FullWidth="true" />
             <MudTextField T="string" Label="Senha" Variant="Variant.Outlined" Margin="Margin.Dense" Immediate="true" InputType="InputType.Password" For="@(() => loginModel.Senha)" @bind-Value="loginModel.Senha" FullWidth="true" Class="mt-2" />
-            <MudCheckBox T="bool" @bind-Value="loginModel.LembrarMe" Label="Lembrar-me" Class="mt-2" />
+            <MudCheckBox T="bool" @bind-Checked="loginModel.LembrarMe" Label="Lembrar-me" Class="mt-2" />
 
             <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Success" Variant="Variant.Filled" FullWidth="true"
                        Disabled="@isLoading" ButtonType="ButtonType.Submit">
@@ -47,13 +47,13 @@
 
 @code {
     private LoginModel loginModel = new();
-    private EditContext editContext = default!;
+    private EditContext loginEditContext = default!;
     private bool isLoading;
     private bool _googleAuthConfigured;
 
     protected override void OnInitialized()
     {
-        editContext = new EditContext(loginModel);
+        loginEditContext = new EditContext(loginModel);
 
         var googleClientId = Configuration["Authentication:Google:ClientId"];
         var googleClientSecret = Configuration["Authentication:Google:ClientSecret"];
@@ -63,7 +63,7 @@
 
     private async Task HandleLogin()
     {
-        if (!editContext.Validate())
+        if (!loginEditContext.Validate())
             return;
 
         if (isLoading) return;
@@ -77,7 +77,11 @@
                 return;
             }
 
-            var result = await Session.LoginWithPasswordAsync(loginModel.Email, loginModel.Senha, loginModel.LembrarMe, context);
+            var email = loginModel.Email?.Trim() ?? string.Empty;
+            var senha = loginModel.Senha;
+            var lembrar = loginModel.LembrarMe;
+
+            var result = await Session.LoginWithPasswordAsync(email, senha, lembrar, context);
             if (!result.ok)
             {
                 Snackbar.Add(result.erro ?? "Falha ao autenticar.", Severity.Error);
