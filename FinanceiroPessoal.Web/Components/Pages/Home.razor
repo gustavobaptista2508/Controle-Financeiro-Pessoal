@@ -1,23 +1,71 @@
 @page "/"
 
-<PageTitle>GranaOK</PageTitle>
+<PageTitle>GranaOK | Controle Financeiro Inteligente</PageTitle>
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
-    <MudGrid AlignItems="MudBlazor.AlignItems.Center">
+<MudContainer MaxWidth="MaxWidth.Large" Class="home-page py-10">
+    <MudGrid AlignItems="MudBlazor.AlignItems.Center" Spacing="4" Class="hero-section">
         <MudItem xs="12" md="6">
-            <MudText Typo="Typo.h3" Class="mb-3">GranaOK: seu sistema financeiro pessoal</MudText>
-            <MudText Typo="Typo.body1" Class="mb-4">Controle entradas, despesas e metas com experiência moderna, rápida e responsiva.</MudText>
-            <MudStack Row="true" Spacing="2">
-                <MudButton Href="/login" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">Entrar</MudButton>
-                <MudButton Href="/usuarios/cadastro" Variant="Variant.Outlined" Color="MudBlazor.Color.Secondary">Criar conta</MudButton>
-                <MudButton Href="/dashboard" Variant="Variant.Text" Color="MudBlazor.Color.Secondary">Ver demonstração</MudButton>
+            <MudText Typo="Typo.h2" Class="hero-title">Controle sua vida financeira de forma simples e inteligente</MudText>
+            <MudText Typo="Typo.body1" Class="hero-subtitle">O GranaOK organiza suas receitas, despesas, cartões e metas com uma experiência moderna, visual premium e foco em resultado.</MudText>
+            <MudStack Row="true" Spacing="2" Class="mt-6 hero-actions">
+                <MudButton Href="/usuarios/cadastro" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">Começar Agora</MudButton>
+                <MudButton Href="/login" Variant="Variant.Outlined" Color="MudBlazor.Color.Secondary">Área do Cliente</MudButton>
             </MudStack>
         </MudItem>
         <MudItem xs="12" md="6">
-            <MudPaper Class="hero">
-                <MudText Typo="Typo.h5">Visual fintech com foco em produtividade</MudText>
-                <MudText>Sidebar, topbar profissional, dashboard com indicadores e análises de despesas.</MudText>
+            <MudPaper Class="hero-mockup pa-4">
+                <MudText Typo="Typo.h6" Class="mb-3">Visão rápida do dashboard</MudText>
+                <img src="granaok-logo.svg" alt="Mockup GranaOK" class="mockup-image" />
             </MudPaper>
         </MudItem>
     </MudGrid>
+
+    <MudText Typo="Typo.h4" Class="section-title">Benefícios</MudText>
+    <MudGrid Spacing="3">
+        @foreach (var benefit in Benefits)
+        {
+            <MudItem xs="12" sm="6" md="4">
+                <MudCard Class="benefit-card">
+                    <MudCardContent>
+                        <MudIcon Icon="@benefit.Icon" Size="Size.Large" Color="MudBlazor.Color.Primary" />
+                        <MudText Typo="Typo.h6" Class="mt-3">@benefit.Title</MudText>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        }
+    </MudGrid>
+
+    <MudPaper Class="how-it-works pa-6 mt-8">
+        <MudText Typo="Typo.h4" Class="section-title">Como funciona</MudText>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="4"><MudText><strong>1.</strong> Crie sua conta em minutos.</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>2.</strong> Cadastre suas finanças e cartões.</MudText></MudItem>
+            <MudItem xs="12" md="4"><MudText><strong>3.</strong> Acompanhe sua evolução com relatórios.</MudText></MudItem>
+        </MudGrid>
+    </MudPaper>
+
+    <MudPaper Class="final-cta pa-6 mt-8">
+        <MudText Typo="Typo.h4">Comece gratuitamente</MudText>
+        <MudButton Href="/usuarios/cadastro" Variant="Variant.Filled" Color="MudBlazor.Color.Primary" Class="mt-3">Criar conta</MudButton>
+    </MudPaper>
+
+    <MudPaper Class="footer mt-8 pa-5">
+        <MudStack Row="true" Class="justify-space-between" Style="flex-wrap:wrap; gap:1rem;">
+            <MudText>Links: Home • Login • Cadastro</MudText>
+            <MudText>Redes sociais: Instagram • LinkedIn • YouTube</MudText>
+            <MudText>© 2026 GranaOK</MudText>
+        </MudStack>
+    </MudPaper>
 </MudContainer>
+
+@code {
+    private static readonly (string Title, string Icon)[] Benefits =
+    [
+        ("Dashboard Inteligente", Icons.Material.Filled.SpaceDashboard),
+        ("Controle de Gastos", Icons.Material.Filled.ReceiptLong),
+        ("Metas Financeiras", Icons.Material.Filled.Flag),
+        ("Relatórios", Icons.Material.Filled.BarChart),
+        ("Planejamento", Icons.Material.Filled.EventNote),
+        ("Mobile", Icons.Material.Filled.PhoneIphone)
+    ];
+}

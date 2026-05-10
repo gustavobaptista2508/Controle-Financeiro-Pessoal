@@ -5,9 +5,9 @@
     {
         if (firstRender)
         {
-            // Evita forceLoad para não reiniciar o circuito Blazor Server,
-            // preservando o estado de autenticação em WebAuthSessionService.
-            Nav.NavigateTo("/auth");
+            var relativePath = Nav.ToBaseRelativePath(Nav.Uri);
+            var returnUrl = string.IsNullOrWhiteSpace(relativePath) ? "/dashboard" : $"/{relativePath}";
+            Nav.NavigateTo($"/login?returnUrl={Uri.EscapeDataString(returnUrl)}", forceLoad: false);
         }
     }
 }

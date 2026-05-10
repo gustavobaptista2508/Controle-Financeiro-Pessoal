@@ -6,6 +6,7 @@ using FinanceiroPessoal.Web.Services;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 using MudBlazor.Services;
+using Microsoft.AspNetCore.Components.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,9 +17,11 @@ builder.Services
 builder.Services.AddHttpClient();
 builder.Services.AddApexCharts();
 builder.Services.AddMudServices();
+builder.Services.AddAuthorizationCore();
 
 // Usa os repositórios reais (MySQL) para manter dados persistidos e dashboard funcional
 builder.Services.AddScoped<WebAuthSessionService>();
+builder.Services.AddScoped<AuthenticationStateProvider, WebAuthStateProvider>();
 builder.Services.AddScoped<ILancamentoRepository, InMemoryLancamentoRepository>();
 builder.Services.AddScoped<ICadastroAuxiliarRepository, InMemoryCadastroAuxiliarRepository>();
 

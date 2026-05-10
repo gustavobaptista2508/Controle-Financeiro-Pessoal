@@ -1,6 +1,8 @@
+@using Microsoft.AspNetCore.WebUtilities
 @page "/login"
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @inject NavigationManager Nav
+@inject Microsoft.AspNetCore.Components.NavigationManager NavigationManager
 
 <PageTitle>Login</PageTitle>
 
@@ -24,4 +26,4 @@
     </MudPaper>
 </MudContainer>
 
-@code { string email=""; string senha=""; bool lembrarMe; string? erro; void Entrar(){ if(!Session.LoginWithPassword(email,senha)){erro="E-mail ou senha inválidos.";return;} Nav.NavigateTo("/"); } }
+@code { string email=""; string senha=""; bool lembrarMe; string? erro; void Entrar(){ if(!Session.LoginWithPassword(email,senha)){erro="E-mail ou senha inválidos.";return;} var target = QueryHelpers.ParseQuery(new Uri(NavigationManager.Uri).Query).TryGetValue("returnUrl", out var returnUrl) ? returnUrl.ToString() : "/dashboard"; Nav.NavigateTo(target); } }
