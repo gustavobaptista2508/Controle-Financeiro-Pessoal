@@ -1,5 +1,5 @@
-using FinanceiroPessoal.WinForms.Data;
-using FinanceiroPessoal.WinForms.Models;
+using FinanceiroPessoal.Core.Data;
+using FinanceiroPessoal.Core.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinanceiroPessoal.WinForms;

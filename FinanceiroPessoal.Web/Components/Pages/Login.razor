@@ -1,8 +1,9 @@
 @page "/login"
 @rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
 @using System.Net.Http.Json
-@inject NavigationManager Nav
+@inject NavigationManager Navigation
 @inject IHttpClientFactory HttpClientFactory
 @inject ISnackbar Snackbar
 @inject IConfiguration Configuration
@@ -18,26 +19,23 @@
             <DataAnnotationsValidator />
             <ValidationSummary />
 
-            <InputText class="mud-input-slot mud-input-root mud-input-root-outlined mud-input-root-adorned-end form-control"
+            <InputText class="form-control"
                        @bind-Value="loginModel.Email"
                        placeholder="E-mail" />
-            <ValidationMessage For="@(() => loginModel.Email)" />
 
-            <InputText class="mud-input-slot mud-input-root mud-input-root-outlined mud-input-root-adorned-end form-control mt-2"
+            <InputText class="form-control mt-2"
                        type="password"
                        @bind-Value="loginModel.Senha"
                        placeholder="Senha" />
-            <ValidationMessage For="@(() => loginModel.Senha)" />
 
             <div class="mt-2">
                 <InputCheckbox @bind-Value="loginModel.LembrarMe" />
                 <label class="ml-2">Lembrar-me</label>
             </div>
 
-            <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Success" Variant="Variant.Filled" FullWidth="true"
-                       Disabled="@isLoading" ButtonType="ButtonType.Submit">
+            <button type="submit" class="btn btn-success mt-5 auth-main-button" disabled="@isLoading">
                 @(isLoading ? "ENTRANDO..." : "ENTRAR")
-            </MudButton>
+            </button>
         </EditForm>
 
         @if (_googleAuthConfigured)
@@ -78,7 +76,6 @@
         Console.WriteLine($"DEBUG LOGIN LembrarMe: {loginModel.LembrarMe}");
 
         if (isLoading) return;
-        isLoading = true;
 
         try
         {

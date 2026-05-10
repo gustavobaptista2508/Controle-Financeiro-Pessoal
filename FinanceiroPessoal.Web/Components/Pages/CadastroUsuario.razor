@@ -13,22 +13,18 @@
         <MudText Typo="Typo.h4" Class="mb-1">Criar conta</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Comece agora seu controle financeiro premium.</MudText>
 
-        <EditForm Model="@cadastroModel" OnValidSubmit="@HandleCadastro" FormName="cadastroUsuarioForm">
+        <EditForm Model="@cadastroModel" OnValidSubmit="@HandleCadastro" FormName="cadastroForm">
             <DataAnnotationsValidator />
+            <ValidationSummary />
 
             <InputText class="form-control" @bind-Value="cadastroModel.Nome" placeholder="Nome" />
             <InputText class="form-control mt-2" @bind-Value="cadastroModel.Email" placeholder="E-mail" />
             <InputText class="form-control mt-2" type="password" @bind-Value="cadastroModel.Senha" placeholder="Senha" />
             <InputText class="form-control mt-2" type="password" @bind-Value="cadastroModel.ConfirmarSenha" placeholder="Confirmar senha" />
 
-            <MudButton ButtonType="ButtonType.Submit"
-                       Color="Color.Success"
-                       Variant="Variant.Filled"
-                       FullWidth="true"
-                       Disabled="@isSaving"
-                       Class="mt-5 auth-main-button">
+            <button type="submit" class="btn btn-success mt-5 auth-main-button" disabled="@isSaving">
                 @(isSaving ? "CADASTRANDO..." : "CADASTRAR")
-            </MudButton>
+            </button>
         </EditForm>
     </MudPaper>
 </MudContainer>
