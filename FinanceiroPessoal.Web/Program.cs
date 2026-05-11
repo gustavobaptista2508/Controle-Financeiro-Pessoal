@@ -69,7 +69,7 @@ var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultCo
 
 if (string.IsNullOrWhiteSpace(mysqlConnectionString))
 {
-    throw new InvalidOperationException("ConnectionStrings:DefaultConnection ou ConnectionStrings:MySqlConnection não foi encontrada.");
+    throw new InvalidOperationException("ConnectionStrings:DefaultConnection ou ConnectionStrings:MySqlConnection não configurada.");
 }
 
 builder.Services.AddDbContext<FinanceiroPessoal.Core.Data.FinanceiroDbContext>(options =>

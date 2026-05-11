@@ -8,6 +8,15 @@ namespace FinanceiroPessoal.Core.Data
 {
     public class FinanceiroDbContext : DbContext
     {
+        public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
+            : base(options)
+        {
+        }
+
+        public FinanceiroDbContext()
+        {
+        }
+
         public DbSet<Lancamento> Lancamentos => Set<Lancamento>();
         public DbSet<Categoria> Categorias => Set<Categoria>();
         public DbSet<Conta> Contas => Set<Conta>();
@@ -18,7 +27,11 @@ namespace FinanceiroPessoal.Core.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseSqlite("Data Source=financeiro.db");
+                var connectionString = "Server=localhost;Port=3306;Database=gadobd;User=root;Password=SUA_SENHA;SslMode=None;AllowPublicKeyRetrieval=True;";
+
+                optionsBuilder.UseMySql(
+                    connectionString,
+                    new MySqlServerVersion(new Version(8, 0, 36)));
             }
         }
 
