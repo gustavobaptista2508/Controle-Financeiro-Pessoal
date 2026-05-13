@@ -1,0 +1,32 @@
+@page "/planos"
+@rendermode InteractiveServer
+@using FinanceiroPessoal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@inject FinanceiroDbContext Db
+@inject NavigationManager Nav
+@inject HttpClient Http
+@inject AuthenticationStateProvider Auth
+
+<h3>Planos</h3>
+@foreach (var p in planos)
+{
+    <div class="mb-3">
+        <strong>@p.Nome</strong><br />@p.Descricao<br />R$ @p.Preco / @p.Intervalo<br />
+        <button class="btn btn-success" @onclick="(()=>Assinar(p.Id))">Assinar agora</button>
+    </div>
+}
+
+@code {
+    private List<FinanceiroPessoal.Core.Models.Plano> planos = new();
+    protected override async Task OnInitializedAsync() => planos = await Db.Planos.Where(x => x.Ativo).ToListAsync();
+    private async Task Assinar(int id)
+    {
+        var state = await Auth.GetAuthenticationStateAsync();
+        if (!(state.User.Identity?.IsAuthenticated ?? false)) { Nav.NavigateTo($"/usuarios/cadastro?planoId={id}"); return; }
+        var res = await Http.PostAsJsonAsync("/api/assinaturas/criar-checkout", new { planoId = id });
+        if (!res.IsSuccessStatusCode) return;
+        var obj = await res.Content.ReadFromJsonAsync<CheckoutResponse>();
+        if (!string.IsNullOrWhiteSpace(obj?.Url)) Nav.NavigateTo(obj.Url, true);
+    }
+    private sealed class CheckoutResponse { public string? Url { get; set; } }
+}

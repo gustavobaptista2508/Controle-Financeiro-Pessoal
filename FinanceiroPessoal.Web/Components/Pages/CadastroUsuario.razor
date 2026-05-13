@@ -30,6 +30,8 @@
 </MudContainer>
 
 @code {
+    [SupplyParameterFromQuery(Name="planoId")] public int? PlanoId { get; set; }
+
     private readonly CadastroUsuarioModel cadastroModel = new();
     private bool isSaving;
 
@@ -50,12 +52,12 @@
         try
         {
             isSaving = true;
-            var result = await AuthService.CadastrarAsync(cadastroModel);
+            var result = await AuthService.CadastrarAsync(cadastroModel, PlanoId);
             Console.WriteLine($"DEBUG CADASTRO Resultado: {result.Success}");
 
             if (result.Success)
             {
-                Navigation.NavigateTo("/login", forceLoad: true);
+                Navigation.NavigateTo("/planos", forceLoad: true);
                 return;
             }
 

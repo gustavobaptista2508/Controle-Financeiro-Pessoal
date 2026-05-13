@@ -22,6 +22,8 @@ namespace FinanceiroPessoal.Core.Data
         public DbSet<Conta> Contas => Set<Conta>();
         public DbSet<Pessoa> Pessoas => Set<Pessoa>();
         public DbSet<Usuario> Usuarios => Set<Usuario>();
+        public DbSet<Plano> Planos => Set<Plano>();
+        public DbSet<Assinatura> Assinaturas => Set<Assinatura>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -85,10 +87,48 @@ namespace FinanceiroPessoal.Core.Data
 
             modelBuilder.Entity<Usuario>(entity =>
             {
+                entity.ToTable("usuarios");
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.Nome).HasMaxLength(100).IsRequired();
                 entity.Property(x => x.Email).HasMaxLength(150).IsRequired();
                 entity.HasIndex(x => x.Email).IsUnique();
+
+                entity.Property(x => x.PlanoId).HasColumnName("plano_id");
+                entity.Property(x => x.AssinaturaStatus).HasColumnName("assinatura_status").HasMaxLength(30);
+                entity.Property(x => x.TrialExpiraEm).HasColumnName("trial_expira_em");
+                entity.Property(x => x.StripeCustomerId).HasColumnName("stripe_customer_id").HasMaxLength(120);
+                entity.Property(x => x.StripeSubscriptionId).HasColumnName("stripe_subscription_id").HasMaxLength(120);
+                entity.Property(x => x.AssinaturaExpiraEm).HasColumnName("assinatura_expira_em");
+            });
+
+
+            modelBuilder.Entity<Plano>(entity =>
+            {
+                entity.ToTable("planos");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Nome).HasColumnName("nome").HasMaxLength(120).IsRequired();
+                entity.Property(x => x.Descricao).HasColumnName("descricao").HasMaxLength(255);
+                entity.Property(x => x.Preco).HasColumnName("preco").HasColumnType("decimal(18,2)");
+                entity.Property(x => x.Intervalo).HasColumnName("intervalo").HasMaxLength(20).IsRequired();
+                entity.Property(x => x.StripePriceId).HasColumnName("stripe_price_id").HasMaxLength(120);
+                entity.Property(x => x.Ativo).HasColumnName("ativo");
+            });
+
+            modelBuilder.Entity<Assinatura>(entity =>
+            {
+                entity.ToTable("assinaturas");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.UsuarioId).HasColumnName("usuario_id");
+                entity.Property(x => x.PlanoId).HasColumnName("plano_id");
+                entity.Property(x => x.Provider).HasColumnName("provider").HasMaxLength(30);
+                entity.Property(x => x.ProviderCustomerId).HasColumnName("provider_customer_id").HasMaxLength(120);
+                entity.Property(x => x.ProviderSubscriptionId).HasColumnName("provider_subscription_id").HasMaxLength(120);
+                entity.Property(x => x.Status).HasColumnName("status").HasMaxLength(30);
+                entity.Property(x => x.Inicio).HasColumnName("inicio");
+                entity.Property(x => x.FimPeriodo).HasColumnName("fim_periodo");
+                entity.Property(x => x.CanceladaEm).HasColumnName("cancelada_em");
+                entity.Property(x => x.DataCriacao).HasColumnName("data_criacao");
+                entity.Property(x => x.DataAtualizacao).HasColumnName("data_atualizacao");
             });
 
             modelBuilder.Entity<Lancamento>().HasOne(x => x.Usuario).WithMany(x => x.Lancamentos).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);

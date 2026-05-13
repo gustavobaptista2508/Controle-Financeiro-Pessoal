@@ -18,7 +18,7 @@ public class UsuarioCadastroService
         _passwordHasher = passwordHasher;
     }
 
-    public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro)
+    public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro, int? planoId = null)
     {
         Console.WriteLine("DEBUG CADASTRO SERVICE: chamado");
         Console.WriteLine($"DEBUG CADASTRO SERVICE: email recebido {cadastro.Email}");
@@ -57,7 +57,9 @@ public class UsuarioCadastroService
             Ativo = true,
             EmailConfirmado = true,
             DataCriacao = DateTime.Now,
-            DataAtualizacao = DateTime.Now
+            DataAtualizacao = DateTime.Now,
+            PlanoId = planoId,
+            AssinaturaStatus = planoId.HasValue ? "PENDENTE" : "PENDENTE"
         };
 
         db.Usuarios.Add(usuario);

@@ -7,6 +7,12 @@ public class Usuario
     public string Email { get; set; } = string.Empty;
     public string SenhaHash { get; set; } = string.Empty;
     public bool Ativo { get; set; } = true;
+    public int? PlanoId { get; set; }
+    public string AssinaturaStatus { get; set; } = "PENDENTE";
+    public DateTime? TrialExpiraEm { get; set; }
+    public string? StripeCustomerId { get; set; }
+    public string? StripeSubscriptionId { get; set; }
+    public DateTime? AssinaturaExpiraEm { get; set; }
     public bool EmailConfirmado { get; set; } = false;
     public DateTime DataCriacao { get; set; } = DateTime.Now;
     public DateTime DataAtualizacao { get; set; } = DateTime.Now;

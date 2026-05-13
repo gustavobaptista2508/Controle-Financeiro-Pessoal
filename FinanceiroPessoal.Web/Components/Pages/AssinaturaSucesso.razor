@@ -1,0 +1,12 @@
+@page "/assinatura/sucesso"
+@rendermode InteractiveServer
+@using FinanceiroPessoal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@inject AuthenticationStateProvider Auth
+@inject FinanceiroDbContext Db
+
+<h3>Pagamento em processamento ou confirmado.</h3>
+@if (ativa) { <a class="btn btn-success" href="/dashboard">Ir para dashboard</a> }
+else { <p>Aguardando confirmação da Stripe.</p> }
+
+@code { bool ativa; protected override async Task OnInitializedAsync(){ var u=(await Auth.GetAuthenticationStateAsync()).User; if(int.TryParse(u.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value,out var id)){ var usr=await Db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x=>x.Id==id); ativa=usr?.AssinaturaStatus=="ATIVA"; } }}
