@@ -1,6 +1,12 @@
 @page "/login"
-@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
-@inject NavigationManager Nav
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net.Http.Json
+@inject NavigationManager Navigation
+@inject IHttpClientFactory HttpClientFactory
+@inject ISnackbar Snackbar
+@inject IConfiguration Configuration
 
 <PageTitle>Login</PageTitle>
 
@@ -9,14 +15,39 @@
         <MudText Typo="Typo.h4" Class="mb-1">Bem-vindo ao GranaOK</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Entre para acessar seu painel financeiro.</MudText>
 
-        <MudTextField Label="E-mail" Variant="Variant.Outlined" @bind-Value="email" FullWidth="true" Margin="Margin.Dense" />
-        <MudTextField Label="Senha" Variant="Variant.Outlined" InputType="InputType.Password" @bind-Value="senha" FullWidth="true" Margin="Margin.Dense" Class="mt-2" />
+        <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin" FormName="loginForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
 
-        <MudCheckBox T="bool" @bind-Value="lembrarMe" Label="Lembrar-me" Class="mt-2" />
+            <InputText class="form-control"
+                       @bind-Value="loginModel.Email"
+                       placeholder="E-mail" />
 
-        @if (!string.IsNullOrWhiteSpace(erro)) { <MudAlert Severity="Severity.Error" Class="mt-3">@erro</MudAlert> }
+            <InputText class="form-control mt-2"
+                       type="password"
+                       @bind-Value="loginModel.Senha"
+                       placeholder="Senha" />
 
-        <MudButton Class="mt-5 auth-main-button" Color="MudBlazor.Color.Primary" Variant="Variant.Filled" FullWidth="true" OnClick="Entrar">Entrar</MudButton>
+            <div class="mt-2">
+                <InputCheckbox @bind-Value="loginModel.LembrarMe" />
+                <label class="ml-2">Lembrar-me</label>
+            </div>
+
+            <button type="submit" class="btn btn-success mt-5 auth-main-button" disabled="@isLoading">
+                @(isLoading ? "ENTRANDO..." : "ENTRAR")
+            </button>
+        </EditForm>
+
+        @if (_googleAuthConfigured)
+        {
+            <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Href="/auth/google" StartIcon="@Icons.Custom.Brands.Google">
+                Entrar com Google
+            </MudButton>
+        }
+        else
+        {
+            <MudButton Class="mt-3" Variant="Variant.Outlined" FullWidth="true" Disabled="true" StartIcon="@Icons.Custom.Brands.Google">Google não configurado</MudButton>
+        }
 
         <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
             <MudLink Href="/usuarios/cadastro">Criar conta</MudLink>
@@ -24,4 +55,70 @@
     </MudPaper>
 </MudContainer>
 
-@code { string email=""; string senha=""; bool lembrarMe; string? erro; void Entrar(){ if(!Session.LoginWithPassword(email,senha)){erro="E-mail ou senha inválidos.";return;} Nav.NavigateTo("/"); } }
+@code {
+    private readonly LoginModel loginModel = new();
+    private bool isLoading;
+    private bool _googleAuthConfigured;
+
+    protected override void OnInitialized()
+    {
+        var googleClientId = Configuration["Authentication:Google:ClientId"];
+        var googleClientSecret = Configuration["Authentication:Google:ClientSecret"];
+        _googleAuthConfigured = !string.IsNullOrWhiteSpace(googleClientId) &&
+                                !string.IsNullOrWhiteSpace(googleClientSecret);
+    }
+
+    private async Task HandleLogin()
+    {
+        Console.WriteLine("DEBUG LOGIN: HandleLogin chamado");
+        Console.WriteLine($"DEBUG LOGIN Email: {loginModel.Email}");
+        Console.WriteLine($"DEBUG LOGIN Senha preenchida: {!string.IsNullOrWhiteSpace(loginModel.Senha)}");
+        Console.WriteLine($"DEBUG LOGIN LembrarMe: {loginModel.LembrarMe}");
+
+        if (isLoading) return;
+
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            var loginEndpoint = Navigation.ToAbsoluteUri("/auth/login");
+            var response = await client.PostAsJsonAsync(loginEndpoint, loginModel);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
+                Console.WriteLine($"DEBUG LOGIN Erro: {error?.Message}");
+                Snackbar.Add(error?.Message ?? "E-mail ou senha inválidos.", Severity.Error);
+                return;
+            }
+
+            Console.WriteLine("DEBUG LOGIN Resultado: true");
+            Navigation.NavigateTo("/dashboard", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"DEBUG LOGIN Exception: {ex}");
+            Snackbar.Add("Falha ao efetuar login.", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private sealed class ApiErrorResponse
+    {
+        public string? Message { get; set; }
+    }
+
+    private sealed class LoginModel
+    {
+        [Required(ErrorMessage = "Informe o e-mail.")]
+        [EmailAddress(ErrorMessage = "E-mail inválido.")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Informe a senha.")]
+        public string Senha { get; set; } = string.Empty;
+
+        public bool LembrarMe { get; set; }
+    }
+}

@@ -1,3 +1,5 @@
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
 @page "/cartoes/extrato/{ContaId:int}/{Ano:int}/{Mes:int}"
 @using ModelLancamento = global::FinanceiroPessoal.Core.Models.Lancamento
 @using FinanceiroPessoal.Core.Services

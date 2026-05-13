@@ -1,6 +1,6 @@
 @page "/auth"
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
-@inject NavigationManager Nav
+@inject NavigationManager Navigation
 
 <PageTitle>Autenticação</PageTitle>
 
@@ -17,7 +17,7 @@
     {
         if (Session.IsAuthenticated)
         {
-            Nav.NavigateTo("/dashboard");
+            Navigation.NavigateTo("/dashboard");
         }
     }
 }
