@@ -1,4 +1,4 @@
-using FinanceiroPessoal.WinForms.Data;
+using FinanceiroPessoal.Core.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinanceiroPessoal.WinForms;
