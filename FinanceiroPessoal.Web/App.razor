@@ -19,7 +19,7 @@
         <Found Context="routeData">
             <AuthorizeRouteView RouteData="@routeData" DefaultLayout="typeof(Components.Layout.MainLayout)">
                 <NotAuthorized>
-                    <Components.RedirectToAuth />
+                    <RedirectToAuth />
                 </NotAuthorized>
             </AuthorizeRouteView>
             <FocusOnNavigate RouteData="@routeData" Selector="h1" />
