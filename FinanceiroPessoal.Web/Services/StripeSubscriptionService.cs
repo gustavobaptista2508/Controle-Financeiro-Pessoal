@@ -87,7 +87,7 @@ public class StripeSubscriptionService(
         return checkoutSession.Url!;
     }
 
-    public async Task<string> CriarPortalSessaoAsync(int usuarioId)
+    public async Task<string> CriarPortalSessionAsync(int usuarioId)
     {
         if (!StripeConfigurado()) throw new Exception("Stripe não configurado.");
 
@@ -150,22 +150,22 @@ public class StripeSubscriptionService(
                 break;
 
             case "invoice.paid":
-                await AtualizarAssinaturaPorInvoiceAsync((Invoice)evt.Data.Object, "ATIVA");
+                await AtualizarAssinaturaPorInvoiceAsync((Stripe.Invoice)evt.Data.Object, "ATIVA");
                 break;
 
             case "invoice.payment_failed":
-                await AtualizarAssinaturaPorInvoiceAsync((Invoice)evt.Data.Object, "ATRASADA");
+                await AtualizarAssinaturaPorInvoiceAsync((Stripe.Invoice)evt.Data.Object, "ATRASADA");
                 break;
 
             case "customer.subscription.created":
             case "customer.subscription.updated":
             case "customer.subscription.deleted":
-                await AtualizarAssinaturaPorSubscriptionAsync((Subscription)evt.Data.Object);
+                await AtualizarAssinaturaPorSubscriptionAsync((Stripe.Subscription)evt.Data.Object);
                 break;
         }
     }
 
-    private async Task AtualizarAssinaturaPorSubscriptionAsync(Subscription subscription)
+    public async Task AtualizarAssinaturaPorSubscriptionAsync(Stripe.Subscription subscription)
     {
         var subscriptionId = subscription.Id;
         var customerId = subscription.CustomerId;
@@ -200,7 +200,12 @@ public class StripeSubscriptionService(
         await db.SaveChangesAsync();
     }
 
-    private async Task AtualizarAssinaturaPorInvoiceAsync(Invoice invoice, string statusInterno)
+    public async Task AtualizarAssinaturaPorInvoiceAsync(Stripe.Invoice invoice)
+    {
+        await AtualizarAssinaturaPorInvoiceAsync(invoice, "ATIVA");
+    }
+
+    private async Task AtualizarAssinaturaPorInvoiceAsync(Stripe.Invoice invoice, string statusInterno)
     {
         var customerId = invoice.CustomerId;
         var subscriptionId = ObterSubscriptionIdDaInvoice(invoice);
