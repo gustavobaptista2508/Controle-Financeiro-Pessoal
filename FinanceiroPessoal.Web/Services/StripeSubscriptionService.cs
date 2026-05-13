@@ -12,8 +12,20 @@ namespace FinanceiroPessoal.Web.Services;
 public class StripeSubscriptionService(FinanceiroDbContext db, IOptions<StripeOptions> options, ILogger<StripeSubscriptionService> logger) : IStripeSubscriptionService
 {
     private readonly StripeOptions _opt = options.Value;
+    private bool StripeConfigurado()
+    {
+        var configurado = !string.IsNullOrWhiteSpace(_opt.SecretKey);
+        if (!configurado)
+        {
+            logger.LogWarning("Stripe não configurado.");
+        }
+
+        return configurado;
+    }
+
     public async Task<string> CriarCheckoutSessionAsync(int usuarioId, int planoId)
     {
+        if (!StripeConfigurado()) throw new Exception("Stripe não configurado.");
         var usuario = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == usuarioId) ?? throw new Exception("Usuário não encontrado");
         var plano = await db.Planos.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == planoId && x.Ativo) ?? throw new Exception("Plano não encontrado");
         if (string.IsNullOrWhiteSpace(plano.StripePriceId)) throw new Exception("Plano sem Stripe Price ID configurado.");
