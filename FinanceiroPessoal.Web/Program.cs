@@ -1,3 +1,4 @@
+using Stripe;
 using ApexCharts;
 using FinanceiroPessoal.Core.Services;
 using FinanceiroPessoal.Web;
@@ -27,6 +28,8 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddAuthorization();
 builder.Services.AddMemoryCache();
 builder.Services.Configure<PluggyOptions>(builder.Configuration.GetSection("Pluggy"));
+builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection("Stripe"));
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddSingleton<PluggyStore>();
 builder.Services.AddHttpClient<IPluggyAuthService, PluggyAuthService>();
 builder.Services.AddHttpClient<IPluggyService, PluggyService>();
@@ -82,6 +85,8 @@ builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 builder.Services.AddScoped<WebAuthSessionService>();
 builder.Services.AddScoped<UsuarioCadastroService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<IAssinaturaService, AssinaturaService>();
+builder.Services.AddScoped<IStripeSubscriptionService, StripeSubscriptionService>();
 
 var app = builder.Build();
 
@@ -107,6 +112,24 @@ app.UseStaticFiles();
 app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
+    var protegidos = new[] { "/dashboard", "/lancamentos", "/contas", "/categorias", "/pessoas", "/bancos", "/relatorios" };
+    var publico = path.StartsWith("/webhooks/stripe") || path.StartsWith("/planos") || path.StartsWith("/assinatura/") || path.StartsWith("/usuarios/cadastro") || path.StartsWith("/login") || path=="/" || path.StartsWith("/_framework") || path.StartsWith("/css") || path.StartsWith("/js") || path.StartsWith("/favicon");
+    if (!publico && protegidos.Any(p => path.StartsWith(p)) && context.User.Identity?.IsAuthenticated == true)
+    {
+        var claim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (int.TryParse(claim, out var uid))
+        {
+            var svc = context.RequestServices.GetRequiredService<IAssinaturaService>();
+            if (!await svc.UsuarioTemAcessoAsync(uid)) { context.Response.Redirect("/assinatura/bloqueada"); return; }
+        }
+    }
+    await next();
+});
+
 
 
 app.MapPost("/auth/login", async (
@@ -253,8 +276,40 @@ app.MapPost("/api/pluggy/transactions/{transacaoId:int}/transformar-lancamento",
     await lancamentoService.Adicionar(novo); tx.LancamentoId = novo.Id; tx.Conciliado = true; return Results.Ok(tx);
 }).RequireAuthorization();
 
+
+app.MapPost("/api/assinaturas/criar-checkout", async (HttpContext ctx, [FromBody] CriarCheckoutRequest request, [FromServices] IStripeSubscriptionService stripe) =>
+{
+    if (!(ctx.User.Identity?.IsAuthenticated ?? false)) return Results.Unauthorized();
+    var claim = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!int.TryParse(claim, out var usuarioId)) return Results.Unauthorized();
+    try { var url = await stripe.CriarCheckoutSessionAsync(usuarioId, request.PlanoId); return Results.Ok(new { url }); }
+    catch (Exception ex) { return Results.BadRequest(new { message = ex.Message }); }
+}).RequireAuthorization();
+
+app.MapPost("/api/assinaturas/portal", async (HttpContext ctx,[FromServices] FinanceiroPessoal.Core.Data.FinanceiroDbContext db,[FromServices] IConfiguration cfg) =>
+{
+    if (!(ctx.User.Identity?.IsAuthenticated ?? false)) return Results.Unauthorized();
+    var claim = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    if (!int.TryParse(claim, out var usuarioId)) return Results.Unauthorized();
+    var user = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x=>x.Id==usuarioId);
+    if (string.IsNullOrWhiteSpace(user?.StripeCustomerId)) return Results.BadRequest(new { message = "Usuário sem customer Stripe." });
+    var session = await new Stripe.BillingPortal.SessionService().CreateAsync(new Stripe.BillingPortal.SessionCreateOptions{ Customer=user.StripeCustomerId, ReturnUrl=cfg["Stripe:CancelUrl"] ?? "https://localhost:7073/planos"});
+    return Results.Ok(new { url = session.Url });
+}).RequireAuthorization();
+
+app.MapPost("/webhooks/stripe", async (HttpRequest req, [FromServices] IStripeSubscriptionService stripe) =>
+{
+    using var reader = new StreamReader(req.Body);
+    var json = await reader.ReadToEndAsync();
+    var sig = req.Headers["Stripe-Signature"].ToString();
+    try { await stripe.ProcessarWebhookAsync(json, sig); return Results.Ok(); }
+    catch (StripeException) { return Results.BadRequest(); }
+});
+
 app.Run();
 
 public sealed record LoginRequest(string Email, string Senha, bool LembrarMe);
 
 public sealed record CadastroRequest(string Nome, string Email, string Senha, string ConfirmarSenha);
+
+public sealed record CriarCheckoutRequest(int PlanoId);
