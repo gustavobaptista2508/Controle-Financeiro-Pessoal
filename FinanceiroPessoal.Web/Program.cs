@@ -29,7 +29,16 @@ builder.Services.AddAuthorization();
 builder.Services.AddMemoryCache();
 builder.Services.Configure<PluggyOptions>(builder.Configuration.GetSection("Pluggy"));
 builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection("Stripe"));
-StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
+if (!string.IsNullOrWhiteSpace(stripeSecretKey))
+{
+    StripeConfiguration.ApiKey = stripeSecretKey;
+}
+else
+{
+    builder.Logging.AddConsole();
+    Console.WriteLine("Stripe não configurado.");
+}
 builder.Services.AddSingleton<PluggyStore>();
 builder.Services.AddHttpClient<IPluggyAuthService, PluggyAuthService>();
 builder.Services.AddHttpClient<IPluggyService, PluggyService>();
@@ -293,7 +302,7 @@ app.MapPost("/api/assinaturas/portal", async (HttpContext ctx,[FromServices] Fin
     if (!int.TryParse(claim, out var usuarioId)) return Results.Unauthorized();
     var user = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x=>x.Id==usuarioId);
     if (string.IsNullOrWhiteSpace(user?.StripeCustomerId)) return Results.BadRequest(new { message = "Usuário sem customer Stripe." });
-    var session = await new Stripe.BillingPortal.SessionService().CreateAsync(new Stripe.BillingPortal.SessionCreateOptions{ Customer=user.StripeCustomerId, ReturnUrl=cfg["Stripe:CancelUrl"] ?? "https://localhost:7073/planos"});
+    var session = await new Stripe.BillingPortal.SessionService().CreateAsync(new Stripe.BillingPortal.SessionCreateOptions{ Customer=user.StripeCustomerId, ReturnUrl=cfg["Stripe:PortalReturnUrl"] ?? cfg["Stripe:CancelUrl"] ?? "https://localhost:7073/planos"});
     return Results.Ok(new { url = session.Url });
 }).RequireAuthorization();
 
