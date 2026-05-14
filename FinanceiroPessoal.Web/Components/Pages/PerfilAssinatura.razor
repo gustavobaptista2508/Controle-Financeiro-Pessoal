@@ -1,0 +1,129 @@
+@page "/perfil/assinatura"
+@rendermode InteractiveServer
+@using System.Security.Claims
+@using FinanceiroPessoal.Core.Data
+@using Microsoft.EntityFrameworkCore
+@inject AuthenticationStateProvider Auth
+@inject FinanceiroDbContext Db
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<h3>Minha assinatura</h3>
+
+@if (isLoading)
+{
+    <p>Carregando...</p>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <p class="text-danger">@errorMessage</p>
+}
+else if (usuario is null)
+{
+    <p>Usuário não encontrado.</p>
+}
+else
+{
+    <p><strong>Plano atual:</strong> @nomePlano</p>
+    <p><strong>Status:</strong> @usuario.AssinaturaStatus</p>
+    @if (usuario.AssinaturaStatus == "TRIAL" && diasRestantesTrial.HasValue)
+    {
+        <p><strong>Dias restantes:</strong> @diasRestantesTrial.Value</p>
+    }
+
+    <button class="btn btn-primary" @onclick="AssinarAgora" disabled="@isRedirecting">
+        @(isRedirecting ? "Redirecionando..." : "Assinar agora")
+    </button>
+}
+
+@code {
+    private FinanceiroPessoal.Core.Models.Usuario? usuario;
+    private string nomePlano = "Sem plano";
+    private int? diasRestantesTrial;
+    private bool isLoading;
+    private bool isRedirecting;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        try
+        {
+            var auth = await Auth.GetAuthenticationStateAsync();
+            var claim = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!int.TryParse(claim, out var usuarioId))
+            {
+                errorMessage = "Faça login para visualizar sua assinatura.";
+                return;
+            }
+
+            usuario = await Db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Id == usuarioId);
+            if (usuario is null)
+            {
+                return;
+            }
+
+            if (usuario.PlanoId.HasValue)
+            {
+                var plano = await Db.Planos.FirstOrDefaultAsync(x => x.Id == usuario.PlanoId.Value);
+                nomePlano = plano?.Nome ?? "Plano não encontrado";
+            }
+
+            if (usuario.AssinaturaStatus == "TRIAL" && usuario.TrialExpiraEm.HasValue)
+            {
+                diasRestantesTrial = Math.Max(0, (usuario.TrialExpiraEm.Value.Date - DateTime.Now.Date).Days);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERRO PERFIL ASSINATURA: " + ex);
+            errorMessage = "Não foi possível carregar sua assinatura.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task AssinarAgora()
+    {
+        if (usuario?.PlanoId is null)
+        {
+            errorMessage = "Usuário sem plano selecionado.";
+            return;
+        }
+
+        isRedirecting = true;
+        try
+        {
+            var res = await Http.PostAsJsonAsync("/api/assinaturas/criar-checkout", new { planoId = usuario.PlanoId.Value });
+            if (!res.IsSuccessStatusCode)
+            {
+                var msg = await res.Content.ReadAsStringAsync();
+                Console.WriteLine("ERRO CHECKOUT PERFIL: " + msg);
+                errorMessage = "Não foi possível iniciar o checkout.";
+                return;
+            }
+
+            var obj = await res.Content.ReadFromJsonAsync<CheckoutResponse>();
+            if (!string.IsNullOrWhiteSpace(obj?.Url))
+            {
+                Nav.NavigateTo(obj.Url, true);
+                return;
+            }
+
+            errorMessage = "Checkout sem URL de redirecionamento.";
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERRO PERFIL ASSINATURA CHECKOUT: " + ex);
+            errorMessage = "Erro ao iniciar checkout.";
+        }
+        finally
+        {
+            isRedirecting = false;
+        }
+    }
+
+    private sealed class CheckoutResponse { public string? Url { get; set; } }
+}
