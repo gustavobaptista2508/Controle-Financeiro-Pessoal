@@ -24,6 +24,7 @@ namespace FinanceiroPessoal.Core.Data
         public DbSet<Usuario> Usuarios => Set<Usuario>();
         public DbSet<Plano> Planos => Set<Plano>();
         public DbSet<Assinatura> Assinaturas => Set<Assinatura>();
+        public DbSet<IaConversa> IaConversas => Set<IaConversa>();
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -131,20 +132,36 @@ namespace FinanceiroPessoal.Core.Data
                 entity.Property(x => x.DataAtualizacao).HasColumnName("data_atualizacao");
             });
 
+
+            modelBuilder.Entity<IaConversa>(entity)
+            {
+                entity.ToTable("ia_conversas");
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("id");
+                entity.Property(x => x.UsuarioId).HasColumnName("usuario_id");
+                entity.Property(x => x.Pergunta).HasColumnName("pergunta").IsRequired();
+                entity.Property(x => x.Resposta).HasColumnName("resposta").IsRequired();
+                entity.Property(x => x.DataCriacao).HasColumnName("data_criacao");
+                entity.Property(x => x.TokensEstimados).HasColumnName("tokens_estimados");
+            });
+
             modelBuilder.Entity<Lancamento>().HasOne(x => x.Usuario).WithMany(x => x.Lancamentos).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<Categoria>().HasOne(x => x.Usuario).WithMany(x => x.Categorias).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<Conta>().HasOne(x => x.Usuario).WithMany(x => x.Contas).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<Pessoa>().HasOne(x => x.Usuario).WithMany(x => x.Pessoas).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+            modelBuilder.Entity<IaConversa>().HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<Lancamento>().HasIndex(x => x.UsuarioId);
             modelBuilder.Entity<Categoria>().HasIndex(x => x.UsuarioId);
             modelBuilder.Entity<Conta>().HasIndex(x => x.UsuarioId);
             modelBuilder.Entity<Pessoa>().HasIndex(x => x.UsuarioId);
+            modelBuilder.Entity<IaConversa>().HasIndex(x => x.UsuarioId);
 
             modelBuilder.Entity<Lancamento>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
             modelBuilder.Entity<Categoria>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
             modelBuilder.Entity<Conta>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
             modelBuilder.Entity<Pessoa>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
+            modelBuilder.Entity<IaConversa>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
         }
 
         public override int SaveChanges()
