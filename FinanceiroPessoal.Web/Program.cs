@@ -29,6 +29,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddMemoryCache();
 builder.Services.Configure<PluggyOptions>(builder.Configuration.GetSection("Pluggy"));
 builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection("Stripe"));
+builder.Services.Configure<BillingOptions>(builder.Configuration.GetSection("Billing"));
 var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 if (!string.IsNullOrWhiteSpace(stripeSecretKey))
 {

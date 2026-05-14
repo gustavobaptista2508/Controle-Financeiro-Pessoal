@@ -2,7 +2,9 @@
 @rendermode InteractiveServer
 @using Microsoft.AspNetCore.Components.Forms
 @using FinanceiroPessoal.Web.Models
+@using FinanceiroPessoal.Core.Data
 @inject FinanceiroPessoal.Web.Services.UsuarioCadastroService AuthService
+@inject FinanceiroDbContext Db
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 
@@ -12,6 +14,14 @@
     <MudPaper Elevation="2" Class="auth-card pa-8">
         <MudText Typo="Typo.h4" Class="mb-1">Criar conta</MudText>
         <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Comece agora seu controle financeiro premium.</MudText>
+
+        @if (planoSelecionado is not null)
+        {
+            <MudAlert Severity="Severity.Info" Dense="true" Class="mb-4">
+                <strong>@planoSelecionado.Nome</strong> • @($"R$ {planoSelecionado.Preco:N2} / {planoSelecionado.Intervalo}")<br />
+                14 dias grátis. Você só assina se quiser continuar.
+            </MudAlert>
+        }
 
         <EditForm Model="@cadastroModel" OnValidSubmit="@HandleCadastro" FormName="cadastroForm">
             <DataAnnotationsValidator />
@@ -23,7 +33,7 @@
             <InputText class="form-control mt-2" type="password" @bind-Value="cadastroModel.ConfirmarSenha" placeholder="Confirmar senha" />
 
             <button type="submit" class="btn btn-success mt-5 auth-main-button" disabled="@isSaving">
-                @(isSaving ? "CADASTRANDO..." : "CADASTRAR")
+                @(isSaving ? "CARREGANDO..." : "Começar 14 dias grátis")
             </button>
         </EditForm>
     </MudPaper>
@@ -34,17 +44,30 @@
 
     private readonly CadastroUsuarioModel cadastroModel = new();
     private bool isSaving;
+    private FinanceiroPessoal.Core.Models.Plano? planoSelecionado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!PlanoId.HasValue)
+        {
+            Navigation.NavigateTo("/planos", true);
+            return;
+        }
+
+        planoSelecionado = await Db.Planos.FirstOrDefaultAsync(p => p.Id == PlanoId.Value && p.Ativo);
+        if (planoSelecionado is null)
+        {
+            Navigation.NavigateTo("/planos", true);
+        }
+    }
 
     private async Task HandleCadastro()
     {
-        Console.WriteLine("DEBUG CADASTRO: HandleCadastro chamado");
-        Console.WriteLine($"DEBUG CADASTRO Nome: {cadastroModel.Nome}");
-        Console.WriteLine($"DEBUG CADASTRO Email: {cadastroModel.Email}");
-        Console.WriteLine($"DEBUG CADASTRO Senha preenchida: {!string.IsNullOrWhiteSpace(cadastroModel.Senha)}");
+        if (isSaving)
+            return;
 
         if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
         {
-            Console.WriteLine("DEBUG CADASTRO: senhas não conferem");
             Snackbar.Add("As senhas não conferem.", Severity.Error);
             return;
         }
@@ -52,17 +75,28 @@
         try
         {
             isSaving = true;
-            var result = await AuthService.CadastrarAsync(cadastroModel, PlanoId);
-            Console.WriteLine($"DEBUG CADASTRO Resultado: {result.Success}");
+            Console.WriteLine("CADASTRO: iniciou");
+            Console.WriteLine($"CADASTRO: planoId = {PlanoId}");
+            Console.WriteLine("CADASTRO: criando usuário");
 
-            if (result.Success)
+            var result = await AuthService.CadastrarAsync(cadastroModel, PlanoId);
+
+            if (!result.Success)
             {
-                Navigation.NavigateTo("/planos", forceLoad: true);
+                Snackbar.Add(result.Message ?? "Não foi possível realizar o cadastro.", Severity.Error);
                 return;
             }
 
-            Console.WriteLine($"DEBUG CADASTRO Erro: {result.Message}");
-            Snackbar.Add(result.Message ?? "Não foi possível realizar o cadastro.", Severity.Error);
+            Console.WriteLine("CADASTRO: usuário criado");
+            Console.WriteLine("CADASTRO: trial aplicado");
+            Console.WriteLine("CADASTRO: redirecionando dashboard");
+
+            Navigation.NavigateTo($"/login?email={Uri.EscapeDataString(cadastroModel.Email)}&cadastro=sucesso", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERRO CADASTRO: " + ex);
+            Snackbar.Add("Não foi possível concluir o cadastro. Tente novamente.", Severity.Error);
         }
         finally
         {

@@ -9,21 +9,40 @@
 @inject AuthenticationStateProvider Auth
 
 <h3>Planos</h3>
+<p><strong>14 dias grátis</strong> para novos usuários.</p>
+
 @foreach (var p in planos)
 {
     <div class="mb-3">
         <strong>@p.Nome</strong><br />@p.Descricao<br />R$ @p.Preco / @p.Intervalo<br />
-        <button class="btn btn-success" @onclick="(()=>Assinar(p.Id))">Assinar agora</button>
+        @if (isAutenticado)
+        {
+            <button class="btn btn-success" @onclick="(()=>Assinar(p.Id))">Assinar agora</button>
+        }
+        else
+        {
+            <button class="btn btn-success" @onclick="(()=>IrParaCadastro(p.Id))">Começar 14 dias grátis</button>
+        }
     </div>
 }
 
 @code {
     private List<FinanceiroPessoal.Core.Models.Plano> planos = new();
-    protected override async Task OnInitializedAsync() => planos = await Db.Planos.Where(x => x.Ativo).ToListAsync();
+    private bool isAutenticado;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("PLANOS: carregando");
+        planos = await Db.Planos.Where(x => x.Ativo).ToListAsync();
+        Console.WriteLine($"PLANOS: quantidade = {planos.Count}");
+        var state = await Auth.GetAuthenticationStateAsync();
+        isAutenticado = state.User.Identity?.IsAuthenticated ?? false;
+    }
+
+    private void IrParaCadastro(int id) => Nav.NavigateTo($"/usuarios/cadastro?planoId={id}");
+
     private async Task Assinar(int id)
     {
-        var state = await Auth.GetAuthenticationStateAsync();
-        if (!(state.User.Identity?.IsAuthenticated ?? false)) { Nav.NavigateTo($"/usuarios/cadastro?planoId={id}"); return; }
         var res = await Http.PostAsJsonAsync("/api/assinaturas/criar-checkout", new { planoId = id });
         if (!res.IsSuccessStatusCode) return;
         var obj = await res.Content.ReadFromJsonAsync<CheckoutResponse>();
