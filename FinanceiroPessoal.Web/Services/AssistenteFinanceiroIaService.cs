@@ -32,8 +32,13 @@ public class AssistenteFinanceiroIaService(
     public async Task<string> AnalisarCategoriasAsync(int usuarioId, int mes, int ano) => await PerguntarInternoAsync(usuarioId, "Quais categorias mais pesaram?", mes, ano);
     public async Task<string> PerguntarAsync(int usuarioId, string pergunta) => await PerguntarInternoAsync(usuarioId, pergunta, null, null);
 
-    public async Task<IReadOnlyList<IaConversa>> ListarUltimasConversasAsync(int usuarioId, int limite = 10)
-        => await db.IaConversas.IgnoreQueryFilters().Where(x => x.UsuarioId == usuarioId).OrderByDescending(x => x.Id).Take(limite).ToListAsync();
+    public async Task<IReadOnlyList<IaConversa>> ListarUltimasConversasAsync(int usuarioId, int quantidade = 10)
+        => await db.IaConversas
+            .IgnoreQueryFilters()
+            .Where(x => x.UsuarioId == usuarioId)
+            .OrderByDescending(x => x.DataCriacao)
+            .Take(quantidade)
+            .ToListAsync();
 
     private async Task<string> PerguntarInternoAsync(int usuarioId, string pergunta, int? mes, int? ano)
     {

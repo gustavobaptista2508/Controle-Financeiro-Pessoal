@@ -5,6 +5,7 @@
 @inject FinanceiroPessoal.Web.Services.IAssinaturaService AssinaturaService
 @inject FinanceiroPessoal.Web.Services.IAssistenteFinanceiroIaService IaService
 @inject NavigationManager Nav
+@using FinanceiroPessoal.Core.Models
 
 <PageTitle>Assistente Financeiro IA</PageTitle>
 <MudPaper Class="pa-4">
@@ -30,7 +31,7 @@
 @code {
     private string pergunta = "Faça um resumo do meu mês.";
     private string resposta = string.Empty;
-    private IReadOnlyList<FinanceiroPessoal.Core.Models.IaConversa> historico = [];
+    private IReadOnlyList<IaConversa> historico = Array.Empty<IaConversa>();
 
     protected override async Task OnInitializedAsync()
     {

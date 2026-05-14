@@ -133,7 +133,7 @@ namespace FinanceiroPessoal.Core.Data
             });
 
 
-            modelBuilder.Entity<IaConversa>(entity)
+            modelBuilder.Entity<IaConversa>(entity =>
             {
                 entity.ToTable("ia_conversas");
                 entity.HasKey(x => x.Id);
