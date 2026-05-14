@@ -1,23 +1,20 @@
-@using Microsoft.AspNetCore.Components.Authorization
 @page "/planos"
 @rendermode InteractiveServer
 @using FinanceiroPessoal.Core.Data
 @using Microsoft.EntityFrameworkCore
 @inject FinanceiroDbContext Db
 @inject NavigationManager Nav
-@inject HttpClient Http
-@inject AuthenticationStateProvider Auth
 
 <h3>Planos</h3>
 <p><strong>14 dias grátis</strong> para novos usuários.</p>
 
-@if (isLoading)
+@if (carregando)
 {
     <p>Carregando planos...</p>
 }
-else if (!string.IsNullOrWhiteSpace(errorMessage))
+else if (!string.IsNullOrWhiteSpace(erro))
 {
-    <p class="text-danger">@errorMessage</p>
+    <p class="text-danger">@erro</p>
 }
 else
 {
@@ -34,27 +31,33 @@ else
 
 @code {
     private List<FinanceiroPessoal.Core.Models.Plano> planos = new();
-    private bool isLoading;
-    private string? errorMessage;
+    private bool carregando = true;
+    private string? erro;
 
     protected override async Task OnInitializedAsync()
     {
-        isLoading = true;
         try
         {
-            Console.WriteLine("PLANOS: carregando");
-            planos = await Db.Planos.Where(x => x.Ativo).OrderBy(x => x.Preco).ToListAsync();
-            Console.WriteLine($"PLANOS: quantidade = {planos.Count}");
-            _ = await Auth.GetAuthenticationStateAsync();
+            carregando = true;
+            erro = null;
+
+            Console.WriteLine("PLANOS: iniciando carregamento");
+            planos = await Db.Planos
+                .AsNoTracking()
+                .Where(x => x.Ativo)
+                .OrderBy(x => x.Preco)
+                .ToListAsync();
+            Console.WriteLine($"PLANOS: quantidade encontrada {planos.Count}");
         }
         catch (Exception ex)
         {
-            Console.WriteLine("ERRO PLANOS: " + ex);
-            errorMessage = "Não foi possível carregar os planos.";
+            Console.WriteLine("ERRO AO CARREGAR PLANOS:");
+            Console.WriteLine(ex.ToString());
+            erro = "Não foi possível carregar os planos.";
         }
         finally
         {
-            isLoading = false;
+            carregando = false;
         }
     }
 

@@ -26,7 +26,7 @@ public class WebAuthSessionService
 
     public async Task<(bool ok, string? erro)> LoginWithPasswordAsync(string email, string senha, bool lembrarMe, HttpContext context)
     {
-        Console.WriteLine("DEBUG LOGIN SERVICE: chamado");
+        Console.WriteLine("LOGIN: buscando usuário");
 
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
             return (false, "Preencha e-mail e senha.");
@@ -35,14 +35,13 @@ public class WebAuthSessionService
 
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var usuario = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
-        Console.WriteLine($"DEBUG GOOGLE LOGIN: usuário existente: {usuario is not null}");
-        Console.WriteLine($"DEBUG LOGIN SERVICE: usuário encontrado {usuario is not null}");
+        Console.WriteLine($"LOGIN: usuário encontrado {usuario is not null}");
 
         if (usuario is null)
             return (false, "E-mail ou senha inválidos.");
 
         var senhaValida = _passwordHasher.VerifyPassword(senha, usuario.SenhaHash);
-        Console.WriteLine($"DEBUG LOGIN SERVICE: senha válida {senhaValida}");
+        Console.WriteLine($"LOGIN: senha válida {senhaValida}");
 
 
         if (!senhaValida && usuario.SenhaHash == senha)
@@ -51,7 +50,7 @@ public class WebAuthSessionService
             usuario.DataAtualizacao = DateTime.Now;
             await db.SaveChangesAsync();
             senhaValida = true;
-            Console.WriteLine("DEBUG AUTHSERVICE: hash legado migrado para BCrypt");
+            Console.WriteLine("LOGIN: hash legado migrado para BCrypt");
         }
 
         if (!senhaValida)
@@ -60,12 +59,27 @@ public class WebAuthSessionService
         if (!usuario.Ativo)
             return (false, "Usuário inativo.");
 
+        if (string.Equals(usuario.Email, "admin@granaok.com", StringComparison.OrdinalIgnoreCase))
+        {
+            usuario.AssinaturaStatus = "ATIVA";
+            usuario.AssinaturaExpiraEm = DateTime.Now.AddYears(10);
+
+            if (!usuario.PlanoId.HasValue)
+            {
+                var planoAtivo = await db.Planos.AsNoTracking().OrderBy(p => p.Preco).FirstOrDefaultAsync(p => p.Ativo);
+                if (planoAtivo is not null)
+                    usuario.PlanoId = planoAtivo.Id;
+            }
+        }
+
         usuario.UltimoLogin = DateTime.Now;
         usuario.DataAtualizacao = DateTime.Now;
         await db.SaveChangesAsync();
 
         await SignInAsync(usuario, lembrarMe, context);
+        Console.WriteLine("LOGIN: sessão criada");
         Login(usuario.Nome, usuario.Email);
+        Console.WriteLine("LOGIN: redirecionando");
         return (true, null);
     }
 
@@ -152,11 +166,10 @@ public class WebAuthSessionService
 
     private MySqlDbContext CreateDbContext()
     {
-        var connectionString = _configuration.GetConnectionString("DefaultConnection")
-            ?? _configuration.GetConnectionString("MySqlConnection");
+        var connectionString = _configuration.GetConnectionString("DefaultConnection");
 
         if (string.IsNullOrWhiteSpace(connectionString))
-            throw new InvalidOperationException("Conexão MySQL não configurada (DefaultConnection/MySqlConnection).");
+            throw new InvalidOperationException("Conexão MySQL não configurada (DefaultConnection).");
 
         Console.WriteLine($"DEBUG MYSQL: ConnectionString carregada para login/google (host): {ExtractServer(connectionString)}");
 

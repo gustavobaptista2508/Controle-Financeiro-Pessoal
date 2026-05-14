@@ -70,15 +70,14 @@
 
     private async Task HandleLogin()
     {
-        Console.WriteLine("DEBUG LOGIN: HandleLogin chamado");
-        Console.WriteLine($"DEBUG LOGIN Email: {loginModel.Email}");
-        Console.WriteLine($"DEBUG LOGIN Senha preenchida: {!string.IsNullOrWhiteSpace(loginModel.Senha)}");
-        Console.WriteLine($"DEBUG LOGIN LembrarMe: {loginModel.LembrarMe}");
-
-        if (isLoading) return;
+        if (isLoading)
+            return;
 
         try
         {
+            isLoading = true;
+            Console.WriteLine("LOGIN: início");
+
             var client = HttpClientFactory.CreateClient();
             var loginEndpoint = Navigation.ToAbsoluteUri("/auth/login");
             var response = await client.PostAsJsonAsync(loginEndpoint, loginModel);
@@ -86,17 +85,18 @@
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadFromJsonAsync<ApiErrorResponse>();
-                Console.WriteLine($"DEBUG LOGIN Erro: {error?.Message}");
+                Console.WriteLine("LOGIN: resultado false");
                 Snackbar.Add(error?.Message ?? "E-mail ou senha inválidos.", Severity.Error);
                 return;
             }
 
-            Console.WriteLine("DEBUG LOGIN Resultado: true");
+            Console.WriteLine("LOGIN: resultado true");
             Navigation.NavigateTo("/dashboard", forceLoad: true);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"DEBUG LOGIN Exception: {ex}");
+            Console.WriteLine("ERRO LOGIN:");
+            Console.WriteLine(ex.ToString());
             Snackbar.Add("Falha ao efetuar login.", Severity.Error);
         }
         finally
