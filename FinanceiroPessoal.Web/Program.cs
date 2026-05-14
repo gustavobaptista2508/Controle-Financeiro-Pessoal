@@ -30,6 +30,7 @@ builder.Services.AddMemoryCache();
 builder.Services.Configure<PluggyOptions>(builder.Configuration.GetSection("Pluggy"));
 builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<BillingOptions>(builder.Configuration.GetSection("Billing"));
+builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection("OpenAI"));
 var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 if (!string.IsNullOrWhiteSpace(stripeSecretKey))
 {
@@ -97,6 +98,7 @@ builder.Services.AddScoped<UsuarioCadastroService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IAssinaturaService, AssinaturaService>();
 builder.Services.AddScoped<IStripeSubscriptionService, StripeSubscriptionService>();
+builder.Services.AddHttpClient<IAssistenteFinanceiroIaService, AssistenteFinanceiroIaService>();
 
 var app = builder.Build();
 
@@ -126,7 +128,7 @@ app.UseAuthorization();
 app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
-    var protegidos = new[] { "/dashboard", "/lancamentos", "/contas", "/categorias", "/pessoas", "/bancos", "/relatorios" };
+    var protegidos = new[] { "/dashboard", "/lancamentos", "/contas", "/categorias", "/pessoas", "/bancos", "/relatorios", "/ia" };
     var publico = path.StartsWith("/webhooks/stripe") || path.StartsWith("/planos") || path.StartsWith("/assinatura/") || path.StartsWith("/usuarios/cadastro") || path.StartsWith("/login") || path=="/" || path.StartsWith("/_framework") || path.StartsWith("/css") || path.StartsWith("/js") || path.StartsWith("/favicon");
     if (!publico && protegidos.Any(p => path.StartsWith(p)) && context.User.Identity?.IsAuthenticated == true)
     {
@@ -223,6 +225,31 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 
+
+
+app.MapPost("/api/ia/perguntar", async (HttpContext ctx, [FromBody] IaPerguntaRequest req, [FromServices] IAssistenteFinanceiroIaService ia) =>
+{
+    if (!(ctx.User.Identity?.IsAuthenticated ?? false)) return Results.Unauthorized();
+    var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
+    var resposta = await ia.PerguntarAsync(usuarioId, req.Pergunta);
+    return Results.Ok(new { resposta });
+}).RequireAuthorization();
+
+app.MapPost("/api/ia/resumo-mensal", async (HttpContext ctx, [FromBody] IaResumoRequest req, [FromServices] IAssistenteFinanceiroIaService ia) =>
+{
+    if (!(ctx.User.Identity?.IsAuthenticated ?? false)) return Results.Unauthorized();
+    var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
+    var resposta = await ia.GerarResumoMensalAsync(usuarioId, req.Mes, req.Ano);
+    return Results.Ok(new { resposta });
+}).RequireAuthorization();
+
+app.MapPost("/api/ia/analisar-categorias", async (HttpContext ctx, [FromBody] IaResumoRequest req, [FromServices] IAssistenteFinanceiroIaService ia) =>
+{
+    if (!(ctx.User.Identity?.IsAuthenticated ?? false)) return Results.Unauthorized();
+    var usuarioId = PluggyUserResolver.GetUsuarioId(ctx.User);
+    var resposta = await ia.AnalisarCategoriasAsync(usuarioId, req.Mes, req.Ano);
+    return Results.Ok(new { resposta });
+}).RequireAuthorization();
 
 app.MapPost("/api/pluggy/connect-token", async (HttpContext ctx, [FromServices] IPluggyService pluggy) =>
 {
@@ -323,3 +350,6 @@ public sealed record LoginRequest(string Email, string Senha, bool LembrarMe);
 public sealed record CadastroRequest(string Nome, string Email, string Senha, string ConfirmarSenha);
 
 public sealed record CriarCheckoutRequest(int PlanoId);
+
+record IaPerguntaRequest(string Pergunta);
+record IaResumoRequest(int Mes, int Ano);
