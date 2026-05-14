@@ -11,34 +11,12 @@
     <MudSnackbarProvider />
     <MudPopoverProvider />
 
-    <MudLayout>
-        <MudAppBar Elevation="0" Dense="false" Class="topbar">
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-            <MudSpacer />
-
-            <AuthorizeView>
-                <Authorized>
-                    <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
-                        <ActivatorContent>
-                            <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
-                                <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials(context.User)</MudAvatar>
-                                <MudText Typo="Typo.body2">@GetDisplayName(context.User)</MudText>
-                            </MudButton>
-                        </ActivatorContent>
-                        <ChildContent>
-                            <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
-                        </ChildContent>
-                    </MudMenu>
-                </Authorized>
-                <NotAuthorized>
-                    <MudButton Href="/login" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">Entrar</MudButton>
-                </NotAuthorized>
-            </AuthorizeView>
-        </MudAppBar>
-
-        <MudDrawer Elevation="1" ClipMode="DrawerClipMode.Always" Variant="DrawerVariant.Responsive" Breakpoint="Breakpoint.Md" @bind-Open="_drawerOpen" Class="app-sidebar">
+    <div class="app-shell @SidebarStateClass">
+        <aside class="app-sidebar">
             <div class="logo-area">
-                <img src="granaok-logo.svg" alt="GranaOK" />
+                <div class="sidebar-logo-box">
+                    <img src="granaok-logo.svg" alt="GranaOK" class="sidebar-logo" />
+                </div>
                 <MudText Typo="Typo.subtitle2" Class="brand-caption">Controle Financeiro Inteligente</MudText>
             </div>
             <MudNavMenu Class="sidebar-menu">
@@ -53,19 +31,44 @@
                     </NotAuthorized>
                 </AuthorizeView>
             </MudNavMenu>
-        </MudDrawer>
+        </aside>
 
-        <MudMainContent Class="main-content-wrapper">
+        <main class="main-content-wrapper">
+            <MudAppBar Elevation="0" Dense="false" Class="topbar">
+                <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="MudBlazor.Color.Inherit" Edge="Edge.Start" Class="topbar-menu-button" OnClick="@ToggleDrawer" />
+                <MudSpacer />
+
+                <AuthorizeView>
+                    <Authorized>
+                        <MudMenu AnchorOrigin="Origin.BottomRight" TransformOrigin="Origin.TopRight" Class="user-menu">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Text" Color="MudBlazor.Color.Inherit" EndIcon="@Icons.Material.Filled.KeyboardArrowDown" Class="user-trigger">
+                                    <MudAvatar Color="MudBlazor.Color.Primary" Size="Size.Medium" Class="me-2">@GetInitials(context.User)</MudAvatar>
+                                    <MudText Typo="Typo.body2">@GetDisplayName(context.User)</MudText>
+                                </MudButton>
+                            </ActivatorContent>
+                            <ChildContent>
+                                <MudMenuItem Icon="@Icons.Material.Filled.Logout" OnClick="Logout">Sair</MudMenuItem>
+                            </ChildContent>
+                        </MudMenu>
+                    </Authorized>
+                    <NotAuthorized>
+                        <MudButton Href="/login" Variant="Variant.Filled" Color="MudBlazor.Color.Primary">Entrar</MudButton>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </MudAppBar>
+
             <MudContainer MaxWidth="MaxWidth.False" Class="content-area">
                 @Body
             </MudContainer>
-        </MudMainContent>
-    </MudLayout>
+        </main>
+    </div>
 </CascadingValue>
 
 @code {
     private bool _drawerOpen = true;
     private readonly MudTheme _theme = new(){ PaletteLight = new PaletteLight{ Primary = "#00C853", Secondary = "#052C65", Background = "#F4F7FB", Surface = "#FFFFFF", AppbarBackground = "#FFFFFF", AppbarText = "#052C65", DrawerBackground = "#052C65", DrawerText = "#E7EEF8", DrawerIcon = "#C8D7EE"}, LayoutProperties = new LayoutProperties{ DefaultBorderRadius = "16px"}};
+    private string SidebarStateClass => _drawerOpen ? "sidebar-open" : "sidebar-closed";
     private void ToggleDrawer() => _drawerOpen = !_drawerOpen;
     private static string GetDisplayName(ClaimsPrincipal user) => user.Identity?.Name ?? "Usuário";
     private static string GetInitials(ClaimsPrincipal user){ var name = GetDisplayName(user); var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries); if (parts.Length == 0) return "GO"; if (parts.Length == 1) return parts[0][..1].ToUpperInvariant(); return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant(); }
