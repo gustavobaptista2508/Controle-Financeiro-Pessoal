@@ -11,13 +11,11 @@ public class UsuarioCadastroService
 {
     private readonly IConfiguration _configuration;
     private readonly IPasswordHasherService _passwordHasher;
-    private readonly BillingOptions _billingOptions;
 
-    public UsuarioCadastroService(IConfiguration configuration, IPasswordHasherService passwordHasher, Microsoft.Extensions.Options.IOptions<BillingOptions> billingOptions)
+    public UsuarioCadastroService(IConfiguration configuration, IPasswordHasherService passwordHasher)
     {
         _configuration = configuration;
         _passwordHasher = passwordHasher;
-        _billingOptions = billingOptions.Value;
     }
 
     public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro, int? planoId = null)
@@ -52,8 +50,17 @@ public class UsuarioCadastroService
         }
 
         var now = DateTime.Now;
-        var trialDays = _billingOptions.EnableTrial ? Math.Max(1, _billingOptions.TrialDays) : 0;
-        var trialEndsAt = trialDays > 0 ? now.AddDays(trialDays) : now;
+        const int trialDays = 14;
+        var trialEndsAt = now.AddDays(trialDays);
+
+        if (planoId.HasValue)
+        {
+            var planoAtivo = await db.Planos.AnyAsync(p => p.Id == planoId.Value && p.Ativo);
+            if (!planoAtivo)
+            {
+                return (false, "Plano inválido ou inativo.");
+            }
+        }
 
         var usuario = new Usuario
         {
@@ -65,9 +72,9 @@ public class UsuarioCadastroService
             DataCriacao = now,
             DataAtualizacao = now,
             PlanoId = planoId,
-            AssinaturaStatus = trialDays > 0 ? "TRIAL" : "PENDENTE",
-            TrialExpiraEm = trialDays > 0 ? trialEndsAt : null,
-            AssinaturaExpiraEm = trialDays > 0 ? trialEndsAt : null
+            AssinaturaStatus = "TRIAL",
+            TrialExpiraEm = trialEndsAt,
+            AssinaturaExpiraEm = trialEndsAt
         };
 
         db.Usuarios.Add(usuario);

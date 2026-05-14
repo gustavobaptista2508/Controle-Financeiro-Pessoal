@@ -11,42 +11,52 @@
 <h3>Planos</h3>
 <p><strong>14 dias grátis</strong> para novos usuários.</p>
 
-@foreach (var p in planos)
+@if (isLoading)
 {
-    <div class="mb-3">
-        <strong>@p.Nome</strong><br />@p.Descricao<br />R$ @p.Preco / @p.Intervalo<br />
-        @if (isAutenticado)
-        {
-            <button class="btn btn-success" @onclick="(()=>Assinar(p.Id))">Assinar agora</button>
-        }
-        else
-        {
+    <p>Carregando planos...</p>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <p class="text-danger">@errorMessage</p>
+}
+else
+{
+    @foreach (var p in planos)
+    {
+        <div class="mb-3">
+            <strong>@p.Nome</strong><br />
+            @p.Descricao<br />
+            @($"R$ {p.Preco:N2} / {p.Intervalo}")<br />
             <button class="btn btn-success" @onclick="(()=>IrParaCadastro(p.Id))">Começar 14 dias grátis</button>
-        }
-    </div>
+        </div>
+    }
 }
 
 @code {
     private List<FinanceiroPessoal.Core.Models.Plano> planos = new();
-    private bool isAutenticado;
+    private bool isLoading;
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("PLANOS: carregando");
-        planos = await Db.Planos.Where(x => x.Ativo).ToListAsync();
-        Console.WriteLine($"PLANOS: quantidade = {planos.Count}");
-        var state = await Auth.GetAuthenticationStateAsync();
-        isAutenticado = state.User.Identity?.IsAuthenticated ?? false;
+        isLoading = true;
+        try
+        {
+            Console.WriteLine("PLANOS: carregando");
+            planos = await Db.Planos.Where(x => x.Ativo).OrderBy(x => x.Preco).ToListAsync();
+            Console.WriteLine($"PLANOS: quantidade = {planos.Count}");
+            _ = await Auth.GetAuthenticationStateAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("ERRO PLANOS: " + ex);
+            errorMessage = "Não foi possível carregar os planos.";
+        }
+        finally
+        {
+            isLoading = false;
+        }
     }
 
     private void IrParaCadastro(int id) => Nav.NavigateTo($"/usuarios/cadastro?planoId={id}");
-
-    private async Task Assinar(int id)
-    {
-        var res = await Http.PostAsJsonAsync("/api/assinaturas/criar-checkout", new { planoId = id });
-        if (!res.IsSuccessStatusCode) return;
-        var obj = await res.Content.ReadFromJsonAsync<CheckoutResponse>();
-        if (!string.IsNullOrWhiteSpace(obj?.Url)) Nav.NavigateTo(obj.Url, true);
-    }
-    private sealed class CheckoutResponse { public string? Url { get; set; } }
 }
