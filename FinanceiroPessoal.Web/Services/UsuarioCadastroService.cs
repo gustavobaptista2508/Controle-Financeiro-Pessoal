@@ -11,11 +11,13 @@ public class UsuarioCadastroService
 {
     private readonly IConfiguration _configuration;
     private readonly IPasswordHasherService _passwordHasher;
+    private readonly BillingOptions _billingOptions;
 
-    public UsuarioCadastroService(IConfiguration configuration, IPasswordHasherService passwordHasher)
+    public UsuarioCadastroService(IConfiguration configuration, IPasswordHasherService passwordHasher, Microsoft.Extensions.Options.IOptions<BillingOptions> billingOptions)
     {
         _configuration = configuration;
         _passwordHasher = passwordHasher;
+        _billingOptions = billingOptions.Value;
     }
 
     public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro, int? planoId = null)
@@ -49,6 +51,10 @@ public class UsuarioCadastroService
             return (false, "E-mail já cadastrado.");
         }
 
+        var now = DateTime.Now;
+        var trialDays = _billingOptions.EnableTrial ? Math.Max(1, _billingOptions.TrialDays) : 0;
+        var trialEndsAt = trialDays > 0 ? now.AddDays(trialDays) : now;
+
         var usuario = new Usuario
         {
             Nome = nome,
@@ -56,10 +62,12 @@ public class UsuarioCadastroService
             SenhaHash = _passwordHasher.HashPassword(senha),
             Ativo = true,
             EmailConfirmado = true,
-            DataCriacao = DateTime.Now,
-            DataAtualizacao = DateTime.Now,
+            DataCriacao = now,
+            DataAtualizacao = now,
             PlanoId = planoId,
-            AssinaturaStatus = planoId.HasValue ? "PENDENTE" : "PENDENTE"
+            AssinaturaStatus = trialDays > 0 ? "TRIAL" : "PENDENTE",
+            TrialExpiraEm = trialDays > 0 ? trialEndsAt : null,
+            AssinaturaExpiraEm = trialDays > 0 ? trialEndsAt : null
         };
 
         db.Usuarios.Add(usuario);
