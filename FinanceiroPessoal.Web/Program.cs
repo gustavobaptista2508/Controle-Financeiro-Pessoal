@@ -78,12 +78,11 @@ if (googleAuthConfigured)
 }
 
 
-var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration.GetConnectionString("MySqlConnection");
+var mysqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrWhiteSpace(mysqlConnectionString))
 {
-    throw new InvalidOperationException("ConnectionStrings:DefaultConnection ou ConnectionStrings:MySqlConnection não configurada.");
+    throw new InvalidOperationException("ConnectionStrings:DefaultConnection não configurada.");
 }
 
 builder.Services.AddDbContext<FinanceiroPessoal.Core.Data.FinanceiroDbContext>(options =>
@@ -129,7 +128,7 @@ app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
     var protegidos = new[] { "/dashboard", "/lancamentos", "/contas", "/categorias", "/pessoas", "/bancos", "/relatorios", "/ia" };
-    var publico = path.StartsWith("/webhooks/stripe") || path.StartsWith("/planos") || path.StartsWith("/assinatura/") || path.StartsWith("/usuarios/cadastro") || path.StartsWith("/login") || path=="/" || path.StartsWith("/_framework") || path.StartsWith("/css") || path.StartsWith("/js") || path.StartsWith("/favicon");
+    var publico = path.StartsWith("/webhooks/stripe") || path.StartsWith("/planos") || path.StartsWith("/assinatura/") || path.StartsWith("/usuarios/cadastro") || path.StartsWith("/login") || path.StartsWith("/esqueci-senha") || path.StartsWith("/redefinir-senha") || path=="/" || path.StartsWith("/_framework") || path.StartsWith("/css") || path.StartsWith("/js") || path.StartsWith("/favicon");
     if (!publico && protegidos.Any(p => path.StartsWith(p)) && context.User.Identity?.IsAuthenticated == true)
     {
         var claim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

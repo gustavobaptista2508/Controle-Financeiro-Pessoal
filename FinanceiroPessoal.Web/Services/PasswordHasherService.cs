@@ -9,6 +9,13 @@ public class PasswordHasherService : IPasswordHasherService
         if (string.IsNullOrWhiteSpace(senha) || string.IsNullOrWhiteSpace(hash))
             return false;
 
-        return BCrypt.Net.BCrypt.Verify(senha, hash);
+        try
+        {
+            return BCrypt.Net.BCrypt.Verify(senha, hash);
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
