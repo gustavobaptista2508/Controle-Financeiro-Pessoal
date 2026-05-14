@@ -1,3 +1,5 @@
+using FinanceiroPessoal.Core.Models;
+
 namespace FinanceiroPessoal.Web.Services;
 
 public interface IAssistenteFinanceiroIaService
@@ -6,5 +8,5 @@ public interface IAssistenteFinanceiroIaService
     Task<string> PerguntarAsync(int usuarioId, string pergunta);
     Task<string> AnalisarCategoriasAsync(int usuarioId, int mes, int ano);
     Task<bool> PodeUsarIaHojeAsync(int usuarioId);
-    Task<IReadOnlyList<FinanceiroPessoal.Core.Models.IaConversa>> ListarUltimasConversasAsync(int usuarioId, int limite = 10);
+    Task<IReadOnlyList<IaConversa>> ListarUltimasConversasAsync(int usuarioId, int quantidade = 10);
 }
