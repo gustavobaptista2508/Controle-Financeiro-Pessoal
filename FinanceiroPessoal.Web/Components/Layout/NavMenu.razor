@@ -1,21 +1,27 @@
-<div class="p-3 border-bottom border-primary-subtle">
-    <img src="granaok-logo.svg" alt="Logo GranaOK" class="img-fluid" style="max-width: 140px;" />
+@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="sidebar-logo-box">
+    <img src="granaok-logo.svg" alt="Logo GranaOK" class="sidebar-logo" />
 </div>
 
-<nav class="nav nav-pills flex-column gap-2 p-3 small">
-    <NavLink class="nav-link text-white" href="" Match="NavLinkMatch.All"><i class="bi bi-house me-2"></i>Dashboard</NavLink>
-    <NavLink class="nav-link text-white" href="lancamentos"><i class="bi bi-card-list me-2"></i>Lançamentos</NavLink>
-    <NavLink class="nav-link text-white" href="lancamentos/novo"><i class="bi bi-plus-square me-2"></i>Novo</NavLink>
-    <NavLink class="nav-link text-white" href="categorias"><i class="bi bi-grid me-2"></i>Categorias</NavLink>
-    <NavLink class="nav-link text-white" href="pessoas"><i class="bi bi-people me-2"></i>Pessoas</NavLink>
-    <NavLink class="nav-link text-white" href="contas"><i class="bi bi-wallet2 me-2"></i>Contas</NavLink>
-</nav>
+<div class="sidebar-title">Controle Financeiro Inteligente</div>
 
-<AuthorizeView>
-    <Authorized>
-        <nav class="nav nav-pills flex-column gap-2 px-3 pb-3 small">
-            <NavLink class="nav-link text-white" href="bancos"><i class="bi bi-bank me-2"></i>Bancos</NavLink>
-            <NavLink class="nav-link text-white" href="perfil/assinatura"><i class="bi bi-credit-card me-2"></i>Assinatura</NavLink>
-        </nav>
-    </Authorized>
-</AuthorizeView>
+<nav class="sidebar-nav">
+    <AuthorizeView>
+        <NotAuthorized>
+            <NavLink class="menu-link" href="/" Match="NavLinkMatch.All">Home</NavLink>
+            <NavLink class="menu-link" href="/login">Login</NavLink>
+        </NotAuthorized>
+        <Authorized>
+            <NavLink class="menu-link" href="/dashboard">Dashboard</NavLink>
+            <NavLink class="menu-link" href="/lancamentos">Lançamentos</NavLink>
+            <NavLink class="menu-link" href="/lancamentos/novo">Novo lançamento</NavLink>
+            <NavLink class="menu-link" href="/ia">IA</NavLink>
+            <NavLink class="menu-link" href="/perfil/assinatura">Minha assinatura</NavLink>
+            <NavLink class="menu-link" href="/contas">Contas</NavLink>
+            <NavLink class="menu-link" href="/categorias">Categorias</NavLink>
+            <NavLink class="menu-link" href="/pessoas">Pessoas</NavLink>
+            <NavLink class="menu-link" href="/bancos">Bancos</NavLink>
+        </Authorized>
+    </AuthorizeView>
+</nav>
