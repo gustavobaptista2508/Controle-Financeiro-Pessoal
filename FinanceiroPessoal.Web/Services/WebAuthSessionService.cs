@@ -39,16 +39,19 @@ public class WebAuthSessionService
             return (false, "E-mail ou senha inválidos.");
 
         var senhaValida = _passwordHasher.VerifyPassword(senha, usuario.SenhaHash);
-        Console.WriteLine($"LOGIN: senha válida {senhaValida}");
 
-
-        if (!senhaValida && usuario.SenhaHash == senha)
+        if (!senhaValida)
         {
-            usuario.SenhaHash = _passwordHasher.HashPassword(senha);
-            usuario.DataAtualizacao = DateTime.Now;
-            await _db.SaveChangesAsync();
-            senhaValida = true;
-            Console.WriteLine("LOGIN: hash legado migrado para BCrypt");
+            var senhaHashPareceTextoPuro =
+                !string.IsNullOrWhiteSpace(usuario.SenhaHash)
+                && usuario.SenhaHash == senha;
+
+            if (senhaHashPareceTextoPuro)
+            {
+                senhaValida = true;
+                usuario.SenhaHash = _passwordHasher.HashPassword(senha);
+                Console.WriteLine("LOGIN: senha legada convertida para hash.");
+            }
         }
 
         if (!senhaValida)
