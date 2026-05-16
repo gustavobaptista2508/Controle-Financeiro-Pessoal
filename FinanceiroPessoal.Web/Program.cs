@@ -85,6 +85,11 @@ if (string.IsNullOrWhiteSpace(mysqlConnectionString))
     throw new InvalidOperationException("ConnectionStrings:DefaultConnection não configurada.");
 }
 
+Console.WriteLine("MYSQL: connection string carregada.");
+Console.WriteLine(mysqlConnectionString.Contains("Database=gadobd")
+    ? "MYSQL: banco gadobd detectado."
+    : "MYSQL: ATENÇÃO - banco diferente de gadobd.");
+
 builder.Services.AddDbContext<FinanceiroPessoal.Core.Data.FinanceiroDbContext>(options =>
 {
     options.UseMySql(mysqlConnectionString, new MySqlServerVersion(new Version(8, 0, 36)));
@@ -100,6 +105,26 @@ builder.Services.AddScoped<IStripeSubscriptionService, StripeSubscriptionService
 builder.Services.AddHttpClient<IAssistenteFinanceiroIaService, AssistenteFinanceiroIaService>();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<FinanceiroPessoal.Core.Data.FinanceiroDbContext>();
+
+    try
+    {
+        var totalPlanos = db.Planos.Count();
+        var totalUsuarios = db.Usuarios.Count();
+
+        Console.WriteLine($"TESTE MYSQL: Planos = {totalPlanos}");
+        Console.WriteLine($"TESTE MYSQL: Usuarios = {totalUsuarios}");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine("ERRO TESTE MYSQL:");
+        Console.WriteLine(ex.ToString());
+        throw;
+    }
+}
 
 var culturaPtBr = new CultureInfo("pt-BR");
 CultureInfo.DefaultThreadCurrentCulture = culturaPtBr;
