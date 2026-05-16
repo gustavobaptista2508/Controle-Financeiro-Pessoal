@@ -9,12 +9,12 @@ namespace FinanceiroPessoal.Web.Services;
 
 public class UsuarioCadastroService
 {
-    private readonly IConfiguration _configuration;
+    private readonly FinanceiroDbContext _db;
     private readonly IPasswordHasherService _passwordHasher;
 
-    public UsuarioCadastroService(IConfiguration configuration, IPasswordHasherService passwordHasher)
+    public UsuarioCadastroService(FinanceiroDbContext db, IPasswordHasherService passwordHasher)
     {
-        _configuration = configuration;
+        _db = db;
         _passwordHasher = passwordHasher;
     }
 
@@ -33,17 +33,8 @@ public class UsuarioCadastroService
         if (!email.Contains('@')) return (false, "E-mail inválido.");
         if (string.IsNullOrWhiteSpace(senha) || senha.Length < 6) return (false, "A senha deve ter no mínimo 6 caracteres.");
 
-        var connectionString = _configuration.GetConnectionString("DefaultConnection")
-            ?? _configuration.GetConnectionString("MySqlConnection");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            return (false, "Conexão com banco de dados não configurada (DefaultConnection/MySqlConnection).");
-        }
 
-        Console.WriteLine($"DEBUG MYSQL: ConnectionString carregada para cadastro (host): {ExtractServer(connectionString)}");
-        await using var db = new MySqlDbContext(connectionString);
-
-        var emailJaExiste = await db.Usuarios.IgnoreQueryFilters().AnyAsync(u => u.Email == email);
+        var emailJaExiste = await _db.Usuarios.IgnoreQueryFilters().AnyAsync(u => u.Email == email);
         if (emailJaExiste)
         {
             return (false, "E-mail já cadastrado.");
@@ -55,7 +46,7 @@ public class UsuarioCadastroService
 
         if (planoId.HasValue)
         {
-            var planoAtivo = await db.Planos.AnyAsync(p => p.Id == planoId.Value && p.Ativo);
+            var planoAtivo = await _db.Planos.AnyAsync(p => p.Id == planoId.Value && p.Ativo);
             if (!planoAtivo)
             {
                 return (false, "Plano inválido ou inativo.");
@@ -77,19 +68,19 @@ public class UsuarioCadastroService
             AssinaturaExpiraEm = trialEndsAt
         };
 
-        db.Usuarios.Add(usuario);
-        var linhas = await db.SaveChangesAsync();
+        _db.Usuarios.Add(usuario);
+        var linhas = await _db.SaveChangesAsync();
         Console.WriteLine($"DEBUG CADASTRO SERVICE: linhas salvas {linhas}");
         Console.WriteLine($"DEBUG CADASTRO SERVICE: UsuarioId criado: {usuario.Id}");
 
-        db.Contas.Add(new Conta
+        _db.Contas.Add(new Conta
         {
             Nome = "Conta Principal",
             Tipo = "Corrente",
             UsuarioId = usuario.Id
         });
 
-        db.Categorias.AddRange(
+        _db.Categorias.AddRange(
             new Categoria { Nome = "Alimentação", UsuarioId = usuario.Id },
             new Categoria { Nome = "Moradia", UsuarioId = usuario.Id },
             new Categoria { Nome = "Transporte", UsuarioId = usuario.Id },
@@ -98,23 +89,16 @@ public class UsuarioCadastroService
             new Categoria { Nome = "Salário", UsuarioId = usuario.Id }
         );
 
-        await db.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
-        await GarantirAdminComHashAsync(db);
+        await GarantirAdminComHashAsync();
 
         return (true, "Usuário cadastrado com sucesso.");
     }
-    private static string ExtractServer(string connectionString)
-    {
-        const string key = "Server=";
-        var part = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries)
-            .FirstOrDefault(x => x.TrimStart().StartsWith(key, StringComparison.OrdinalIgnoreCase));
-        return part ?? "server=indefinido";
-    }
 
-    private async Task GarantirAdminComHashAsync(MySqlDbContext db)
+    private async Task GarantirAdminComHashAsync()
     {
-        var admin = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == "admin@granaok.com");
+        var admin = await _db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == "admin@granaok.com");
         if (admin is null)
             return;
 
@@ -122,7 +106,7 @@ public class UsuarioCadastroService
         {
             admin.SenhaHash = _passwordHasher.HashPassword("123456");
             admin.DataAtualizacao = DateTime.Now;
-            await db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
         }
     }
 }

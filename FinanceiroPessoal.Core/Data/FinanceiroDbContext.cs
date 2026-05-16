@@ -13,9 +13,6 @@ namespace FinanceiroPessoal.Core.Data
         {
         }
 
-        public FinanceiroDbContext()
-        {
-        }
 
         public DbSet<Lancamento> Lancamentos => Set<Lancamento>();
         public DbSet<Categoria> Categorias => Set<Categoria>();
@@ -30,11 +27,8 @@ namespace FinanceiroPessoal.Core.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                var connectionString = "Server=localhost;Port=3306;Database=gadobd;User=root;Password=SUA_SENHA;SslMode=None;AllowPublicKeyRetrieval=True;";
-
-                optionsBuilder.UseMySql(
-                    connectionString,
-                    new MySqlServerVersion(new Version(8, 0, 36)));
+                throw new InvalidOperationException(
+                    "FinanceiroDbContext não foi configurado. Configure o DbContext no Program.cs usando AddDbContext e ConnectionStrings:DefaultConnection.");
             }
         }
 
@@ -89,17 +83,29 @@ namespace FinanceiroPessoal.Core.Data
             modelBuilder.Entity<Usuario>(entity =>
             {
                 entity.ToTable("usuarios");
-                entity.HasKey(x => x.Id);
-                entity.Property(x => x.Nome).HasMaxLength(100).IsRequired();
-                entity.Property(x => x.Email).HasMaxLength(150).IsRequired();
-                entity.HasIndex(x => x.Email).IsUnique();
 
+                entity.HasKey(x => x.Id);
+
+                entity.Property(x => x.Id).HasColumnName("id");
+                entity.Property(x => x.Nome).HasColumnName("nome").HasMaxLength(100).IsRequired();
+                entity.Property(x => x.Email).HasColumnName("email").HasMaxLength(150).IsRequired();
+                entity.Property(x => x.SenhaHash).HasColumnName("senha_hash");
+                entity.Property(x => x.Telefone).HasColumnName("telefone");
+                entity.Property(x => x.Ativo).HasColumnName("ativo");
+                entity.Property(x => x.EmailConfirmado).HasColumnName("email_confirmado");
+                entity.Property(x => x.TokenRecuperacao).HasColumnName("token_recuperacao");
+                entity.Property(x => x.TokenExpiracao).HasColumnName("token_expiracao");
+                entity.Property(x => x.UltimoLogin).HasColumnName("ultimo_login");
+                entity.Property(x => x.DataCriacao).HasColumnName("data_criacao");
+                entity.Property(x => x.DataAtualizacao).HasColumnName("data_atualizacao");
                 entity.Property(x => x.PlanoId).HasColumnName("plano_id");
                 entity.Property(x => x.AssinaturaStatus).HasColumnName("assinatura_status").HasMaxLength(30);
                 entity.Property(x => x.TrialExpiraEm).HasColumnName("trial_expira_em");
                 entity.Property(x => x.StripeCustomerId).HasColumnName("stripe_customer_id").HasMaxLength(120);
                 entity.Property(x => x.StripeSubscriptionId).HasColumnName("stripe_subscription_id").HasMaxLength(120);
                 entity.Property(x => x.AssinaturaExpiraEm).HasColumnName("assinatura_expira_em");
+
+                entity.HasIndex(x => x.Email).IsUnique();
             });
 
 
@@ -107,6 +113,7 @@ namespace FinanceiroPessoal.Core.Data
             {
                 entity.ToTable("planos");
                 entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("id");
                 entity.Property(x => x.Nome).HasColumnName("nome").HasMaxLength(120).IsRequired();
                 entity.Property(x => x.Descricao).HasColumnName("descricao").HasMaxLength(255);
                 entity.Property(x => x.Preco).HasColumnName("preco").HasColumnType("decimal(18,2)");
@@ -119,6 +126,7 @@ namespace FinanceiroPessoal.Core.Data
             {
                 entity.ToTable("assinaturas");
                 entity.HasKey(x => x.Id);
+                entity.Property(x => x.Id).HasColumnName("id");
                 entity.Property(x => x.UsuarioId).HasColumnName("usuario_id");
                 entity.Property(x => x.PlanoId).HasColumnName("plano_id");
                 entity.Property(x => x.Provider).HasColumnName("provider").HasMaxLength(30);

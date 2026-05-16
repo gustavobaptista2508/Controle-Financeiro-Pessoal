@@ -15,12 +15,12 @@ public class WebAuthSessionService
     public string CurrentUserEmail { get; private set; } = string.Empty;
     public event Action? AuthenticationStateChanged;
 
-    private readonly IConfiguration _configuration;
+    private readonly FinanceiroDbContext _db;
     private readonly IPasswordHasherService _passwordHasher;
 
-    public WebAuthSessionService(IConfiguration configuration, IPasswordHasherService passwordHasher)
+    public WebAuthSessionService(FinanceiroDbContext db, IPasswordHasherService passwordHasher)
     {
-        _configuration = configuration;
+        _db = db;
         _passwordHasher = passwordHasher;
     }
 
@@ -31,10 +31,8 @@ public class WebAuthSessionService
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
             return (false, "Preencha e-mail e senha.");
 
-        await using var db = CreateDbContext();
-
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        var usuario = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
+        var usuario = await _db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
         Console.WriteLine($"LOGIN: usuário encontrado {usuario is not null}");
 
         if (usuario is null)
@@ -48,7 +46,7 @@ public class WebAuthSessionService
         {
             usuario.SenhaHash = _passwordHasher.HashPassword(senha);
             usuario.DataAtualizacao = DateTime.Now;
-            await db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
             senhaValida = true;
             Console.WriteLine("LOGIN: hash legado migrado para BCrypt");
         }
@@ -66,7 +64,7 @@ public class WebAuthSessionService
 
             if (!usuario.PlanoId.HasValue)
             {
-                var planoAtivo = await db.Planos.AsNoTracking().OrderBy(p => p.Preco).FirstOrDefaultAsync(p => p.Ativo);
+                var planoAtivo = await _db.Planos.AsNoTracking().OrderBy(p => p.Preco).FirstOrDefaultAsync(p => p.Ativo);
                 if (planoAtivo is not null)
                     usuario.PlanoId = planoAtivo.Id;
             }
@@ -74,7 +72,7 @@ public class WebAuthSessionService
 
         usuario.UltimoLogin = DateTime.Now;
         usuario.DataAtualizacao = DateTime.Now;
-        await db.SaveChangesAsync();
+        await _db.SaveChangesAsync();
 
         await SignInAsync(usuario, lembrarMe, context);
         Console.WriteLine("LOGIN: sessão criada");
@@ -86,10 +84,8 @@ public class WebAuthSessionService
     public async Task LoginWithGoogleAsync(string email, string nome, HttpContext context)
     {
         Console.WriteLine("DEBUG GOOGLE LOGIN: callback iniciado");
-        await using var db = CreateDbContext();
-
         var normalizedEmail = email.Trim().ToLowerInvariant();
-        var usuario = await db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
+        var usuario = await _db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
         Console.WriteLine($"DEBUG GOOGLE LOGIN: usuário existente: {usuario is not null}");
 
         if (usuario is null)
@@ -106,17 +102,17 @@ public class WebAuthSessionService
                 UltimoLogin = DateTime.Now
             };
 
-            db.Usuarios.Add(usuario);
-            await db.SaveChangesAsync();
+            _db.Usuarios.Add(usuario);
+            await _db.SaveChangesAsync();
 
-            db.Contas.Add(new Conta
+            _db.Contas.Add(new Conta
             {
                 Nome = "Conta Principal",
                 Tipo = "Corrente",
                 UsuarioId = usuario.Id
             });
 
-            db.Categorias.AddRange(
+            _db.Categorias.AddRange(
                 new Categoria { Nome = "Alimentação", UsuarioId = usuario.Id },
                 new Categoria { Nome = "Moradia", UsuarioId = usuario.Id },
                 new Categoria { Nome = "Transporte", UsuarioId = usuario.Id },
@@ -125,14 +121,14 @@ public class WebAuthSessionService
                 new Categoria { Nome = "Salário", UsuarioId = usuario.Id }
             );
 
-            await db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
             Console.WriteLine($"DEBUG GOOGLE LOGIN: usuário criado e dados padrão inicializados. UsuarioId: {usuario.Id}");
         }
         else
         {
             usuario.UltimoLogin = DateTime.Now;
             usuario.DataAtualizacao = DateTime.Now;
-            await db.SaveChangesAsync();
+            await _db.SaveChangesAsync();
         }
 
         await SignInAsync(usuario, true, context);
@@ -163,26 +159,6 @@ public class WebAuthSessionService
         AuthenticationStateChanged?.Invoke();
     }
 
-
-    private MySqlDbContext CreateDbContext()
-    {
-        var connectionString = _configuration.GetConnectionString("DefaultConnection");
-
-        if (string.IsNullOrWhiteSpace(connectionString))
-            throw new InvalidOperationException("Conexão MySQL não configurada (DefaultConnection).");
-
-        Console.WriteLine($"DEBUG MYSQL: ConnectionString carregada para login/google (host): {ExtractServer(connectionString)}");
-
-        return new MySqlDbContext(connectionString);
-    }
-
-    private static string ExtractServer(string connectionString)
-    {
-        const string key = "Server=";
-        var part = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries)
-            .FirstOrDefault(x => x.TrimStart().StartsWith(key, StringComparison.OrdinalIgnoreCase));
-        return part ?? "server=indefinido";
-    }
 
     private static async Task SignInAsync(Usuario usuario, bool lembrarMe, HttpContext context)
     {
