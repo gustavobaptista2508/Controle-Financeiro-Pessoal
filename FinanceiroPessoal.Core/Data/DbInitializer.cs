@@ -7,22 +7,28 @@ namespace FinanceiroPessoal.Core.Data
 {
     public class DbInitializer
     {
-        public static void Initialize()
-        {
-            using var context = new FinanceiroDbContext();
-            context.Database.EnsureCreated();
+        private readonly FinanceiroDbContext _db;
 
-            if (!context.Pessoas.Any())
+        public DbInitializer(FinanceiroDbContext db)
+        {
+            _db = db;
+        }
+
+        public async Task InicializarAsync()
+        {
+            await _db.Database.EnsureCreatedAsync();
+
+            if (!_db.Pessoas.Any())
             {
-                context.Pessoas.AddRange(
+                _db.Pessoas.AddRange(
                     new Pessoa { Nome = "Gustavo" },
                     new Pessoa { Nome = "Wanessa" }
                 );
             }
 
-            if (!context.Categorias.Any())
+            if (!_db.Categorias.Any())
             {
-                context.Categorias.AddRange(
+                _db.Categorias.AddRange(
                     new Categoria { Nome = "Salário" },
                 new Categoria { Nome = "Comissão" },
                 new Categoria { Nome = "Recebimento" },
@@ -39,9 +45,9 @@ namespace FinanceiroPessoal.Core.Data
                 );
             }
 
-            if (!context.Contas.Any())
+            if (!_db.Contas.Any())
             {
-                context.Contas.AddRange(
+                _db.Contas.AddRange(
                     new Conta { Nome = "Conta Principal", Tipo = "Conta Corrente" },
                     new Conta { Nome = "Sicredi", Tipo = "Cartão" },
                     new Conta { Nome = "Neon", Tipo = "Cartão" },
@@ -49,7 +55,7 @@ namespace FinanceiroPessoal.Core.Data
                 );
             }
 
-            context.SaveChanges();
+            await _db.SaveChangesAsync();
         }
     }
 }

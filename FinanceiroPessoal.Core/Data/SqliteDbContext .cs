@@ -7,19 +7,9 @@ namespace FinanceiroPessoal.Core.Data
 {
     public class SqliteDbContext : FinanceiroDbContext
     {
-        private readonly string _connectionString;
-
-        public SqliteDbContext(string connectionString = "Data Source=financeiro.db")
+        public SqliteDbContext(DbContextOptions<FinanceiroDbContext> options)
+            : base(options)
         {
-            _connectionString = connectionString;
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlite(_connectionString);
-            }
         }
     }
 }
