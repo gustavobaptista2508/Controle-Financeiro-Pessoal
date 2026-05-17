@@ -36,6 +36,10 @@
             <button type="submit" class="btn btn-success mt-5 auth-main-button" disabled="@isLoading">
                 @(isLoading ? "ENTRANDO..." : "ENTRAR")
             </button>
+
+            <div>
+                <MudLink Href="/recuperar-senha" Class="forgot-password-link">Esqueci minha senha</MudLink>
+            </div>
         </EditForm>
 
         @if (!string.IsNullOrWhiteSpace(erro))

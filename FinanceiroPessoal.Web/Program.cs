@@ -111,6 +111,7 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<IAssinaturaService, AssinaturaService>();
 builder.Services.AddScoped<IStripeSubscriptionService, StripeSubscriptionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<RecuperacaoSenhaService>();
 builder.Services.AddScoped<TrialNotificationService>();
 builder.Services.AddHostedService<TrialNotificationHostedService>();
 builder.Services.AddHttpClient<IAssistenteFinanceiroIaService, AssistenteFinanceiroIaService>();
@@ -164,7 +165,7 @@ app.Use(async (context, next) =>
 {
     var path = context.Request.Path.Value?.ToLowerInvariant() ?? string.Empty;
     var protegidos = new[] { "/dashboard", "/lancamentos", "/contas", "/categorias", "/pessoas", "/bancos", "/relatorios", "/ia" };
-    var publico = path.StartsWith("/webhooks/stripe") || path.StartsWith("/planos") || path.StartsWith("/assinatura/") || path.StartsWith("/usuarios/cadastro") || path.StartsWith("/login") || path.StartsWith("/esqueci-senha") || path.StartsWith("/redefinir-senha") || path=="/" || path.StartsWith("/_framework") || path.StartsWith("/css") || path.StartsWith("/js") || path.StartsWith("/favicon");
+    var publico = path.StartsWith("/webhooks/stripe") || path.StartsWith("/planos") || path.StartsWith("/assinatura/") || path.StartsWith("/usuarios/cadastro") || path.StartsWith("/login") || path.StartsWith("/esqueci-senha") || path.StartsWith("/recuperar-senha") || path.StartsWith("/redefinir-senha") || path=="/" || path.StartsWith("/_framework") || path.StartsWith("/css") || path.StartsWith("/js") || path.StartsWith("/favicon");
     if (!publico && protegidos.Any(p => path.StartsWith(p)) && context.User.Identity?.IsAuthenticated == true)
     {
         var claim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

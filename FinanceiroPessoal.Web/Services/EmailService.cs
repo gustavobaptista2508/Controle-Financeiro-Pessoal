@@ -73,6 +73,28 @@ public class EmailService : IEmailService
         return await EnviarAsync(usuario.Email, assunto, corpo);
     }
 
+    public async Task<bool> EnviarRecuperacaoSenhaAsync(Usuario usuario, string linkRedefinicao)
+    {
+        var assunto = "Redefinição de senha - GranaOK";
+
+        var corpo = $"""
+        Olá, {usuario.Nome}.
+
+        Recebemos uma solicitação para redefinir sua senha no GranaOK.
+
+        Acesse o link abaixo para criar uma nova senha:
+        {linkRedefinicao}
+
+        Este link expira em 1 hora.
+
+        Se você não solicitou essa alteração, ignore este e-mail.
+
+        Equipe GranaOK
+        """;
+
+        return await EnviarAsync(usuario.Email, assunto, corpo);
+    }
+
     private async Task<bool> EnviarAsync(string destinatario, string assunto, string corpo)
     {
         if (string.IsNullOrWhiteSpace(destinatario))
