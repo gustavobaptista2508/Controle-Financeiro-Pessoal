@@ -102,6 +102,8 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
             entity.Property(x => x.StripeCustomerId).HasColumnName("stripe_customer_id").HasMaxLength(120);
             entity.Property(x => x.StripeSubscriptionId).HasColumnName("stripe_subscription_id").HasMaxLength(120);
             entity.Property(x => x.AssinaturaExpiraEm).HasColumnName("assinatura_expira_em");
+            entity.Property(x => x.TrialLembreteEnviadoEm).HasColumnName("trial_lembrete_enviado_em");
+            entity.Property(x => x.TrialEncerradoEmailEnviadoEm).HasColumnName("trial_encerrado_email_enviado_em");
 
             entity.HasIndex(x => x.Email).IsUnique();
         });
