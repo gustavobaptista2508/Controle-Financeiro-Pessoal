@@ -11,6 +11,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="Data/MySqlDbContext.cs" />
+    <Compile Remove="Data/SqliteDbContext .cs" />
+    <Compile Remove="Services/DatabaseFactory.cs" />
+    <Compile Remove="Repositories/SqliteCadastroAuxiliarRepository.cs" />
+    <Compile Remove="Repositories/SqliteLancamentoRepository .cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
     <PackageReference Include="Otp.NET" Version="1.4.1" />
