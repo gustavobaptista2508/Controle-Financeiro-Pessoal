@@ -1,35 +1,15 @@
 using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Repositories;
 using Microsoft.EntityFrameworkCore;
+using System;
 
 namespace FinanceiroPessoal.Core.Services
 {
-    public class DatabaseFactory
+    public static class DatabaseFactory
     {
-        private readonly FinanceiroDbContext _context;
-
-        public DatabaseFactory(FinanceiroDbContext context)
-        {
-            _context = context;
-        }
-
-        public ILancamentoRepository CriarLancamentoRepository(TipoBanco tipo = TipoBanco.OnlineMySql)
-        {
-            return tipo == TipoBanco.LocalSqlite
-                ? new SqliteLancamentoRepository(_context)
-                : new MySqlLancamentoRepository(_context);
-        }
-
-        public ICadastroAuxiliarRepository CriarCadastroAuxiliarRepository(TipoBanco tipo = TipoBanco.OnlineMySql)
-        {
-            return tipo == TipoBanco.LocalSqlite
-                ? new SqliteCadastroAuxiliarRepository(_context)
-                : new MySqlCadastroAuxiliarRepository(_context);
-        }
-
         public static ILancamentoRepository CriarLancamentoRepository(TipoBanco tipoBanco)
         {
-            var context = CriarContextoParaWinForms(tipoBanco);
+            var context = CriarContexto(tipoBanco);
 
             return tipoBanco == TipoBanco.OnlineMySql
                 ? new MySqlLancamentoRepository(context)
@@ -38,41 +18,37 @@ namespace FinanceiroPessoal.Core.Services
 
         public static ICadastroAuxiliarRepository CriarCadastroAuxiliarRepository(TipoBanco tipoBanco)
         {
-            var context = CriarContextoParaWinForms(tipoBanco);
+            var context = CriarContexto(tipoBanco);
 
             return tipoBanco == TipoBanco.OnlineMySql
                 ? new MySqlCadastroAuxiliarRepository(context)
                 : new SqliteCadastroAuxiliarRepository(context);
         }
 
-        private static FinanceiroDbContext CriarContextoParaWinForms(TipoBanco tipoBanco)
+        private static FinanceiroDbContext CriarContexto(TipoBanco tipoBanco)
         {
             var optionsBuilder = new DbContextOptionsBuilder<FinanceiroDbContext>();
 
             if (tipoBanco == TipoBanco.OnlineMySql)
             {
-                var connectionString = ObterConnectionStringMySqlWinForms();
-                optionsBuilder.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36)));
-            }
-            else
-            {
-                throw new NotSupportedException("SQLite não é o foco atual. Use MySQL para o projeto Web.");
-            }
+                var connectionString =
+                    Environment.GetEnvironmentVariable("GRANAOK_MYSQL")
+                    ?? "Server=localhost;Port=3306;Database=gadobd;User=root;Password=SUA_SENHA;SslMode=None;AllowPublicKeyRetrieval=True;";
 
-            return new FinanceiroDbContext(optionsBuilder.Options);
-        }
+                if (connectionString.Contains("SUA_SENHA"))
+                {
+                    throw new InvalidOperationException("Configure a variável GRANAOK_MYSQL com a senha real do MySQL.");
+                }
 
-        private static string ObterConnectionStringMySqlWinForms()
-        {
-            var connectionString = Environment.GetEnvironmentVariable("GRANAOK_MYSQL");
+                optionsBuilder.UseMySql(
+                    connectionString,
+                    new MySqlServerVersion(new Version(8, 0, 36))
+                );
 
-            if (string.IsNullOrWhiteSpace(connectionString))
-            {
-                throw new InvalidOperationException(
-                    "Configure a variável de ambiente GRANAOK_MYSQL com a connection string real para uso no WinForms.");
+                return new FinanceiroDbContext(optionsBuilder.Options);
             }
 
-            return connectionString;
+            throw new NotSupportedException("SQLite não é prioridade no Web. Ajustar somente se WinForms exigir.");
         }
     }
 }
