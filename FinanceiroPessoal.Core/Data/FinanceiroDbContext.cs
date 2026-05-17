@@ -28,7 +28,7 @@ namespace FinanceiroPessoal.Core.Data
             if (!optionsBuilder.IsConfigured)
             {
                 throw new InvalidOperationException(
-                    "FinanceiroDbContext não foi configurado. Configure o DbContext no Program.cs usando AddDbContext e ConnectionStrings:DefaultConnection.");
+                    "FinanceiroDbContext não foi configurado. Configure no Program.cs usando AddDbContext.");
             }
         }
 
