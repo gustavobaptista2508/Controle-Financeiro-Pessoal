@@ -7,24 +7,9 @@ namespace FinanceiroPessoal.Core.Data
 {
     public class MySqlDbContext : FinanceiroDbContext
     {
-        private readonly string _connectionString;
-
-        public MySqlDbContext(string connectionString = "Server=gadobd.mysql.uhserver.com;Database=gadobd;Uid=gustavobaptista;Pwd=Senh@102030;")
+        public MySqlDbContext(DbContextOptions<FinanceiroDbContext> options)
+            : base(options)
         {
-            _connectionString = connectionString;
-        }
-
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                if (string.IsNullOrWhiteSpace(_connectionString))
-                {
-                    throw new InvalidOperationException("Connection string do MySQL não configurada.");
-                }
-
-                optionsBuilder.UseMySql(_connectionString, new MySqlServerVersion(new Version(8, 0, 36)));
-            }
         }
     }
 }
