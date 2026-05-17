@@ -37,7 +37,8 @@
     {
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
         if (!(auth.User.Identity?.IsAuthenticated ?? false)) { Nav.NavigateTo("/login"); return; }
-        var uid = int.Parse(auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var idClaim = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(idClaim) || !int.TryParse(idClaim, out var uid)) { Nav.NavigateTo("/login", true); return; }
         if (!await AssinaturaService.UsuarioTemAcessoAsync(uid)) { Nav.NavigateTo("/assinatura/bloqueada", true); return; }
         historico = await IaService.ListarUltimasConversasAsync(uid);
     }
@@ -52,7 +53,8 @@
         var r = await client.PostAsJsonAsync(url, body);
         resposta = r.IsSuccessStatusCode ? (await r.Content.ReadFromJsonAsync<IaResposta>())?.Resposta ?? "Sem resposta." : "Não foi possível consultar a IA no momento.";
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        var uid = int.Parse(auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var idClaim = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (string.IsNullOrWhiteSpace(idClaim) || !int.TryParse(idClaim, out var uid)) { Nav.NavigateTo("/login", true); return; }
         historico = await IaService.ListarUltimasConversasAsync(uid);
     }
 

@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
+@inject IHttpClientFactory HttpClientFactory
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
@@ -59,9 +60,12 @@
 
     private async Task Logout()
     {
+        var client = HttpClientFactory.CreateClient();
+        await client.PostAsync("/auth/logout", content: null);
+
         var context = HttpContextAccessor.HttpContext;
         if (context is not null)
-            await Session.LogoutAsync(context);
+            Session.Logout();
 
         Navigation.NavigateTo("/login", true);
     }
