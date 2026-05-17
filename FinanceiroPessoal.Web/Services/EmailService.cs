@@ -11,24 +11,31 @@ public class EmailService(IOptions<EmailOptions> options, ILogger<EmailService> 
 {
     private readonly EmailOptions _options = options.Value;
 
-    public Task EnviarBoasVindasAsync(Usuario usuario)
+    public Task<bool> EnviarBoasVindasAsync(Usuario usuario)
         => EnviarAsync(usuario.Email, "Bem-vindo ao GranaOK",
-            $"Olá, {usuario.Nome}.\nSua conta foi criada com sucesso.\nVocê iniciou seu teste grátis de 14 dias.\nAcesse seu painel e comece a organizar seu financeiro.");
+            $"Olá, {usuario.Nome}.
+Sua conta foi criada com sucesso.
+Você iniciou seu teste grátis de 14 dias.
+Acesse seu painel e comece a organizar seu financeiro.");
 
-    public Task EnviarLembreteTrialAsync(Usuario usuario, int diasRestantes)
+    public Task<bool> EnviarLembreteTrialAsync(Usuario usuario, int diasRestantes)
         => EnviarAsync(usuario.Email, "Seu teste grátis do GranaOK termina em breve",
-            $"Olá, {usuario.Nome}.\nSeu período grátis termina em {diasRestantes} dias.\nPara continuar usando o GranaOK sem interrupção, escolha seu plano.");
+            $"Olá, {usuario.Nome}.
+Seu período grátis termina em {diasRestantes} dias.
+Para continuar usando o GranaOK sem interrupção, escolha seu plano.");
 
-    public Task EnviarTrialEncerradoAsync(Usuario usuario)
+    public Task<bool> EnviarTrialEncerradoAsync(Usuario usuario)
         => EnviarAsync(usuario.Email, "Seu teste grátis do GranaOK terminou",
-            $"Olá, {usuario.Nome}.\nSeu teste grátis terminou.\nPara continuar acessando seu dashboard, lançamentos e relatórios, assine um plano.");
+            $"Olá, {usuario.Nome}.
+Seu teste grátis terminou.
+Para continuar acessando seu dashboard, lançamentos e relatórios, assine um plano.");
 
-    private async Task EnviarAsync(string para, string assunto, string conteudo)
+    private async Task<bool> EnviarAsync(string para, string assunto, string conteudo)
     {
         if (string.IsNullOrWhiteSpace(_options.SmtpPassword))
         {
             logger.LogWarning("E-mail não enviado porque Email:SmtpPassword não está configurado.");
-            return;
+            return false;
         }
 
         var message = new MimeMessage();
@@ -42,5 +49,6 @@ public class EmailService(IOptions<EmailOptions> options, ILogger<EmailService> 
         await smtp.AuthenticateAsync(_options.SmtpUser, _options.SmtpPassword);
         await smtp.SendAsync(message);
         await smtp.DisconnectAsync(true);
+        return true;
     }
 }
