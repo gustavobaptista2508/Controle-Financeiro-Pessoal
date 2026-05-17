@@ -1,7 +1,7 @@
-<MudCard Class="card-financeiro @CardClass h-100">
+<MudCard Class="@CardCssClass">
     <MudCardContent>
         <MudText Typo="Typo.caption" Class="metric-title">@Title</MudText>
-        <MudText Typo="Typo.h5" Class="fw-bold mt-1 @ValueClass">@Value</MudText>
+        <MudText Typo="Typo.h5" Class="@ValueCssClass">@Value</MudText>
         <MudText Typo="Typo.body2" Class="text-muted">@Subtitle</MudText>
     </MudCardContent>
 </MudCard>
@@ -12,4 +12,14 @@
     [Parameter] public string Subtitle { get; set; } = string.Empty;
     [Parameter] public string CardClass { get; set; } = string.Empty;
     [Parameter] public string ValueClass { get; set; } = string.Empty;
+
+    private string CardCssClass =>
+        string.IsNullOrWhiteSpace(CardClass)
+            ? "card-financeiro h-100"
+            : $"card-financeiro {CardClass} h-100";
+
+    private string ValueCssClass =>
+        string.IsNullOrWhiteSpace(ValueClass)
+            ? "fw-bold mt-1"
+            : $"fw-bold mt-1 {ValueClass}";
 }
