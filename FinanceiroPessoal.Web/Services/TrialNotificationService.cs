@@ -41,12 +41,15 @@ public class TrialNotificationService(FinanceiroDbContext db, IEmailService emai
         }
     }
 
-    private async Task TentarEnviarEmailAsync(Func<Task> envio, int usuarioId, string colunaControle, CancellationToken cancellationToken)
+    private async Task TentarEnviarEmailAsync(Func<Task<bool>> envio, int usuarioId, string colunaControle, CancellationToken cancellationToken)
     {
         try
         {
-            await envio();
-            await AtualizarDataControleAsync(usuarioId, colunaControle, cancellationToken);
+            var enviado = await envio();
+            if (enviado)
+            {
+                await AtualizarDataControleAsync(usuarioId, colunaControle, cancellationToken);
+            }
         }
         catch (Exception ex)
         {
