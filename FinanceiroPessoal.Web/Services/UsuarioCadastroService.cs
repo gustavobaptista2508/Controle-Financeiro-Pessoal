@@ -27,9 +27,6 @@ public class UsuarioCadastroService
 
     public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro, int? planoId = null)
     {
-        Console.WriteLine("DEBUG CADASTRO SERVICE: chamado");
-        Console.WriteLine($"DEBUG CADASTRO SERVICE: email recebido {cadastro.Email}");
-        Console.WriteLine($"DEBUG CADASTRO SERVICE: senha preenchida {!string.IsNullOrEmpty(cadastro.Senha)}");
 
         string nome = cadastro.Nome.Trim();
         string email = cadastro.Email.Trim().ToLowerInvariant();
@@ -76,9 +73,7 @@ public class UsuarioCadastroService
         };
 
         _db.Usuarios.Add(usuario);
-        var linhas = await _db.SaveChangesAsync();
-        Console.WriteLine($"DEBUG CADASTRO SERVICE: linhas salvas {linhas}");
-        Console.WriteLine($"DEBUG CADASTRO SERVICE: UsuarioId criado: {usuario.Id}");
+        await _db.SaveChangesAsync();
 
         await _usuarioPadraoService.CriarEstruturaPadraoAsync(usuario.Id);
 

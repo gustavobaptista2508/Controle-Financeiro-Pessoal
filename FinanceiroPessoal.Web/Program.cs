@@ -87,11 +87,6 @@ if (string.IsNullOrWhiteSpace(mysqlConnectionString))
     throw new InvalidOperationException("ConnectionStrings:DefaultConnection não configurada.");
 }
 
-Console.WriteLine("MYSQL: connection string carregada.");
-Console.WriteLine(mysqlConnectionString.Contains("Database=gadobd")
-    ? "MYSQL: banco gadobd detectado."
-    : "MYSQL: ATENÇÃO - banco diferente de gadobd.");
-
 builder.Services.AddDbContext<FinanceiroPessoal.Core.Data.FinanceiroDbContext>(options =>
 {
     options.UseMySql(mysqlConnectionString, new MySqlServerVersion(new Version(8, 0, 36)));
@@ -105,6 +100,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LancamentoService>();
 builder.Services.AddScoped<CadastroAuxiliarService>();
 builder.Services.AddScoped<UsuarioPadraoService>();
+builder.Services.AddScoped<ProtecaoDadosFinanceirosService>();
 builder.Services.AddScoped<ILancamentoRepository, MySqlLancamentoRepository>();
 builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRepository>();
 builder.Services.AddScoped<DashboardService>();
@@ -159,6 +155,13 @@ app.UseStaticFiles();
 app.UseAntiforgery();
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.Use(async (context, next) =>
+{
+    var claim = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId = int.TryParse(claim, out var uid) ? uid : 0;
+    await next();
+});
 
 app.Use(async (context, next) =>
 {
@@ -256,7 +259,6 @@ if (googleAuthConfigured)
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"DEBUG GOOGLE CALLBACK ERRO: {ex.Message}");
             context.Response.Redirect("/login?erro=mysql_indisponivel");
         }
     });

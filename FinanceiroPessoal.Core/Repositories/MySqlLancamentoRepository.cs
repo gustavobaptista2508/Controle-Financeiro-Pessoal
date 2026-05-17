@@ -18,7 +18,9 @@ namespace FinanceiroPessoal.Core.Repositories
 
         public async Task<List<Lancamento>> ObterTodos()
         {
+            var usuarioId = Services.SessaoUsuario.UsuarioId;
             return await _context.Lancamentos
+                .Where(x => x.UsuarioId == usuarioId)
                 .Include(x => x.Categoria)
                 .Include(x => x.Conta)
                 .Include(x => x.Pessoa)
@@ -29,7 +31,9 @@ namespace FinanceiroPessoal.Core.Repositories
 
         public async Task<Lancamento?> ObterPorId(int id)
         {
+            var usuarioId = Services.SessaoUsuario.UsuarioId;
             return await _context.Lancamentos
+                .Where(x => x.UsuarioId == usuarioId)
                 .Include(x => x.Categoria)
                 .Include(x => x.Conta)
                 .Include(x => x.Pessoa)
@@ -72,6 +76,7 @@ namespace FinanceiroPessoal.Core.Repositories
         public async Task<List<Lancamento>> Filtrar(string pessoa, string status, string tipo, DateTime dataIni, DateTime dataFim)
         {
             var query = _context.Lancamentos
+                .Where(x => x.UsuarioId == Services.SessaoUsuario.UsuarioId)
                 .Include(x => x.Categoria)
                 .Include(x => x.Conta)
                 .Include(x => x.Pessoa)
@@ -105,12 +110,14 @@ namespace FinanceiroPessoal.Core.Repositories
         async Task<decimal> ILancamentoRepository.CalcularSaldoConta(string pessoa, string status, string tipo, DateTime? dataIni, DateTime? dataFim)
         {
             var queryEntradas = _context.Lancamentos
-        .Where(x => x.Tipo == TipoLancamento.Entrada &&
+        .Where(x => x.UsuarioId == Services.SessaoUsuario.UsuarioId &&
+                    x.Tipo == TipoLancamento.Entrada &&
                     x.Status == "Pago" &&
                     x.DataPagamento.HasValue);
 
             var querySaidasPagas = _context.Lancamentos
-        .Where(x => x.Tipo == TipoLancamento.Saida &&
+        .Where(x => x.UsuarioId == Services.SessaoUsuario.UsuarioId &&
+                    x.Tipo == TipoLancamento.Saida &&
                     x.Status == "Pago" &&
                     x.DataPagamento.HasValue);
 

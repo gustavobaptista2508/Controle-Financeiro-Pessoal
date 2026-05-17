@@ -18,21 +18,27 @@ namespace FinanceiroPessoal.Core.Repositories
 
         public async Task<List<Categoria>> ObterCategorias()
         {
+            var usuarioId = Services.SessaoUsuario.UsuarioId;
             return await _context.Categorias
+                .Where(x => x.UsuarioId == usuarioId)
                 .OrderBy(x => x.Nome)
                 .ToListAsync();
         }
 
         public async Task<List<Conta>> ObterContas()
         {
+            var usuarioId = Services.SessaoUsuario.UsuarioId;
             return await _context.Contas
+                .Where(x => x.UsuarioId == usuarioId)
                 .OrderBy(x => x.Nome)
                 .ToListAsync();
         }
 
         public async Task<List<Pessoa>> ObterPessoas()
         {
+            var usuarioId = Services.SessaoUsuario.UsuarioId;
             return await _context.Pessoas
+                .Where(x => x.UsuarioId == usuarioId)
                 .OrderBy(x => x.Nome)
                 .ToListAsync();
         }

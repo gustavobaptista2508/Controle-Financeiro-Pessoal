@@ -29,14 +29,11 @@ public class WebAuthSessionService
 
     public async Task<(bool ok, string? erro)> LoginWithPasswordAsync(string email, string senha, bool lembrarMe, HttpContext context)
     {
-        Console.WriteLine("LOGIN: buscando usuário");
-
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(senha))
             return (false, "Preencha e-mail e senha.");
 
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var usuario = await _db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
-        Console.WriteLine($"LOGIN: usuário encontrado {usuario is not null}");
 
         if (usuario is null)
             return (false, "E-mail ou senha inválidos.");
@@ -53,7 +50,6 @@ public class WebAuthSessionService
             {
                 senhaValida = true;
                 usuario.SenhaHash = _passwordHasher.HashPassword(senha);
-                Console.WriteLine("LOGIN: senha legada convertida para hash.");
             }
         }
 
@@ -81,18 +77,14 @@ public class WebAuthSessionService
         await _db.SaveChangesAsync();
 
         await SignInAsync(usuario, lembrarMe, context);
-        Console.WriteLine("LOGIN: sessão criada");
         Login(usuario.Nome, usuario.Email);
-        Console.WriteLine("LOGIN: redirecionando");
         return (true, null);
     }
 
     public async Task LoginWithGoogleAsync(string email, string nome, HttpContext context)
     {
-        Console.WriteLine("DEBUG GOOGLE LOGIN: callback iniciado");
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var usuario = await _db.Usuarios.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.Email == normalizedEmail);
-        Console.WriteLine($"DEBUG GOOGLE LOGIN: usuário existente: {usuario is not null}");
 
         if (usuario is null)
         {
@@ -112,7 +104,6 @@ public class WebAuthSessionService
             await _db.SaveChangesAsync();
 
             await _usuarioPadraoService.CriarEstruturaPadraoAsync(usuario.Id);
-            Console.WriteLine($"DEBUG GOOGLE LOGIN: usuário criado e dados padrão inicializados. UsuarioId: {usuario.Id}");
         }
         else
         {
