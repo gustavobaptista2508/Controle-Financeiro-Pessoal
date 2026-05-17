@@ -1,7 +1,7 @@
 using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Repositories;
 using FinanceiroPessoal.Core.Services;
-
+using Microsoft.EntityFrameworkCore;
 
 namespace FinanceiroPessoal.WinForms
 {
@@ -16,12 +16,29 @@ namespace FinanceiroPessoal.WinForms
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            FinanceiroDbContext context;
+
             var tipoBanco = TipoBanco.OnlineMySql;
+            var optionsBuilder = new DbContextOptionsBuilder<FinanceiroDbContext>();
+
             if (tipoBanco == TipoBanco.LocalSqlite)
-                context = new SqliteDbContext();
-            else
-                context = new MySqlDbContext();
+            {
+                throw new NotSupportedException("SQLite não é o foco atual. Use MySQL para o projeto Web.");
+            }
+
+            var connectionString = Environment.GetEnvironmentVariable("GRANAOK_MYSQL");
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                MessageBox.Show(
+                    "Configure a variável de ambiente GRANAOK_MYSQL com a connection string real.",
+                    "Configuração inválida",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                return;
+            }
+
+            optionsBuilder.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 36)));
+            using var context = new FinanceiroDbContext(optionsBuilder.Options);
+
             try
             {
                 context.Database.EnsureCreated();
