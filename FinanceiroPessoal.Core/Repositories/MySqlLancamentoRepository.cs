@@ -9,10 +9,12 @@ namespace FinanceiroPessoal.Core.Repositories
 {
     public class MySqlLancamentoRepository : ILancamentoRepository
     {
-        private readonly MySqlDbContext _context;
+        private readonly FinanceiroDbContext _context;
 
-        public MySqlLancamentoRepository() : this(new MySqlDbContext()) { }
-        public MySqlLancamentoRepository(MySqlDbContext context) { _context = context; }
+        public MySqlLancamentoRepository(FinanceiroDbContext context)
+        {
+            _context = context;
+        }
 
         public async Task<List<Lancamento>> ObterTodos()
         {
