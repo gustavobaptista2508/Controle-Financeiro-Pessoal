@@ -11,11 +11,15 @@ public class UsuarioCadastroService
 {
     private readonly FinanceiroDbContext _db;
     private readonly IPasswordHasherService _passwordHasher;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<UsuarioCadastroService> _logger;
 
-    public UsuarioCadastroService(FinanceiroDbContext db, IPasswordHasherService passwordHasher)
+    public UsuarioCadastroService(FinanceiroDbContext db, IPasswordHasherService passwordHasher, IEmailService emailService, ILogger<UsuarioCadastroService> logger)
     {
         _db = db;
         _passwordHasher = passwordHasher;
+        _emailService = emailService;
+        _logger = logger;
     }
 
     public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro, int? planoId = null)
@@ -92,6 +96,15 @@ public class UsuarioCadastroService
         await _db.SaveChangesAsync();
 
         await GarantirAdminComHashAsync();
+
+        try
+        {
+            await _emailService.EnviarBoasVindasAsync(usuario);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao enviar e-mail de boas-vindas para usuário {UsuarioId}.", usuario.Id);
+        }
 
         return (true, "Usuário cadastrado com sucesso.");
     }

@@ -1,5 +1,6 @@
 using Stripe;
 using ApexCharts;
+using FinanceiroPessoal.Core.Repositories;
 using FinanceiroPessoal.Core.Services;
 using FinanceiroPessoal.Web;
 using FinanceiroPessoal.Web.Services;
@@ -31,6 +32,7 @@ builder.Services.Configure<PluggyOptions>(builder.Configuration.GetSection("Plug
 builder.Services.Configure<StripeOptions>(builder.Configuration.GetSection("Stripe"));
 builder.Services.Configure<BillingOptions>(builder.Configuration.GetSection("Billing"));
 builder.Services.Configure<OpenAIOptions>(builder.Configuration.GetSection("OpenAI"));
+builder.Services.Configure<EmailOptions>(builder.Configuration.GetSection("Email"));
 var stripeSecretKey = builder.Configuration["Stripe:SecretKey"];
 if (!string.IsNullOrWhiteSpace(stripeSecretKey))
 {
@@ -100,9 +102,14 @@ builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 builder.Services.AddScoped<WebAuthSessionService>();
 builder.Services.AddScoped<UsuarioCadastroService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ILancamentoRepository, MySqlLancamentoRepository>();
+builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRepository>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<IAssinaturaService, AssinaturaService>();
 builder.Services.AddScoped<IStripeSubscriptionService, StripeSubscriptionService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<TrialNotificationService>();
+builder.Services.AddHostedService<TrialNotificationHostedService>();
 builder.Services.AddHttpClient<IAssistenteFinanceiroIaService, AssistenteFinanceiroIaService>();
 
 var app = builder.Build();
@@ -161,7 +168,7 @@ app.Use(async (context, next) =>
         if (int.TryParse(claim, out var uid))
         {
             var svc = context.RequestServices.GetRequiredService<IAssinaturaService>();
-            if (!await svc.UsuarioTemAcessoAsync(uid)) { context.Response.Redirect("/assinatura/bloqueada"); return; }
+            if (!await svc.UsuarioTemAcessoAsync(uid)) { context.Response.Redirect("/planos"); return; }
         }
     }
     await next();
