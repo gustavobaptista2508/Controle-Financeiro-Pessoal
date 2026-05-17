@@ -1,6 +1,7 @@
 using System.Linq;
 using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Models;
+using FinanceiroPessoal.Core.Services;
 using Microsoft.EntityFrameworkCore;
 
 using FinanceiroPessoal.Web.Models;
@@ -13,13 +14,15 @@ public class UsuarioCadastroService
     private readonly IPasswordHasherService _passwordHasher;
     private readonly IEmailService _emailService;
     private readonly ILogger<UsuarioCadastroService> _logger;
+    private readonly UsuarioPadraoService _usuarioPadraoService;
 
-    public UsuarioCadastroService(FinanceiroDbContext db, IPasswordHasherService passwordHasher, IEmailService emailService, ILogger<UsuarioCadastroService> logger)
+    public UsuarioCadastroService(FinanceiroDbContext db, IPasswordHasherService passwordHasher, IEmailService emailService, ILogger<UsuarioCadastroService> logger, UsuarioPadraoService usuarioPadraoService)
     {
         _db = db;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
         _logger = logger;
+        _usuarioPadraoService = usuarioPadraoService;
     }
 
     public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro, int? planoId = null)
@@ -77,23 +80,7 @@ public class UsuarioCadastroService
         Console.WriteLine($"DEBUG CADASTRO SERVICE: linhas salvas {linhas}");
         Console.WriteLine($"DEBUG CADASTRO SERVICE: UsuarioId criado: {usuario.Id}");
 
-        _db.Contas.Add(new Conta
-        {
-            Nome = "Conta Principal",
-            Tipo = "Corrente",
-            UsuarioId = usuario.Id
-        });
-
-        _db.Categorias.AddRange(
-            new Categoria { Nome = "Alimentação", UsuarioId = usuario.Id },
-            new Categoria { Nome = "Moradia", UsuarioId = usuario.Id },
-            new Categoria { Nome = "Transporte", UsuarioId = usuario.Id },
-            new Categoria { Nome = "Saúde", UsuarioId = usuario.Id },
-            new Categoria { Nome = "Lazer", UsuarioId = usuario.Id },
-            new Categoria { Nome = "Salário", UsuarioId = usuario.Id }
-        );
-
-        await _db.SaveChangesAsync();
+        await _usuarioPadraoService.CriarEstruturaPadraoAsync(usuario.Id);
 
         await GarantirAdminComHashAsync();
 

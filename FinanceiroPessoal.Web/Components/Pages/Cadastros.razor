@@ -6,55 +6,78 @@
 
 <PageTitle>Categorias</PageTitle>
 
-<h3>Categorias</h3>
+<div class="page-header">
+    <div>
+        <h2>Categorias</h2>
+        <p>Organize seus lançamentos por tipo de receita ou despesa.</p>
+    </div>
+</div>
 
-<div class="card mb-3">
-    <div class="card-body">
+<div class="content-grid">
+    <section class="card form-card">
         <EditForm Model="this" OnValidSubmit="SalvarCategoria">
-            <div class="row g-2 align-items-end">
-                <div class="col-12 col-md-8">
-                    <label class="form-label">Nova categoria</label>
-                    <input class="form-control" @bind="novoNomeCategoria" placeholder="Ex: Alimentação" />
-                </div>
-                <div class="col-12 col-md-4">
-                    <button type="submit" class="btn btn-success w-100">Cadastrar categoria</button>
-                </div>
+            <div class="form-group">
+                <label>Nova categoria</label>
+                <input class="form-control" @bind="novoNomeCategoria" placeholder="Ex: Alimentação, Combustível, Salário" />
             </div>
+
+            <button type="submit" class="btn-primary-granaok">Cadastrar categoria</button>
         </EditForm>
 
         @if (!string.IsNullOrWhiteSpace(mensagem))
         {
             <div class="alert alert-info mt-3 mb-0">@mensagem</div>
         }
-    </div>
-</div>
+    </section>
 
-<div class="card">
-    <div class="card-header">Categorias cadastradas</div>
-    <ul class="list-group list-group-flush">
-        @if (categorias.Count == 0)
+    <section class="card table-card">
+        <div class="table-toolbar">
+            <input class="form-control" @bind="filtro" placeholder="Buscar categoria..." />
+        </div>
+
+        @if (!CategoriasFiltradas.Any())
         {
-            <li class="list-group-item text-muted">Nenhuma categoria cadastrada.</li>
+            <div class="empty-state">Nenhuma categoria cadastrada.</div>
         }
         else
         {
-            @foreach (var categoria in categorias)
-            {
-                <li class="list-group-item">@categoria.Nome</li>
-            }
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var categoria in CategoriasFiltradas)
+                    {
+                        <tr>
+                            <td>@categoria.Nome</td>
+                            <td>
+                                <div class="table-actions">
+                                    <button type="button" class="btn-action" disabled>Editar</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         }
-    </ul>
+    </section>
 </div>
 
 @code {
     private List<Categoria> categorias = new();
     private string novoNomeCategoria = string.Empty;
+    private string filtro = string.Empty;
     private string? mensagem;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await CarregarCategorias();
-    }
+    private IEnumerable<Categoria> CategoriasFiltradas =>
+        string.IsNullOrWhiteSpace(filtro)
+            ? categorias
+            : categorias.Where(x => x.Nome.Contains(filtro, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync() => await CarregarCategorias();
 
     private async Task SalvarCategoria()
     {
@@ -71,8 +94,5 @@
         }
     }
 
-    private async Task CarregarCategorias()
-    {
-        categorias = await CadastroAuxiliarService.ObterCategorias();
-    }
+    private async Task CarregarCategorias() => categorias = await CadastroAuxiliarService.ObterCategorias();
 }

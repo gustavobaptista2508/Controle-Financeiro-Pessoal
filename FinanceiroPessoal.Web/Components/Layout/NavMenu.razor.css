@@ -1,11 +1,12 @@
 .sidebar-logo-box {
     background: #ffffff;
-    border-radius: 14px;
-    padding: 8px 12px;
-    margin: 18px 20px 12px 20px;
+    border-radius: 18px;
+    padding: 14px 16px;
+    margin: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.14);
 }
 
 .sidebar-logo {
@@ -14,33 +15,44 @@
 }
 
 .sidebar-title {
-    color: #dbeafe;
+    color: #ffffff;
     font-size: .92rem;
-    font-weight: 600;
-    padding: 0 22px 14px 22px;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0 20px 18px 20px;
 }
 
 .sidebar-nav {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    padding: 0 14px 20px 14px;
+    gap: 4px;
+    padding: 0 10px 20px 10px;
 }
 
 .menu-link {
-    color: #e5ecf7;
+    color: #ffffff !important;
+    opacity: 0.92;
+    font-weight: 600;
     text-decoration: none;
-    border-radius: 10px;
-    padding: 10px 12px;
-    font-weight: 500;
-}
-
-.menu-link.active {
-    background: rgba(255, 255, 255, 0.18);
-    color: #ffffff;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 16px;
+    border-radius: 12px;
+    margin: 3px 12px;
+    transition: all 0.2s ease;
 }
 
 .menu-link:hover {
+    color: #ffffff !important;
+    opacity: 1;
     background: rgba(255, 255, 255, 0.12);
-    color: #ffffff;
+    transform: translateX(2px);
+}
+
+.menu-link.active {
+    color: #00e676 !important;
+    opacity: 1;
+    background: rgba(0, 200, 83, 0.14);
+    font-weight: 800;
 }

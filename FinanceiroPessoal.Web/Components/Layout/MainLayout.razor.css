@@ -8,7 +8,7 @@
     width: 250px;
     min-width: 250px;
     min-height: 100vh;
-    background: linear-gradient(180deg, #073b7a 0%, #062b5c 100%);
+    background: linear-gradient(180deg, #073b78 0%, #052b5f 100%);
     color: white;
     transition: width .2s ease, min-width .2s ease;
 }
@@ -48,9 +48,24 @@
     background: #0b59d7; color: white; display: inline-flex;
     align-items: center; justify-content: center; font-weight: 700;
 }
-.logout-btn, .login-btn {
+.login-btn {
     border: 1px solid #d1d5db; background: white; color: #1f2937;
     border-radius: 8px; padding: 8px 12px; text-decoration: none;
+}
+
+.btn-logout {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-logout:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
 }
 
 .layout.sidebar-collapsed .sidebar {

@@ -104,6 +104,7 @@ builder.Services.AddScoped<UsuarioCadastroService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<LancamentoService>();
 builder.Services.AddScoped<CadastroAuxiliarService>();
+builder.Services.AddScoped<UsuarioPadraoService>();
 builder.Services.AddScoped<ILancamentoRepository, MySqlLancamentoRepository>();
 builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRepository>();
 builder.Services.AddScoped<DashboardService>();

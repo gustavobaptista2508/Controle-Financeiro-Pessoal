@@ -7,28 +7,85 @@
 @inject CadastroAuxiliarService CadastroAuxiliarService
 
 <PageTitle>Contas</PageTitle>
-<h3>Contas</h3>
 
-<div class="card mb-3"><div class="card-body">
-    <EditForm Model="this" OnValidSubmit="Salvar">
-        <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-5"><label class="form-label">Nome da conta</label><input class="form-control" @bind="nome" /></div>
-            <div class="col-12 col-md-5"><label class="form-label">Tipo</label><input class="form-control" @bind="tipo" /></div>
-            <div class="col-12 col-md-2"><button type="submit" class="btn btn-success w-100">Cadastrar</button></div>
+<div class="page-header">
+    <div>
+        <h2>Contas</h2>
+        <p>Cadastre contas, carteiras ou meios de pagamento para controlar seus lançamentos.</p>
+    </div>
+</div>
+
+<div class="content-grid">
+    <section class="card form-card">
+        <EditForm Model="this" OnValidSubmit="Salvar">
+            <div class="form-group">
+                <label>Nome da conta</label>
+                <input class="form-control" @bind="nome" placeholder="Ex: Conta Principal, Banco, Caixa" />
+            </div>
+            <div class="form-group">
+                <label>Tipo</label>
+                <input class="form-control" @bind="tipo" placeholder="Ex: Conta Corrente, Cartão, Carteira, Dinheiro" />
+            </div>
+            <button type="submit" class="btn-primary-granaok">Cadastrar conta</button>
+        </EditForm>
+
+        @if (!string.IsNullOrWhiteSpace(mensagem))
+        {
+            <div class="alert alert-info mt-3 mb-0">@mensagem</div>
+        }
+    </section>
+
+    <section class="card table-card">
+        <div class="table-toolbar">
+            <input class="form-control" @bind="filtro" placeholder="Buscar conta..." />
         </div>
-    </EditForm>
-    @if (!string.IsNullOrWhiteSpace(mensagem)) { <div class="alert alert-info mt-3 mb-0">@mensagem</div> }
-</div></div>
 
-<ul class="list-group">
-@foreach (var item in contas) { <li class="list-group-item">@item.Nome - @item.Tipo</li> }
-</ul>
+        @if (!ContasFiltradas.Any())
+        {
+            <div class="empty-state">Nenhuma conta cadastrada.</div>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Tipo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in ContasFiltradas)
+                    {
+                        <tr>
+                            <td>@item.Nome</td>
+                            <td>@item.Tipo</td>
+                            <td>
+                                <div class="table-actions">
+                                    <button type="button" class="btn-action" disabled>Editar</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+</div>
 
 @code {
     private List<Conta> contas = new();
     private string nome = string.Empty;
     private string tipo = string.Empty;
+    private string filtro = string.Empty;
     private string? mensagem;
+
+    private IEnumerable<Conta> ContasFiltradas =>
+        string.IsNullOrWhiteSpace(filtro)
+            ? contas
+            : contas.Where(x =>
+                x.Nome.Contains(filtro, StringComparison.OrdinalIgnoreCase) ||
+                x.Tipo.Contains(filtro, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync() => await Carregar();
 

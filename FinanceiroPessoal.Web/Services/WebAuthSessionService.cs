@@ -1,6 +1,7 @@
 using System.Linq;
 using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Models;
+using FinanceiroPessoal.Core.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -17,11 +18,13 @@ public class WebAuthSessionService
 
     private readonly FinanceiroDbContext _db;
     private readonly IPasswordHasherService _passwordHasher;
+    private readonly UsuarioPadraoService _usuarioPadraoService;
 
-    public WebAuthSessionService(FinanceiroDbContext db, IPasswordHasherService passwordHasher)
+    public WebAuthSessionService(FinanceiroDbContext db, IPasswordHasherService passwordHasher, UsuarioPadraoService usuarioPadraoService)
     {
         _db = db;
         _passwordHasher = passwordHasher;
+        _usuarioPadraoService = usuarioPadraoService;
     }
 
     public async Task<(bool ok, string? erro)> LoginWithPasswordAsync(string email, string senha, bool lembrarMe, HttpContext context)
@@ -108,23 +111,7 @@ public class WebAuthSessionService
             _db.Usuarios.Add(usuario);
             await _db.SaveChangesAsync();
 
-            _db.Contas.Add(new Conta
-            {
-                Nome = "Conta Principal",
-                Tipo = "Corrente",
-                UsuarioId = usuario.Id
-            });
-
-            _db.Categorias.AddRange(
-                new Categoria { Nome = "Alimentação", UsuarioId = usuario.Id },
-                new Categoria { Nome = "Moradia", UsuarioId = usuario.Id },
-                new Categoria { Nome = "Transporte", UsuarioId = usuario.Id },
-                new Categoria { Nome = "Saúde", UsuarioId = usuario.Id },
-                new Categoria { Nome = "Lazer", UsuarioId = usuario.Id },
-                new Categoria { Nome = "Salário", UsuarioId = usuario.Id }
-            );
-
-            await _db.SaveChangesAsync();
+            await _usuarioPadraoService.CriarEstruturaPadraoAsync(usuario.Id);
             Console.WriteLine($"DEBUG GOOGLE LOGIN: usuário criado e dados padrão inicializados. UsuarioId: {usuario.Id}");
         }
         else
