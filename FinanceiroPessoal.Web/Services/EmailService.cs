@@ -7,48 +7,109 @@ using MimeKit;
 
 namespace FinanceiroPessoal.Web.Services;
 
-public class EmailService(IOptions<EmailOptions> options, ILogger<EmailService> logger) : IEmailService
+public class EmailService : IEmailService
 {
-    private readonly EmailOptions _options = options.Value;
+    private readonly EmailOptions _options;
+    private readonly ILogger<EmailService> _logger;
 
-    public Task<bool> EnviarBoasVindasAsync(Usuario usuario)
-        => EnviarAsync(usuario.Email, "Bem-vindo ao GranaOK",
-            $"Olá, {usuario.Nome}.
-Sua conta foi criada com sucesso.
-Você iniciou seu teste grátis de 14 dias.
-Acesse seu painel e comece a organizar seu financeiro.");
-
-    public Task<bool> EnviarLembreteTrialAsync(Usuario usuario, int diasRestantes)
-        => EnviarAsync(usuario.Email, "Seu teste grátis do GranaOK termina em breve",
-            $"Olá, {usuario.Nome}.
-Seu período grátis termina em {diasRestantes} dias.
-Para continuar usando o GranaOK sem interrupção, escolha seu plano.");
-
-    public Task<bool> EnviarTrialEncerradoAsync(Usuario usuario)
-        => EnviarAsync(usuario.Email, "Seu teste grátis do GranaOK terminou",
-            $"Olá, {usuario.Nome}.
-Seu teste grátis terminou.
-Para continuar acessando seu dashboard, lançamentos e relatórios, assine um plano.");
-
-    private async Task<bool> EnviarAsync(string para, string assunto, string conteudo)
+    public EmailService(IOptions<EmailOptions> options, ILogger<EmailService> logger)
     {
-        if (string.IsNullOrWhiteSpace(_options.SmtpPassword))
+        _options = options.Value;
+        _logger = logger;
+    }
+
+    public async Task<bool> EnviarBoasVindasAsync(Usuario usuario)
+    {
+        var assunto = "Bem-vindo ao GranaOK";
+
+        var corpo = $"""
+        Olá, {usuario.Nome}.
+
+        Sua conta foi criada com sucesso no GranaOK.
+
+        Você iniciou seu teste grátis de 14 dias.
+        Acesse seu painel e comece a organizar seu financeiro.
+
+        Atenciosamente,
+        Equipe GranaOK
+        """;
+
+        return await EnviarAsync(usuario.Email, assunto, corpo);
+    }
+
+    public async Task<bool> EnviarLembreteTrialAsync(Usuario usuario, int diasRestantes)
+    {
+        var assunto = "Seu teste grátis do GranaOK termina em breve";
+
+        var corpo = $"""
+        Olá, {usuario.Nome}.
+
+        Seu período grátis do GranaOK termina em {diasRestantes} dias.
+
+        Para continuar usando o dashboard, lançamentos, categorias, contas e relatórios sem interrupção, escolha um plano.
+
+        Atenciosamente,
+        Equipe GranaOK
+        """;
+
+        return await EnviarAsync(usuario.Email, assunto, corpo);
+    }
+
+    public async Task<bool> EnviarTrialEncerradoAsync(Usuario usuario)
+    {
+        var assunto = "Seu teste grátis do GranaOK terminou";
+
+        var corpo = $"""
+        Olá, {usuario.Nome}.
+
+        Seu teste grátis do GranaOK terminou.
+
+        Para continuar acessando seu dashboard, lançamentos, relatórios e recursos financeiros, assine um plano.
+
+        Atenciosamente,
+        Equipe GranaOK
+        """;
+
+        return await EnviarAsync(usuario.Email, assunto, corpo);
+    }
+
+    private async Task<bool> EnviarAsync(string destinatario, string assunto, string corpo)
+    {
+        if (string.IsNullOrWhiteSpace(destinatario))
         {
-            logger.LogWarning("E-mail não enviado porque Email:SmtpPassword não está configurado.");
+            _logger.LogWarning("E-mail não enviado: destinatário vazio.");
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(_options.SmtpHost) ||
+            string.IsNullOrWhiteSpace(_options.SmtpUser) ||
+            string.IsNullOrWhiteSpace(_options.SmtpPassword) ||
+            string.IsNullOrWhiteSpace(_options.FromEmail))
+        {
+            _logger.LogWarning("E-mail não configurado. Mensagem não enviada para {Destinatario}.", destinatario);
             return false;
         }
 
         var message = new MimeMessage();
         message.From.Add(new MailboxAddress(_options.FromName, _options.FromEmail));
-        message.To.Add(MailboxAddress.Parse(para));
+        message.To.Add(MailboxAddress.Parse(destinatario));
         message.Subject = assunto;
-        message.Body = new TextPart("plain") { Text = conteudo };
+        message.Body = new TextPart("plain") { Text = corpo };
 
-        using var smtp = new SmtpClient();
-        await smtp.ConnectAsync(_options.SmtpHost, _options.SmtpPort, SecureSocketOptions.StartTls);
-        await smtp.AuthenticateAsync(_options.SmtpUser, _options.SmtpPassword);
-        await smtp.SendAsync(message);
-        await smtp.DisconnectAsync(true);
-        return true;
+        using var client = new SmtpClient();
+
+        try
+        {
+            await client.ConnectAsync(_options.SmtpHost, _options.SmtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_options.SmtpUser, _options.SmtpPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao enviar e-mail para {Destinatario}.", destinatario);
+            return false;
+        }
     }
 }
