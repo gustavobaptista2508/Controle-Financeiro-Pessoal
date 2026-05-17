@@ -1,5 +1,6 @@
 using Stripe;
 using ApexCharts;
+using FinanceiroPessoal.Core.Repositories;
 using FinanceiroPessoal.Core.Services;
 using FinanceiroPessoal.Web;
 using FinanceiroPessoal.Web.Services;
@@ -101,6 +102,8 @@ builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 builder.Services.AddScoped<WebAuthSessionService>();
 builder.Services.AddScoped<UsuarioCadastroService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<ILancamentoRepository, MySqlLancamentoRepository>();
+builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRepository>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<IAssinaturaService, AssinaturaService>();
 builder.Services.AddScoped<IStripeSubscriptionService, StripeSubscriptionService>();
