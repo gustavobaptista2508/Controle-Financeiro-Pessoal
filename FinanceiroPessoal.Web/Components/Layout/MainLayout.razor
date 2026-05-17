@@ -26,7 +26,7 @@
                         <div class="user-pill">
                             <span class="user-avatar">@GetInitials(context.User)</span>
                             <span class="user-name">@GetDisplayName(context.User)</span>
-                            <button class="logout-btn" @onclick="Logout">Sair</button>
+                            <button type="button" class="btn-logout" @onclick="Logout">Sair</button>
                         </div>
                     </Authorized>
                     <NotAuthorized>
@@ -64,7 +64,7 @@
     private Task Logout()
     {
         Session.Logout();
-        Navigation.NavigateTo("/auth/logout", true);
+        Navigation.NavigateTo("/auth/logout", forceLoad: true);
         return Task.CompletedTask;
     }
 }

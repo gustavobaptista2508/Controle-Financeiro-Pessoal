@@ -5,29 +5,76 @@
 @inject CadastroAuxiliarService CadastroAuxiliarService
 
 <PageTitle>Pessoas</PageTitle>
-<h3>Pessoas</h3>
 
-<div class="card mb-3"><div class="card-body">
-    <EditForm Model="this" OnValidSubmit="Salvar">
-        <div class="row g-2 align-items-end">
-            <div class="col-12 col-md-8">
-                <label class="form-label">Nome da pessoa</label>
-                <input class="form-control" @bind="nome" />
+<div class="page-header">
+    <div>
+        <h2>Pessoas</h2>
+        <p>Cadastre pessoas relacionadas aos seus lançamentos financeiros.</p>
+    </div>
+</div>
+
+<div class="content-grid">
+    <section class="card form-card">
+        <EditForm Model="this" OnValidSubmit="Salvar">
+            <div class="form-group">
+                <label>Nome da pessoa</label>
+                <input class="form-control" @bind="nome" placeholder="Ex: Cliente, fornecedor ou responsável" />
             </div>
-            <div class="col-12 col-md-4"><button type="submit" class="btn btn-success w-100">Cadastrar</button></div>
-        </div>
-    </EditForm>
-    @if (!string.IsNullOrWhiteSpace(mensagem)) { <div class="alert alert-info mt-3 mb-0">@mensagem</div> }
-</div></div>
+            <button type="submit" class="btn-primary-granaok">Cadastrar pessoa</button>
+        </EditForm>
 
-<ul class="list-group">
-@foreach (var item in pessoas) { <li class="list-group-item">@item.Nome</li> }
-</ul>
+        @if (!string.IsNullOrWhiteSpace(mensagem))
+        {
+            <div class="alert alert-info mt-3 mb-0">@mensagem</div>
+        }
+    </section>
+
+    <section class="card table-card">
+        <div class="table-toolbar">
+            <input class="form-control" @bind="filtro" placeholder="Buscar pessoa..." />
+        </div>
+
+        @if (!PessoasFiltradas.Any())
+        {
+            <div class="empty-state">Nenhuma pessoa cadastrada.</div>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in PessoasFiltradas)
+                    {
+                        <tr>
+                            <td>@item.Nome</td>
+                            <td>
+                                <div class="table-actions">
+                                    <button type="button" class="btn-action" disabled>Editar</button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+</div>
 
 @code {
     private List<Pessoa> pessoas = new();
     private string nome = string.Empty;
+    private string filtro = string.Empty;
     private string? mensagem;
+
+    private IEnumerable<Pessoa> PessoasFiltradas =>
+        string.IsNullOrWhiteSpace(filtro)
+            ? pessoas
+            : pessoas.Where(x => x.Nome.Contains(filtro, StringComparison.OrdinalIgnoreCase));
 
     protected override async Task OnInitializedAsync() => await Carregar();
 
