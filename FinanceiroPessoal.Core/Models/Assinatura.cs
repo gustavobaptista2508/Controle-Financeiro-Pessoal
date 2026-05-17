@@ -14,4 +14,5 @@ public class Assinatura
     public DateTime? CanceladaEm { get; set; }
     public DateTime DataCriacao { get; set; }
     public DateTime DataAtualizacao { get; set; }
+    public Usuario? Usuario { get; set; }
 }
