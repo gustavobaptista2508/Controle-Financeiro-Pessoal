@@ -2,6 +2,7 @@
 @attribute [Authorize]
 @inject IHttpClientFactory HttpClientFactory
 @inject AuthenticationStateProvider AuthStateProvider
+@inject IHttpContextAccessor HttpContextAccessor
 @inject FinanceiroPessoal.Web.Services.IAssinaturaService AssinaturaService
 @inject FinanceiroPessoal.Web.Services.IAssistenteFinanceiroIaService IaService
 @inject NavigationManager Nav
@@ -35,11 +36,24 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var uid = await ObterUsuarioIdAsync();
+        if (!uid.HasValue) { Nav.NavigateTo("/login", true); return; }
+        if (!await AssinaturaService.UsuarioTemAcessoAsync(uid.Value)) { Nav.NavigateTo("/assinatura/bloqueada", true); return; }
+        historico = await IaService.ListarUltimasConversasAsync(uid.Value);
+    }
+
+    private async Task<int?> ObterUsuarioIdAsync()
+    {
+        var claimContexto = HttpContextAccessor.HttpContext?.User?.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrWhiteSpace(claimContexto) && int.TryParse(claimContexto, out var uidContexto))
+            return uidContexto;
+
         var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        if (!(auth.User.Identity?.IsAuthenticated ?? false)) { Nav.NavigateTo("/login"); return; }
-        var uid = int.Parse(auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-        if (!await AssinaturaService.UsuarioTemAcessoAsync(uid)) { Nav.NavigateTo("/assinatura/bloqueada", true); return; }
-        historico = await IaService.ListarUltimasConversasAsync(uid);
+        var idClaim = auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrWhiteSpace(idClaim) && int.TryParse(idClaim, out var uid))
+            return uid;
+
+        return null;
     }
 
     private async Task Perguntar() => await Chamar("/api/ia/perguntar", new { pergunta });
@@ -51,9 +65,9 @@
         var client = HttpClientFactory.CreateClient();
         var r = await client.PostAsJsonAsync(url, body);
         resposta = r.IsSuccessStatusCode ? (await r.Content.ReadFromJsonAsync<IaResposta>())?.Resposta ?? "Sem resposta." : "Não foi possível consultar a IA no momento.";
-        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        var uid = int.Parse(auth.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
-        historico = await IaService.ListarUltimasConversasAsync(uid);
+        var uid = await ObterUsuarioIdAsync();
+        if (!uid.HasValue) { Nav.NavigateTo("/login", true); return; }
+        historico = await IaService.ListarUltimasConversasAsync(uid.Value);
     }
 
     class IaResposta { public string Resposta { get; set; } = string.Empty; }

@@ -102,6 +102,8 @@ builder.Services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 builder.Services.AddScoped<WebAuthSessionService>();
 builder.Services.AddScoped<UsuarioCadastroService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<LancamentoService>();
+builder.Services.AddScoped<CadastroAuxiliarService>();
 builder.Services.AddScoped<ILancamentoRepository, MySqlLancamentoRepository>();
 builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRepository>();
 builder.Services.AddScoped<DashboardService>();
@@ -204,6 +206,12 @@ app.MapPost("/auth/logout", async ([FromServices] WebAuthSessionService session,
 {
     await session.LogoutAsync(context);
     return Results.Ok();
+});
+
+app.MapGet("/auth/logout", async ([FromServices] WebAuthSessionService session, HttpContext context) =>
+{
+    await session.LogoutAsync(context);
+    return Results.Redirect("/login");
 });
 
 app.MapGet("/debug/mysql", async ([FromServices] FinanceiroPessoal.Core.Data.FinanceiroDbContext db) =>

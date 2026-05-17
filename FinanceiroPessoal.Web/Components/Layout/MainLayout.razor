@@ -1,9 +1,13 @@
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
-@inject IHttpContextAccessor HttpContextAccessor
 @inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
 
 <div class="layout @(sidebarCollapsed ? "sidebar-collapsed" : string.Empty)">
     <aside class="sidebar">
@@ -57,12 +61,10 @@
         return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant();
     }
 
-    private async Task Logout()
+    private Task Logout()
     {
-        var context = HttpContextAccessor.HttpContext;
-        if (context is not null)
-            await Session.LogoutAsync(context);
-
-        Navigation.NavigateTo("/login", true);
+        Session.Logout();
+        Navigation.NavigateTo("/auth/logout", true);
+        return Task.CompletedTask;
     }
 }
