@@ -208,6 +208,12 @@ app.MapPost("/auth/logout", async ([FromServices] WebAuthSessionService session,
     return Results.Ok();
 });
 
+app.MapGet("/auth/logout", async ([FromServices] WebAuthSessionService session, HttpContext context) =>
+{
+    await session.LogoutAsync(context);
+    return Results.Redirect("/login");
+});
+
 app.MapGet("/debug/mysql", async ([FromServices] FinanceiroPessoal.Core.Data.FinanceiroDbContext db) =>
 {
     try
