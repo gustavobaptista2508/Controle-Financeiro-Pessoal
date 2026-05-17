@@ -1,0 +1,107 @@
+@page "/redefinir-senha"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components
+@inject RecuperacaoSenhaService RecuperacaoSenhaService
+@inject NavigationManager Navigation
+
+<PageTitle>Redefinir senha</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="auth-shell">
+    <MudPaper Elevation="2" Class="auth-card pa-8">
+        <MudText Typo="Typo.h4" Class="mb-1">Redefinir senha</MudText>
+        <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Digite sua nova senha para voltar a acessar sua conta.</MudText>
+
+        @if (!string.IsNullOrWhiteSpace(erroToken))
+        {
+            <p class="text-danger">@erroToken</p>
+        }
+        else
+        {
+            <EditForm Model="@model" OnValidSubmit="@RedefinirSenha" FormName="redefinir-senha-form">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <InputText class="form-control" type="password" @bind-Value="model.NovaSenha" placeholder="Nova senha" />
+                <InputText class="form-control mt-2" type="password" @bind-Value="model.ConfirmacaoSenha" placeholder="Confirmar nova senha" />
+
+                <button type="submit" class="btn btn-success mt-5 auth-main-button" disabled="@isLoading">
+                    @(isLoading ? "REDEFININDO..." : "REDEFINIR SENHA")
+                </button>
+            </EditForm>
+
+            @if (!string.IsNullOrWhiteSpace(erro))
+            {
+                <p class="text-danger mt-3">@erro</p>
+            }
+        }
+
+        <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
+            <MudLink Href="/login">Voltar ao login</MudLink>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    [SupplyParameterFromQuery(Name = "token")]
+    public string? Token { get; set; }
+
+    private readonly RedefinirSenhaModel model = new();
+    private bool isLoading;
+    private string? erro;
+    private string? erroToken;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        erroToken = null;
+
+        if (string.IsNullOrWhiteSpace(Token))
+        {
+            erroToken = "Token inválido ou ausente.";
+            return;
+        }
+
+        var tokenValido = await RecuperacaoSenhaService.TokenValidoAsync(Token);
+        if (!tokenValido)
+        {
+            erroToken = "Token inválido ou expirado.";
+        }
+    }
+
+    private async Task RedefinirSenha()
+    {
+        if (isLoading || string.IsNullOrWhiteSpace(Token))
+            return;
+
+        if (model.NovaSenha != model.ConfirmacaoSenha)
+        {
+            erro = "A senha e a confirmação devem ser iguais.";
+            return;
+        }
+
+        isLoading = true;
+        erro = null;
+
+        var redefiniu = await RecuperacaoSenhaService.RedefinirSenhaAsync(Token, model.NovaSenha);
+        isLoading = false;
+
+        if (!redefiniu)
+        {
+            erro = "Não foi possível redefinir a senha. Solicite um novo link.";
+            return;
+        }
+
+        Navigation.NavigateTo("/login?senhaRedefinida=1", forceLoad: true);
+    }
+
+    private sealed class RedefinirSenhaModel
+    {
+        [Required(ErrorMessage = "Informe a nova senha.")]
+        [MinLength(6, ErrorMessage = "A senha deve ter no mínimo 6 caracteres.")]
+        public string NovaSenha { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Confirme a nova senha.")]
+        [MinLength(6, ErrorMessage = "A senha deve ter no mínimo 6 caracteres.")]
+        public string ConfirmacaoSenha { get; set; } = string.Empty;
+    }
+}

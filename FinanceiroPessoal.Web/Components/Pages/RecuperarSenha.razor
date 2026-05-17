@@ -1,0 +1,65 @@
+@page "/recuperar-senha"
+@rendermode InteractiveServer
+@using System.ComponentModel.DataAnnotations
+@inject RecuperacaoSenhaService RecuperacaoSenhaService
+
+<PageTitle>Recuperar senha</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.False" Class="auth-shell">
+    <MudPaper Elevation="2" Class="auth-card pa-8">
+        <MudText Typo="Typo.h4" Class="mb-1">Recuperar senha</MudText>
+        <MudText Typo="Typo.body2" Class="mb-6 auth-subtitle">Informe seu e-mail para receber o link de redefinição.</MudText>
+
+        <EditForm Model="@model" OnValidSubmit="@SolicitarRecuperacao" FormName="recuperar-senha-form">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <InputText class="form-control" @bind-Value="model.Email" placeholder="E-mail" />
+
+            <button type="submit" class="btn btn-success mt-5 auth-main-button" disabled="@isLoading">
+                @(isLoading ? "ENVIANDO..." : "ENVIAR INSTRUÇÕES")
+            </button>
+        </EditForm>
+
+        @if (!string.IsNullOrWhiteSpace(mensagem))
+        {
+            <p class="text-success mt-3">@mensagem</p>
+        }
+
+        <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
+            <MudLink Href="/login">Voltar ao login</MudLink>
+        </MudStack>
+    </MudPaper>
+</MudContainer>
+
+@code {
+    private readonly RecuperarSenhaModel model = new();
+    private bool isLoading;
+    private string? mensagem;
+
+    private async Task SolicitarRecuperacao()
+    {
+        if (isLoading)
+            return;
+
+        isLoading = true;
+        mensagem = null;
+
+        try
+        {
+            await RecuperacaoSenhaService.SolicitarRecuperacaoAsync(model.Email);
+        }
+        finally
+        {
+            mensagem = "Se o e-mail informado estiver cadastrado, enviaremos instruções para redefinir sua senha.";
+            isLoading = false;
+        }
+    }
+
+    private sealed class RecuperarSenhaModel
+    {
+        [Required(ErrorMessage = "Informe o e-mail.")]
+        [EmailAddress(ErrorMessage = "E-mail inválido.")]
+        public string Email { get; set; } = string.Empty;
+    }
+}
