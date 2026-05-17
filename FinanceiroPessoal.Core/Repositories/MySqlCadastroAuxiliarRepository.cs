@@ -9,10 +9,12 @@ namespace FinanceiroPessoal.Core.Repositories
 {
     public class MySqlCadastroAuxiliarRepository : ICadastroAuxiliarRepository
     {
-        public readonly MySqlDbContext _context;
+        private readonly FinanceiroDbContext _context;
 
-        public MySqlCadastroAuxiliarRepository() : this(new MySqlDbContext()) { }
-        public MySqlCadastroAuxiliarRepository(MySqlDbContext context) { _context = context; }
+        public MySqlCadastroAuxiliarRepository(FinanceiroDbContext context)
+        {
+            _context = context;
+        }
 
         public async Task<List<Categoria>> ObterCategorias()
         {

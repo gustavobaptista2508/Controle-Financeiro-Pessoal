@@ -10,12 +10,11 @@ namespace FinanceiroPessoal.Core.Repositories
 {
     public class SqliteLancamentoRepository : ILancamentoRepository
     {
-        private readonly SqliteDbContext _context;
+        private readonly FinanceiroDbContext _context;
 
-        // ✅ CONSTRUTOR SEM PARÂMETRO - AUTO-CRIA
-        public SqliteLancamentoRepository()
+        public SqliteLancamentoRepository(FinanceiroDbContext context)
         {
-            _context = new SqliteDbContext();
+            _context = context;
         }
 
         public async Task<List<Lancamento>> ObterTodos()

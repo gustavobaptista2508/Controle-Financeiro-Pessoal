@@ -9,7 +9,12 @@ namespace FinanceiroPessoal.Core.Repositories
 {
     public class SqliteCadastroAuxiliarRepository : ICadastroAuxiliarRepository
     {
-        private readonly SqliteDbContext _context = new();
+        private readonly FinanceiroDbContext _context;
+
+        public SqliteCadastroAuxiliarRepository(FinanceiroDbContext context)
+        {
+            _context = context;
+        }
 
         public async Task<List<Categoria>> ObterCategorias()
         {
