@@ -14,6 +14,8 @@ public class Usuario
     public string? StripeCustomerId { get; set; }
     public string? StripeSubscriptionId { get; set; }
     public DateTime? AssinaturaExpiraEm { get; set; }
+    public DateTime? TrialLembreteEnviadoEm { get; set; }
+    public DateTime? TrialEncerradoEmailEnviadoEm { get; set; }
     public bool EmailConfirmado { get; set; }
     public string? TokenRecuperacao { get; set; }
     public DateTime? TokenExpiracao { get; set; }
