@@ -26,6 +26,11 @@
             <p class="text-success mt-3">@mensagem</p>
         }
 
+        @if (!string.IsNullOrWhiteSpace(erro))
+        {
+            <p class="text-danger mt-3">@erro</p>
+        }
+
         <MudStack Row="true" Justify="Justify.Center" Class="mt-4">
             <MudLink Href="/login">Voltar ao login</MudLink>
         </MudStack>
@@ -36,6 +41,7 @@
     private readonly RecuperarSenhaModel model = new();
     private bool isLoading;
     private string? mensagem;
+    private string? erro;
 
     private async Task SolicitarRecuperacao()
     {
@@ -44,14 +50,19 @@
 
         isLoading = true;
         mensagem = null;
+        erro = null;
 
         try
         {
             await RecuperacaoSenhaService.SolicitarRecuperacaoAsync(model.Email);
+            mensagem = "Se o e-mail informado estiver cadastrado, enviaremos instruções para redefinir sua senha.";
+        }
+        catch
+        {
+            erro = "Não foi possível solicitar a recuperação agora. Tente novamente em alguns minutos.";
         }
         finally
         {
-            mensagem = "Se o e-mail informado estiver cadastrado, enviaremos instruções para redefinir sua senha.";
             isLoading = false;
         }
     }
