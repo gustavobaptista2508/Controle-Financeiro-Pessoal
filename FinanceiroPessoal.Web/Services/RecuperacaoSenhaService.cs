@@ -1,7 +1,7 @@
 using System.Security.Cryptography;
 using FinanceiroPessoal.Core.Data;
-using FinanceiroPessoal.Core.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Http;
 
 namespace FinanceiroPessoal.Web.Services;
 
@@ -11,22 +11,30 @@ public class RecuperacaoSenhaService
     private readonly IPasswordHasherService _passwordHasher;
     private readonly IEmailService _emailService;
     private readonly IConfiguration _configuration;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public RecuperacaoSenhaService(
         FinanceiroDbContext db,
         IPasswordHasherService passwordHasher,
         IEmailService emailService,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        IHttpContextAccessor httpContextAccessor)
     {
         _db = db;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
         _configuration = configuration;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task SolicitarRecuperacaoAsync(string email)
     {
-        var usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
+        if (string.IsNullOrWhiteSpace(email))
+            return;
+
+        var emailNormalizado = email.Trim().ToLowerInvariant();
+
+        var usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Ativo && u.Email.ToLower() == emailNormalizado);
         if (usuario is null)
             return;
 
@@ -35,7 +43,17 @@ public class RecuperacaoSenhaService
 
         await _db.SaveChangesAsync();
 
-        var baseUrl = _configuration["App:BaseUrl"]?.TrimEnd('/') ?? "http://localhost:5095";
+        var baseUrl = _configuration["App:BaseUrl"]?.TrimEnd('/');
+        if (string.IsNullOrWhiteSpace(baseUrl))
+        {
+            var request = _httpContextAccessor.HttpContext?.Request;
+            if (request is not null)
+                baseUrl = $"{request.Scheme}://{request.Host}";
+        }
+
+        if (string.IsNullOrWhiteSpace(baseUrl))
+            return;
+
         var link = $"{baseUrl}/redefinir-senha?token={Uri.EscapeDataString(usuario.TokenRecuperacao)}";
         await _emailService.EnviarRecuperacaoSenhaAsync(usuario, link);
     }
@@ -56,6 +74,7 @@ public class RecuperacaoSenhaService
         usuario.SenhaHash = _passwordHasher.HashPassword(novaSenha);
         usuario.TokenRecuperacao = null;
         usuario.TokenExpiracao = null;
+        usuario.DataAtualizacao = DateTime.Now;
 
         await _db.SaveChangesAsync();
         return true;

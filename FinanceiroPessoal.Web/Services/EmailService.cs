@@ -75,24 +75,64 @@ public class EmailService : IEmailService
 
     public async Task<bool> EnviarRecuperacaoSenhaAsync(Usuario usuario, string linkRedefinicao)
     {
-        var assunto = "Redefinição de senha - GranaOK";
+        if (string.IsNullOrWhiteSpace(usuario.Email))
+            return false;
 
-        var corpo = $"""
-        Olá, {usuario.Nome}.
+        if (string.IsNullOrWhiteSpace(_options.SmtpHost) ||
+            string.IsNullOrWhiteSpace(_options.SmtpUser) ||
+            string.IsNullOrWhiteSpace(_options.SmtpPassword) ||
+            string.IsNullOrWhiteSpace(_options.FromEmail))
+        {
+            _logger.LogWarning("Configuração SMTP incompleta. E-mail de recuperação não enviado.");
+            return false;
+        }
 
-        Recebemos uma solicitação para redefinir sua senha no GranaOK.
+        var nome = string.IsNullOrWhiteSpace(usuario.Nome) ? usuario.Email : usuario.Nome;
+        var message = new MimeMessage();
+        message.From.Add(new MailboxAddress(_options.FromName ?? "GranaOK", _options.FromEmail));
+        message.To.Add(new MailboxAddress(nome, usuario.Email));
+        message.Subject = "Redefinição de senha - GranaOK";
+        message.Body = new BodyBuilder
+        {
+            HtmlBody = $"""
+            <p>Olá, {nome}.</p>
+            <p>Recebemos uma solicitação para redefinir sua senha no GranaOK.</p>
+            <p><a href=\"{linkRedefinicao}\">Clique aqui para criar uma nova senha</a></p>
+            <p>Este link expira em 1 hora.</p>
+            <p>Se você não solicitou essa alteração, ignore este e-mail.</p>
+            <p>Equipe GranaOK</p>
+            """,
+            TextBody = $"""
+            Olá, {nome}.
 
-        Acesse o link abaixo para criar uma nova senha:
-        {linkRedefinicao}
+            Recebemos uma solicitação para redefinir sua senha no GranaOK.
 
-        Este link expira em 1 hora.
+            Acesse o link abaixo para criar uma nova senha:
+            {linkRedefinicao}
 
-        Se você não solicitou essa alteração, ignore este e-mail.
+            Este link expira em 1 hora.
 
-        Equipe GranaOK
-        """;
+            Se você não solicitou essa alteração, ignore este e-mail.
 
-        return await EnviarAsync(usuario.Email, assunto, corpo);
+            Equipe GranaOK
+            """
+        }.ToMessageBody();
+
+        using var client = new SmtpClient();
+
+        try
+        {
+            await client.ConnectAsync(_options.SmtpHost, _options.SmtpPort, SecureSocketOptions.StartTls);
+            await client.AuthenticateAsync(_options.SmtpUser, _options.SmtpPassword);
+            await client.SendAsync(message);
+            await client.DisconnectAsync(true);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Falha ao enviar e-mail de recuperação de senha.");
+            return false;
+        }
     }
 
     private async Task<bool> EnviarAsync(string destinatario, string assunto, string corpo)
