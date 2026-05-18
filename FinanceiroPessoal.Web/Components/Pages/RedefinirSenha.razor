@@ -18,7 +18,7 @@
         }
         else
         {
-            <EditForm Model="@model" OnValidSubmit="@RedefinirSenha" FormName="redefinir-senha-form">
+            <EditForm Model="@model" OnValidSubmit="@RedefinirSenhaAsync" FormName="redefinir-senha-form">
                 <DataAnnotationsValidator />
                 <ValidationSummary />
 
@@ -68,7 +68,7 @@
         }
     }
 
-    private async Task RedefinirSenha()
+    private async Task RedefinirSenhaAsync()
     {
         if (isLoading || string.IsNullOrWhiteSpace(Token))
             return;

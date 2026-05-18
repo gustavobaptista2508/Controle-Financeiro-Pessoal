@@ -18,6 +18,7 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
     public DbSet<Plano> Planos => Set<Plano>();
     public DbSet<Assinatura> Assinaturas => Set<Assinatura>();
     public DbSet<IaConversa> IaConversas => Set<IaConversa>();
+    public DbSet<Investimento> Investimentos => Set<Investimento>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -153,23 +154,46 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
             entity.Property(x => x.TokensEstimados).HasColumnName("tokens_estimados");
         });
 
+
+        modelBuilder.Entity<Investimento>(entity =>
+        {
+            entity.ToTable("investimentos");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.UsuarioId).HasColumnName("usuario_id");
+            entity.Property(x => x.Nome).HasColumnName("nome").HasMaxLength(120).IsRequired();
+            entity.Property(x => x.Ticker).HasColumnName("ticker").HasMaxLength(20);
+            entity.Property(x => x.Tipo).HasColumnName("tipo").HasMaxLength(50).IsRequired();
+            entity.Property(x => x.ValorInvestido).HasColumnName("valor_investido").HasPrecision(18, 2);
+            entity.Property(x => x.Quantidade).HasColumnName("quantidade").HasPrecision(18, 6);
+            entity.Property(x => x.ValorAtualUnitario).HasColumnName("valor_atual_unitario").HasPrecision(18, 2);
+            entity.Property(x => x.DataCompra).HasColumnName("data_compra");
+            entity.Property(x => x.Observacao).HasColumnName("observacao").HasMaxLength(500);
+            entity.Property(x => x.DataCriacao).HasColumnName("data_criacao");
+            entity.Property(x => x.DataAtualizacao).HasColumnName("data_atualizacao");
+        });
+
         modelBuilder.Entity<Lancamento>().HasOne(x => x.Usuario).WithMany(x => x.Lancamentos).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Categoria>().HasOne(x => x.Usuario).WithMany(x => x.Categorias).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Conta>().HasOne(x => x.Usuario).WithMany(x => x.Contas).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Pessoa>().HasOne(x => x.Usuario).WithMany(x => x.Pessoas).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<IaConversa>().HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<Investimento>().HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Lancamento>().HasIndex(x => x.UsuarioId);
         modelBuilder.Entity<Categoria>().HasIndex(x => x.UsuarioId);
         modelBuilder.Entity<Conta>().HasIndex(x => x.UsuarioId);
         modelBuilder.Entity<Pessoa>().HasIndex(x => x.UsuarioId);
         modelBuilder.Entity<IaConversa>().HasIndex(x => x.UsuarioId);
+        modelBuilder.Entity<Investimento>().HasIndex(x => x.UsuarioId);
 
         modelBuilder.Entity<Lancamento>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
         modelBuilder.Entity<Categoria>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
         modelBuilder.Entity<Conta>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
         modelBuilder.Entity<Pessoa>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
         modelBuilder.Entity<IaConversa>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
+        modelBuilder.Entity<Investimento>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
     }
 
     public override int SaveChanges()
@@ -195,6 +219,7 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
                 case Categoria c when c.UsuarioId == 0: c.UsuarioId = usuarioId; break;
                 case Conta c when c.UsuarioId == 0: c.UsuarioId = usuarioId; break;
                 case Pessoa p when p.UsuarioId == 0: p.UsuarioId = usuarioId; break;
+                case Investimento i when i.UsuarioId == 0: i.UsuarioId = usuarioId; break;
             }
         }
     }
