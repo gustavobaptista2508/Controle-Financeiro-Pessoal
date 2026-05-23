@@ -10,20 +10,17 @@ public class RecuperacaoSenhaService
     private readonly FinanceiroDbContext _db;
     private readonly IPasswordHasherService _passwordHasher;
     private readonly IEmailService _emailService;
-    private readonly IConfiguration _configuration;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public RecuperacaoSenhaService(
         FinanceiroDbContext db,
         IPasswordHasherService passwordHasher,
         IEmailService emailService,
-        IConfiguration configuration,
         IHttpContextAccessor httpContextAccessor)
     {
         _db = db;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
-        _configuration = configuration;
         _httpContextAccessor = httpContextAccessor;
     }
 
@@ -43,16 +40,10 @@ public class RecuperacaoSenhaService
 
         await _db.SaveChangesAsync();
 
-        var baseUrl = _configuration["App:BaseUrl"]?.TrimEnd('/');
-        if (string.IsNullOrWhiteSpace(baseUrl))
-        {
-            var request = _httpContextAccessor.HttpContext?.Request;
-            if (request is not null)
-                baseUrl = $"{request.Scheme}://{request.Host}";
-        }
-
-        if (string.IsNullOrWhiteSpace(baseUrl))
-            return;
+        var request = _httpContextAccessor.HttpContext?.Request;
+        var baseUrl = request != null
+            ? $"{request.Scheme}://{request.Host}"
+            : "https://localhost:7073";
 
         var link = $"{baseUrl}/redefinir-senha?token={Uri.EscapeDataString(usuario.TokenRecuperacao)}";
         await _emailService.EnviarRecuperacaoSenhaAsync(usuario, link);

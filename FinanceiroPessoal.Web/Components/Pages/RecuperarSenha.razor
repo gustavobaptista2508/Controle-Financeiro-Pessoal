@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @using System.ComponentModel.DataAnnotations
 @inject RecuperacaoSenhaService RecuperacaoSenhaService
+@inject ILogger<RecuperarSenha> Logger
 
 <PageTitle>Recuperar senha</PageTitle>
 
@@ -57,8 +58,9 @@
             await RecuperacaoSenhaService.SolicitarRecuperacaoAsync(model.Email);
             mensagem = "Se o e-mail informado estiver cadastrado, enviaremos instruções para redefinir sua senha.";
         }
-        catch
+        catch (Exception ex)
         {
+            Logger.LogError(ex, "Erro ao solicitar recuperação de senha.");
             erro = "Não foi possível solicitar a recuperação agora. Tente novamente em alguns minutos.";
         }
         finally
