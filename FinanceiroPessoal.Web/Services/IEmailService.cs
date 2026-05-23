@@ -8,4 +8,5 @@ public interface IEmailService
     Task<bool> EnviarLembreteTrialAsync(Usuario usuario, int diasRestantes);
     Task<bool> EnviarTrialEncerradoAsync(Usuario usuario);
     Task<bool> EnviarRecuperacaoSenhaAsync(Usuario usuario, string linkRedefinicao);
+    Task EnviarEmailTesteAsync(string destinatario);
 }
