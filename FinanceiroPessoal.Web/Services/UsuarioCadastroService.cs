@@ -15,22 +15,20 @@ public class UsuarioCadastroService
     private readonly IEmailService _emailService;
     private readonly ILogger<UsuarioCadastroService> _logger;
     private readonly UsuarioPadraoService _usuarioPadraoService;
+    private readonly IStripeSubscriptionService _stripeSubscriptionService;
 
-    public UsuarioCadastroService(FinanceiroDbContext db, IPasswordHasherService passwordHasher, IEmailService emailService, ILogger<UsuarioCadastroService> logger, UsuarioPadraoService usuarioPadraoService)
+    public UsuarioCadastroService(FinanceiroDbContext db, IPasswordHasherService passwordHasher, IEmailService emailService, ILogger<UsuarioCadastroService> logger, UsuarioPadraoService usuarioPadraoService, IStripeSubscriptionService stripeSubscriptionService)
     {
         _db = db;
         _passwordHasher = passwordHasher;
         _emailService = emailService;
         _logger = logger;
         _usuarioPadraoService = usuarioPadraoService;
+        _stripeSubscriptionService = stripeSubscriptionService;
     }
 
     public async Task<(bool Success, string Message)> CadastrarAsync(CadastroUsuarioModel cadastro, int? planoId = null)
     {
-        Console.WriteLine("DEBUG CADASTRO SERVICE: chamado");
-        Console.WriteLine($"DEBUG CADASTRO SERVICE: email recebido {cadastro.Email}");
-        Console.WriteLine($"DEBUG CADASTRO SERVICE: senha preenchida {!string.IsNullOrEmpty(cadastro.Senha)}");
-
         string nome = cadastro.Nome.Trim();
         string email = cadastro.Email.Trim().ToLowerInvariant();
         string senha = cadastro.Senha;
@@ -70,15 +68,14 @@ public class UsuarioCadastroService
             DataCriacao = now,
             DataAtualizacao = now,
             PlanoId = planoId,
-            AssinaturaStatus = "TRIAL",
+            AssinaturaStatus = "PENDENTE",
             TrialExpiraEm = trialEndsAt,
             AssinaturaExpiraEm = trialEndsAt
         };
 
         _db.Usuarios.Add(usuario);
         var linhas = await _db.SaveChangesAsync();
-        Console.WriteLine($"DEBUG CADASTRO SERVICE: linhas salvas {linhas}");
-        Console.WriteLine($"DEBUG CADASTRO SERVICE: UsuarioId criado: {usuario.Id}");
+        _logger.LogInformation("Cadastro: usuário salvo com ID {UsuarioId}.", usuario.Id);
 
         await _usuarioPadraoService.CriarEstruturaPadraoAsync(usuario.Id);
 
@@ -94,6 +91,37 @@ public class UsuarioCadastroService
         }
 
         return (true, "Usuário cadastrado com sucesso.");
+    }
+
+    public async Task<(bool Success, string Message, string? CheckoutUrl)> CadastrarEIniciarCheckoutAsync(CadastroUsuarioModel cadastro, int planoId)
+    {
+        _logger.LogInformation("Cadastro: início do fluxo.");
+        _logger.LogInformation("Cadastro: plano selecionado {PlanoId}.", planoId);
+
+        var result = await CadastrarAsync(cadastro, planoId);
+        if (!result.Success)
+            return (false, result.Message, null);
+
+        var usuario = await _db.Usuarios
+            .OrderByDescending(u => u.Id)
+            .FirstOrDefaultAsync(u => u.Email == cadastro.Email.Trim().ToLowerInvariant());
+
+        if (usuario is null)
+            return (false, "Não foi possível concluir o cadastro.", null);
+
+        _logger.LogInformation("Cadastro: usuário salvo com ID {UsuarioId}.", usuario.Id);
+
+        try
+        {
+            _logger.LogInformation("Cadastro: iniciando checkout Stripe para usuário {UsuarioId}.", usuario.Id);
+            var checkoutUrl = await _stripeSubscriptionService.CriarCheckoutSessionAsync(usuario.Id, planoId);
+            return (true, "Usuário cadastrado com sucesso.", checkoutUrl);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Cadastro criado, mas checkout Stripe falhou para usuário {UsuarioId}.", usuario.Id);
+            return (true, "Cadastro criado, mas não foi possível iniciar o checkout.", null);
+        }
     }
 
     private async Task GarantirAdminComHashAsync()

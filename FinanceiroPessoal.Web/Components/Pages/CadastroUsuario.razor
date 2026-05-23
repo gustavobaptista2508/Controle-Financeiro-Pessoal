@@ -7,6 +7,7 @@
 @inject FinanceiroDbContext Db
 @inject ISnackbar Snackbar
 @inject NavigationManager Navigation
+@inject ILogger<CadastroUsuario> Logger
 
 <PageTitle>Cadastro</PageTitle>
 
@@ -66,20 +67,36 @@
         if (isSaving)
             return;
 
-        if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
-        {
-            Snackbar.Add("As senhas não conferem.", Severity.Error);
-            return;
-        }
+        isSaving = true;
 
         try
         {
-            isSaving = true;
-            Console.WriteLine("CADASTRO: iniciou");
-            Console.WriteLine($"CADASTRO: planoId = {PlanoId}");
-            Console.WriteLine("CADASTRO: criando usuário");
+            Logger.LogInformation("Cadastro: início do fluxo.");
+            Logger.LogInformation("Cadastro: plano selecionado {PlanoId}.", PlanoId);
 
-            var result = await AuthService.CadastrarAsync(cadastroModel, PlanoId);
+            if (!PlanoId.HasValue || planoSelecionado is null)
+            {
+                Snackbar.Add("Selecione um plano para continuar.", Severity.Error);
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(cadastroModel.Nome) ||
+                string.IsNullOrWhiteSpace(cadastroModel.Email) ||
+                string.IsNullOrWhiteSpace(cadastroModel.Senha))
+            {
+                Snackbar.Add("Preencha todos os campos obrigatórios.", Severity.Error);
+                return;
+            }
+
+            if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
+            {
+                Snackbar.Add("A senha e a confirmação devem ser iguais.", Severity.Error);
+                return;
+            }
+
+            Logger.LogInformation("Cadastro: validações iniciais concluídas.");
+
+            var result = await AuthService.CadastrarEIniciarCheckoutAsync(cadastroModel, PlanoId.Value);
 
             if (!result.Success)
             {
@@ -87,15 +104,17 @@
                 return;
             }
 
-            Console.WriteLine("CADASTRO: usuário criado");
-            Console.WriteLine("CADASTRO: trial aplicado");
-            Console.WriteLine("CADASTRO: redirecionando dashboard");
+            if (string.IsNullOrWhiteSpace(result.CheckoutUrl))
+            {
+                Snackbar.Add("Cadastro criado, mas não foi possível iniciar o checkout.", Severity.Warning);
+                return;
+            }
 
-            Navigation.NavigateTo($"/login?email={Uri.EscapeDataString(cadastroModel.Email)}&cadastro=sucesso", forceLoad: true);
+            Navigation.NavigateTo(result.CheckoutUrl, forceLoad: true);
         }
         catch (Exception ex)
         {
-            Console.WriteLine("ERRO CADASTRO: " + ex);
+            Logger.LogError(ex, "Erro no fluxo de cadastro.");
             Snackbar.Add("Não foi possível concluir o cadastro. Tente novamente.", Severity.Error);
         }
         finally

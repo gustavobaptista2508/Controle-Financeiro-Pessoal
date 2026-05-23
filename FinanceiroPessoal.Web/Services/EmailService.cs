@@ -78,9 +78,14 @@ public class EmailService : IEmailService
         if (string.IsNullOrWhiteSpace(usuario.Email))
             return false;
 
+        if (string.IsNullOrWhiteSpace(_options.SmtpPassword))
+        {
+            _logger.LogWarning("SMTP não configurado. E-mail de recuperação não enviado.");
+            return false;
+        }
+
         if (string.IsNullOrWhiteSpace(_options.SmtpHost) ||
             string.IsNullOrWhiteSpace(_options.SmtpUser) ||
-            string.IsNullOrWhiteSpace(_options.SmtpPassword) ||
             string.IsNullOrWhiteSpace(_options.FromEmail))
         {
             _logger.LogWarning("Configuração SMTP incompleta. E-mail de recuperação não enviado.");
