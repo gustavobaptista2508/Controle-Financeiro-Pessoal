@@ -73,6 +73,52 @@ public class EmailService : IEmailService
         return await EnviarAsync(usuario.Email, assunto, corpo);
     }
 
+
+    public async Task EnviarEmailTesteAsync(string destinatario)
+    {
+        if (string.IsNullOrWhiteSpace(destinatario))
+            throw new ArgumentException("Destinatário inválido.");
+
+        if (string.IsNullOrWhiteSpace(_options.SmtpHost) ||
+            string.IsNullOrWhiteSpace(_options.SmtpUser) ||
+            string.IsNullOrWhiteSpace(_options.SmtpPassword) ||
+            string.IsNullOrWhiteSpace(_options.FromEmail))
+        {
+            throw new InvalidOperationException("Configuração SMTP incompleta.");
+        }
+
+        var message = new MimeMessage();
+
+        message.From.Add(new MailboxAddress(_options.FromName ?? "GranaOK", _options.FromEmail));
+        message.To.Add(new MailboxAddress(destinatario, destinatario));
+        message.Subject = "Teste de envio de e-mail - GranaOK";
+        message.Body = new BodyBuilder
+        {
+            HtmlBody = """
+            <h2>GranaOK</h2>
+            <p>Este é um e-mail de teste.</p>
+            <p>Se você recebeu esta mensagem, a configuração SMTP está funcionando corretamente.</p>
+            <p>Equipe GranaOK</p>
+            """,
+            TextBody = """
+            GranaOK
+
+            Este é um e-mail de teste.
+
+            Se você recebeu esta mensagem, a configuração SMTP está funcionando corretamente.
+
+            Equipe GranaOK
+            """
+        }.ToMessageBody();
+
+        using var client = new SmtpClient();
+
+        await client.ConnectAsync(_options.SmtpHost, _options.SmtpPort, SecureSocketOptions.StartTls);
+        await client.AuthenticateAsync(_options.SmtpUser, _options.SmtpPassword);
+        await client.SendAsync(message);
+        await client.DisconnectAsync(true);
+    }
+
     public async Task<bool> EnviarRecuperacaoSenhaAsync(Usuario usuario, string linkRedefinicao)
     {
         if (string.IsNullOrWhiteSpace(usuario.Email))

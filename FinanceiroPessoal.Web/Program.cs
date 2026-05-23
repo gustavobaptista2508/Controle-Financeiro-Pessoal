@@ -264,6 +264,32 @@ if (googleAuthConfigured)
     });
 }
 
+if (app.Environment.IsDevelopment())
+{
+    app.MapGet("/api/email/teste", async (string para, IEmailService emailService) =>
+    {
+        try
+        {
+            await emailService.EnviarEmailTesteAsync(para);
+
+            return Results.Ok(new
+            {
+                sucesso = true,
+                mensagem = "E-mail teste enviado com sucesso."
+            });
+        }
+        catch (Exception ex)
+        {
+            return Results.BadRequest(new
+            {
+                sucesso = false,
+                mensagem = "Falha ao enviar e-mail teste.",
+                erro = ex.Message
+            });
+        }
+    });
+}
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
