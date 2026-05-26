@@ -5,7 +5,6 @@
 @using FinanceiroPessoal.Core.Data
 @inject FinanceiroPessoal.Web.Services.UsuarioCadastroService AuthService
 @inject FinanceiroDbContext Db
-@inject ISnackbar Snackbar
 @inject NavigationManager Navigation
 @inject ILogger<CadastroUsuario> Logger
 
@@ -24,7 +23,17 @@
             </MudAlert>
         }
 
-        <EditForm Model="@cadastroModel" OnValidSubmit="@HandleCadastro" FormName="cadastroForm">
+        @if (!string.IsNullOrWhiteSpace(erro))
+        {
+            <MudAlert Severity="Severity.Error" Dense="true" Class="mb-4">@erro</MudAlert>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(sucesso))
+        {
+            <MudAlert Severity="Severity.Success" Dense="true" Class="mb-4">@sucesso</MudAlert>
+        }
+
+        <EditForm Model="@cadastroModel" OnSubmit="@HandleSubmitAsync" FormName="cadastroForm">
             <DataAnnotationsValidator />
             <ValidationSummary />
 
@@ -34,7 +43,7 @@
             <InputText class="form-control mt-2" type="password" @bind-Value="cadastroModel.ConfirmarSenha" placeholder="Confirmar senha" />
 
             <button type="submit" class="btn btn-success mt-5 auth-main-button" disabled="@isSaving">
-                @(isSaving ? "CARREGANDO..." : "Começar 14 dias grátis")
+                @(isSaving ? "Processando..." : "Começar 14 dias grátis")
             </button>
         </EditForm>
     </MudPaper>
@@ -45,6 +54,8 @@
 
     private readonly CadastroUsuarioModel cadastroModel = new();
     private bool isSaving;
+    private string? erro;
+    private string? sucesso;
     private FinanceiroPessoal.Core.Models.Plano? planoSelecionado;
 
     protected override async Task OnInitializedAsync()
@@ -62,51 +73,48 @@
         }
     }
 
-    private async Task HandleCadastro()
+    private async Task HandleCadastroAsync()
     {
         if (isSaving)
             return;
 
         isSaving = true;
+        erro = null;
+        sucesso = null;
 
         try
         {
-            Logger.LogInformation("Cadastro: início do fluxo.");
+            Logger.LogInformation("Cadastro: clique recebido no botão Começar 14 dias grátis.");
             Logger.LogInformation("Cadastro: plano selecionado {PlanoId}.", PlanoId);
 
             if (!PlanoId.HasValue || planoSelecionado is null)
             {
-                Snackbar.Add("Selecione um plano para continuar.", Severity.Error);
+                erro = "Plano não encontrado. Volte para a tela de planos e tente novamente.";
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(cadastroModel.Nome) ||
                 string.IsNullOrWhiteSpace(cadastroModel.Email) ||
-                string.IsNullOrWhiteSpace(cadastroModel.Senha))
+                string.IsNullOrWhiteSpace(cadastroModel.Senha) ||
+                string.IsNullOrWhiteSpace(cadastroModel.ConfirmarSenha))
             {
-                Snackbar.Add("Preencha todos os campos obrigatórios.", Severity.Error);
+                erro = "Preencha todos os campos obrigatórios.";
                 return;
             }
 
             if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
             {
-                Snackbar.Add("A senha e a confirmação devem ser iguais.", Severity.Error);
+                erro = "A senha e a confirmação devem ser iguais.";
                 return;
             }
 
             Logger.LogInformation("Cadastro: validações iniciais concluídas.");
 
-            var result = await AuthService.CadastrarEIniciarCheckoutAsync(cadastroModel, PlanoId.Value);
-
-            if (!result.Success)
-            {
-                Snackbar.Add(result.Message ?? "Não foi possível realizar o cadastro.", Severity.Error);
-                return;
-            }
+            var result = await AuthService.CadastrarUsuarioAsync(cadastroModel, PlanoId.Value);
 
             if (string.IsNullOrWhiteSpace(result.CheckoutUrl))
             {
-                Snackbar.Add("Cadastro criado, mas não foi possível iniciar o checkout.", Severity.Warning);
+                sucesso = "Cadastro criado com sucesso. Não foi possível iniciar o checkout automaticamente.";
                 return;
             }
 
@@ -115,11 +123,32 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Erro no fluxo de cadastro.");
-            Snackbar.Add("Não foi possível concluir o cadastro. Tente novamente.", Severity.Error);
+            erro = ex.Message.Contains("E-mail", StringComparison.OrdinalIgnoreCase)
+                ? ex.Message
+                : "Não foi possível concluir o cadastro. Verifique os dados e tente novamente.";
         }
         finally
         {
             isSaving = false;
         }
+    }
+
+    private async Task HandleSubmitAsync(EditContext editContext)
+    {
+        erro = null;
+        sucesso = null;
+
+        Logger.LogInformation("Cadastro: submit recebido.");
+
+        var valido = editContext.Validate();
+
+        if (!valido)
+        {
+            erro = "Verifique os campos informados.";
+            Logger.LogWarning("Cadastro: formulário inválido.");
+            return;
+        }
+
+        await HandleCadastroAsync();
     }
 }

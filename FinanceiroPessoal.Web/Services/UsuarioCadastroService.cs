@@ -10,6 +10,12 @@ namespace FinanceiroPessoal.Web.Services;
 
 public class UsuarioCadastroService
 {
+    public class CadastroUsuarioResultado
+    {
+        public int UsuarioId { get; set; }
+        public string? CheckoutUrl { get; set; }
+    }
+
     private readonly FinanceiroDbContext _db;
     private readonly IPasswordHasherService _passwordHasher;
     private readonly IEmailService _emailService;
@@ -93,21 +99,18 @@ public class UsuarioCadastroService
         return (true, "Usuário cadastrado com sucesso.");
     }
 
-    public async Task<(bool Success, string Message, string? CheckoutUrl)> CadastrarEIniciarCheckoutAsync(CadastroUsuarioModel cadastro, int planoId)
+    public async Task<CadastroUsuarioResultado> CadastrarUsuarioAsync(CadastroUsuarioModel cadastro, int planoId)
     {
-        _logger.LogInformation("Cadastro: início do fluxo.");
-        _logger.LogInformation("Cadastro: plano selecionado {PlanoId}.", planoId);
-
         var result = await CadastrarAsync(cadastro, planoId);
         if (!result.Success)
-            return (false, result.Message, null);
+            throw new InvalidOperationException(result.Message);
 
         var usuario = await _db.Usuarios
             .OrderByDescending(u => u.Id)
             .FirstOrDefaultAsync(u => u.Email == cadastro.Email.Trim().ToLowerInvariant());
 
         if (usuario is null)
-            return (false, "Não foi possível concluir o cadastro.", null);
+            throw new InvalidOperationException("Não foi possível concluir o cadastro.");
 
         _logger.LogInformation("Cadastro: usuário salvo com ID {UsuarioId}.", usuario.Id);
 
@@ -115,12 +118,25 @@ public class UsuarioCadastroService
         {
             _logger.LogInformation("Cadastro: iniciando checkout Stripe para usuário {UsuarioId}.", usuario.Id);
             var checkoutUrl = await _stripeSubscriptionService.CriarCheckoutSessionAsync(usuario.Id, planoId);
-            return (true, "Usuário cadastrado com sucesso.", checkoutUrl);
+            return new CadastroUsuarioResultado { UsuarioId = usuario.Id, CheckoutUrl = checkoutUrl };
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Cadastro criado, mas checkout Stripe falhou para usuário {UsuarioId}.", usuario.Id);
-            return (true, "Cadastro criado, mas não foi possível iniciar o checkout.", null);
+            return new CadastroUsuarioResultado { UsuarioId = usuario.Id, CheckoutUrl = null };
+        }
+    }
+
+    public async Task<(bool Success, string Message, string? CheckoutUrl)> CadastrarEIniciarCheckoutAsync(CadastroUsuarioModel cadastro, int planoId)
+    {
+        try
+        {
+            var resultado = await CadastrarUsuarioAsync(cadastro, planoId);
+            return (true, "Usuário cadastrado com sucesso.", resultado.CheckoutUrl);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return (false, ex.Message, null);
         }
     }
 
