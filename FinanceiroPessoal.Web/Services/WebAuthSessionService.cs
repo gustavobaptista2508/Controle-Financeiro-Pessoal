@@ -152,7 +152,10 @@ public class WebAuthSessionService
         {
             new(ClaimTypes.NameIdentifier, usuario.Id.ToString()),
             new(ClaimTypes.Name, usuario.Nome),
-            new(ClaimTypes.Email, usuario.Email)
+            new(ClaimTypes.Email, usuario.Email),
+            new("plano_id", usuario.PlanoId?.ToString() ?? string.Empty),
+            new("assinatura_status", usuario.AssinaturaStatus ?? string.Empty),
+            new("usuario_id", usuario.Id.ToString())
         };
 
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);

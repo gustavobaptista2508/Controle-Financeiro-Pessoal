@@ -20,6 +20,13 @@ public class UsuarioPadraoService
         await _db.SaveChangesAsync();
     }
 
+    public async Task GarantirEstruturaPadraoAsync(int usuarioId)
+    {
+        await CriarContaPrincipalAsync(usuarioId);
+        await CriarCategoriasPadraoAsync(usuarioId);
+        await _db.SaveChangesAsync();
+    }
+
     private async Task CriarContaPrincipalAsync(int usuarioId)
     {
         var existeConta = await _db.Contas

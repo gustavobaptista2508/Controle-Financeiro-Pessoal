@@ -1,31 +1,35 @@
-﻿using FinanceiroPessoal.Core.Data;
+using FinanceiroPessoal.Core.Data;
 using FinanceiroPessoal.Core.Models;
 using FinanceiroPessoal.Core.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinanceiroPessoal.Core.Services;
 
 public class CadastroAuxiliarService
 {
     public readonly ICadastroAuxiliarRepository _repository;
+    private readonly FinanceiroDbContext _db;
 
-    public CadastroAuxiliarService(ICadastroAuxiliarRepository repository)
+    public CadastroAuxiliarService(ICadastroAuxiliarRepository repository, FinanceiroDbContext db)
     {
         _repository = repository;
-    }
-    public async Task<List<Categoria>> ObterCategorias()
-    {
-        return await _repository.ObterCategorias();
+        _db = db;
     }
 
-    public async Task<List<Conta>> ObterContas()
-    {
-        return await _repository.ObterContas();
-    }
+    public Task<List<Categoria>> ObterCategorias() => _repository.ObterCategorias();
 
-    public async Task<List<Pessoa>> ObterPessoas()
-    {
-        return await _repository.ObterPessoas();
-    }
+    public Task<List<Conta>> ObterContas() => _repository.ObterContas();
+
+    public Task<List<Pessoa>> ObterPessoas() => _repository.ObterPessoas();
+
+    public Task<List<Categoria>> ObterCategorias(int usuarioId)
+        => _db.Categorias.Where(x => x.UsuarioId == usuarioId).OrderBy(x => x.Nome).ToListAsync();
+
+    public Task<List<Conta>> ObterContas(int usuarioId)
+        => _db.Contas.Where(x => x.UsuarioId == usuarioId).OrderBy(x => x.Nome).ToListAsync();
+
+    public Task<List<Pessoa>> ObterPessoas(int usuarioId)
+        => _db.Pessoas.Where(x => x.UsuarioId == usuarioId).OrderBy(x => x.Nome).ToListAsync();
 
     public async Task<Categoria> AdicionarCategoriaAsync(string nome)
     {
@@ -35,6 +39,7 @@ public class CadastroAuxiliarService
         var categoria = new Categoria { Nome = nome.Trim() };
         return await _repository.AdicionarCategoriaAsync(categoria);
     }
+
     public async Task<Pessoa> AdicionarPessoaAsync(string nome)
     {
         if (string.IsNullOrWhiteSpace(nome))
@@ -52,5 +57,4 @@ public class CadastroAuxiliarService
         var conta = new Conta { Nome = nome.Trim(), Tipo = tipo.Trim() };
         return await _repository.AdicionarContaAsync(conta);
     }
-
 }

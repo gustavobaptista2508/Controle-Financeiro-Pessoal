@@ -1,6 +1,5 @@
 @inherits LayoutComponentBase
 @inject NavigationManager Navigation
-@inject FinanceiroPessoal.Web.Services.WebAuthSessionService Session
 @using Microsoft.AspNetCore.Components.Authorization
 @using System.Security.Claims
 
@@ -26,7 +25,7 @@
                         <div class="user-pill">
                             <span class="user-avatar">@GetInitials(context.User)</span>
                             <span class="user-name">@GetDisplayName(context.User)</span>
-                            <button type="button" class="btn-logout" @onclick="Logout">Sair</button>
+                            <form method="post" action="/auth/logout"><button type="submit" class="btn-logout">Sair</button></form>
                         </div>
                     </Authorized>
                     <NotAuthorized>
@@ -61,10 +60,4 @@
         return string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant();
     }
 
-    private Task Logout()
-    {
-        Session.Logout();
-        Navigation.NavigateTo("/auth/logout", forceLoad: true);
-        return Task.CompletedTask;
-    }
 }

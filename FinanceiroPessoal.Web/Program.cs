@@ -110,6 +110,7 @@ builder.Services.AddScoped<ICadastroAuxiliarRepository, MySqlCadastroAuxiliarRep
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<InvestimentoService>();
 builder.Services.AddScoped<IAssinaturaService, AssinaturaService>();
+builder.Services.AddScoped<IUsuarioAtualService, UsuarioAtualService>();
 builder.Services.AddScoped<IStripeSubscriptionService, StripeSubscriptionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<RecuperacaoSenhaService>();
@@ -208,7 +209,7 @@ app.MapPost("/auth/register", async (
 app.MapPost("/auth/logout", async ([FromServices] WebAuthSessionService session, HttpContext context) =>
 {
     await session.LogoutAsync(context);
-    return Results.Ok();
+    return Results.Redirect("/login");
 });
 
 app.MapGet("/auth/logout", async ([FromServices] WebAuthSessionService session, HttpContext context) =>
@@ -408,7 +409,7 @@ app.MapPost("/webhooks/stripe", async (HttpRequest req, [FromServices] IStripeSu
     using var reader = new StreamReader(req.Body);
     var json = await reader.ReadToEndAsync();
     var sig = req.Headers["Stripe-Signature"].ToString();
-    try { await stripe.ProcessarWebhookAsync(json, sig); return Results.Ok(); }
+    try { await stripe.ProcessarWebhookAsync(json, sig); return Results.Redirect("/login"); }
     catch (StripeException) { return Results.BadRequest(); }
 });
 

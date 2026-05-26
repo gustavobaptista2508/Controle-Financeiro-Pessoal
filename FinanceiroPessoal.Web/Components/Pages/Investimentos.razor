@@ -1,11 +1,12 @@
 @page "/investimentos"
 @attribute [Authorize]
-@using System.Security.Claims
 @using FinanceiroPessoal.Core.Models
 @using FinanceiroPessoal.Core.Services
 @using Microsoft.AspNetCore.Components.Authorization
 @inject InvestimentoService InvestimentoService
-@inject AuthenticationStateProvider AuthStateProvider
+@inject FinanceiroPessoal.Web.Services.IUsuarioAtualService UsuarioAtualService
+@inject FinanceiroPessoal.Web.Services.IAssinaturaService AssinaturaService
+@inject NavigationManager Nav
 @inject ISnackbar Snackbar
 
 <PageTitle>Carteira de Investimentos</PageTitle>
@@ -68,6 +69,7 @@
     private Investimento form = new() { Tipo = "Outros" };
     private string filtro = string.Empty;
     private int usuarioId;
+    private bool bloqueado;
     private DateTime? dataCompra = DateTime.Today;
 
     private IEnumerable<Investimento> InvestimentosFiltrados => investimentos.Where(i => string.IsNullOrWhiteSpace(filtro) || i.Nome.Contains(filtro, StringComparison.OrdinalIgnoreCase) || (i.Ticker?.Contains(filtro, StringComparison.OrdinalIgnoreCase) ?? false) || i.Tipo.Contains(filtro, StringComparison.OrdinalIgnoreCase));
@@ -78,15 +80,23 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var auth = await AuthStateProvider.GetAuthenticationStateAsync();
-        var claim = auth.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (!int.TryParse(claim, out usuarioId))
+        var uid = await UsuarioAtualService.ObterUsuarioIdAsync();
+        if (!uid.HasValue)
         {
-            Snackbar.Add("Usuário inválido.", Severity.Error);
+            Nav.NavigateTo("/login", true);
             return;
         }
 
-        // TODO: integrar bloqueio oficial do plano Plus quando regra estiver disponível.
+        usuarioId = uid.Value;
+
+        if (!await AssinaturaService.UsuarioPossuiPlusAsync(usuarioId))
+        {
+            bloqueado = true;
+            Snackbar.Add("Este recurso faz parte do plano Plus.", Severity.Warning);
+            Nav.NavigateTo("/assinatura/bloqueada", true);
+            return;
+        }
+
         await CarregarAsync();
     }
 
