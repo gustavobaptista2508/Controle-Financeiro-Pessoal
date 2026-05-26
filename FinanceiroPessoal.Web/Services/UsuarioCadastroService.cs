@@ -75,7 +75,12 @@ public class UsuarioCadastroService
             TrialExpiraEm = now.AddDays(14),
             StripeCustomerId = null,
             StripeSubscriptionId = null,
-            AssinaturaExpiraEm = null
+            AssinaturaExpiraEm = null,
+            TrialLembreteEnviadoEm = null,
+            TrialEncerradoEmailEnviadoEm = null,
+            TrialAviso7DiasEnviadoEm = null,
+            TrialAviso3DiasEnviadoEm = null,
+            TrialAviso1DiaEnviadoEm = null
         };
 
         _db.Usuarios.Add(usuario);
