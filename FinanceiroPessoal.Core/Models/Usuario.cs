@@ -16,6 +16,9 @@ public class Usuario
     public DateTime? AssinaturaExpiraEm { get; set; }
     public DateTime? TrialLembreteEnviadoEm { get; set; }
     public DateTime? TrialEncerradoEmailEnviadoEm { get; set; }
+    public DateTime? TrialAviso7DiasEnviadoEm { get; set; }
+    public DateTime? TrialAviso3DiasEnviadoEm { get; set; }
+    public DateTime? TrialAviso1DiaEnviadoEm { get; set; }
     public bool EmailConfirmado { get; set; }
     public string? TokenRecuperacao { get; set; }
     public DateTime? TokenExpiracao { get; set; }
