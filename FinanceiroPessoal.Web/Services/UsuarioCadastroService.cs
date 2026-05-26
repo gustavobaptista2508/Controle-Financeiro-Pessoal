@@ -81,9 +81,16 @@ public class UsuarioCadastroService
 
         _db.Usuarios.Add(usuario);
         var linhas = await _db.SaveChangesAsync();
-        _logger.LogInformation("Cadastro: usuário salvo com ID {UsuarioId}.", usuario.Id);
+        _logger.LogInformation("Cadastro: usuário gravado no banco. UsuarioId={UsuarioId}", usuario.Id);
 
-        await _usuarioPadraoService.CriarEstruturaPadraoAsync(usuario.Id);
+        try
+        {
+            await _usuarioPadraoService.CriarEstruturaPadraoAsync(usuario.Id);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao criar estrutura padrão do usuário {UsuarioId}. Cadastro do usuário foi mantido.", usuario.Id);
+        }
 
         await GarantirAdminComHashAsync();
 
@@ -112,7 +119,7 @@ public class UsuarioCadastroService
         if (usuario is null)
             throw new InvalidOperationException("Não foi possível concluir o cadastro.");
 
-        _logger.LogInformation("Cadastro: usuário salvo com ID {UsuarioId}.", usuario.Id);
+        _logger.LogInformation("Cadastro: usuário gravado no banco. UsuarioId={UsuarioId}", usuario.Id);
 
         try
         {
@@ -122,7 +129,7 @@ public class UsuarioCadastroService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Cadastro criado, mas checkout Stripe falhou para usuário {UsuarioId}.", usuario.Id);
+            _logger.LogError(ex, "Stripe falhou após cadastro do usuário {UsuarioId}. Usuário foi mantido.", usuario.Id);
             return new CadastroUsuarioResultado { UsuarioId = usuario.Id, CheckoutUrl = null };
         }
     }
