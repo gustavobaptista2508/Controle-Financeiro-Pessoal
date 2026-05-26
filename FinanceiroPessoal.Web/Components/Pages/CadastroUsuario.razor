@@ -3,10 +3,11 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using FinanceiroPessoal.Web.Models
 @using FinanceiroPessoal.Core.Data
-@inject FinanceiroPessoal.Web.Services.UsuarioCadastroService AuthService
+@inject FinanceiroPessoal.Web.Services.UsuarioCadastroService UsuarioCadastroService
 @inject FinanceiroDbContext Db
 @inject NavigationManager Navigation
 @inject ILogger<CadastroUsuario> Logger
+@inject IWebHostEnvironment Environment
 
 <PageTitle>Cadastro</PageTitle>
 
@@ -50,7 +51,7 @@
 </MudContainer>
 
 @code {
-    [SupplyParameterFromQuery(Name="planoId")] public int? PlanoId { get; set; }
+    [SupplyParameterFromQuery(Name = "planoId")] public int? PlanoId { get; set; }
 
     private readonly CadastroUsuarioModel cadastroModel = new();
     private bool isSaving;
@@ -73,66 +74,6 @@
         }
     }
 
-    private async Task HandleCadastroAsync()
-    {
-        if (isSaving)
-            return;
-
-        isSaving = true;
-        erro = null;
-        sucesso = null;
-
-        try
-        {
-            Logger.LogInformation("Cadastro: clique recebido no botão Começar 14 dias grátis.");
-            Logger.LogInformation("Cadastro: plano selecionado {PlanoId}.", PlanoId);
-
-            if (!PlanoId.HasValue || planoSelecionado is null)
-            {
-                erro = "Plano não encontrado. Volte para a tela de planos e tente novamente.";
-                return;
-            }
-
-            if (string.IsNullOrWhiteSpace(cadastroModel.Nome) ||
-                string.IsNullOrWhiteSpace(cadastroModel.Email) ||
-                string.IsNullOrWhiteSpace(cadastroModel.Senha) ||
-                string.IsNullOrWhiteSpace(cadastroModel.ConfirmarSenha))
-            {
-                erro = "Preencha todos os campos obrigatórios.";
-                return;
-            }
-
-            if (cadastroModel.Senha != cadastroModel.ConfirmarSenha)
-            {
-                erro = "A senha e a confirmação devem ser iguais.";
-                return;
-            }
-
-            Logger.LogInformation("Cadastro: validações iniciais concluídas.");
-
-            var result = await AuthService.CadastrarUsuarioAsync(cadastroModel, PlanoId.Value);
-
-            if (string.IsNullOrWhiteSpace(result.CheckoutUrl))
-            {
-                sucesso = "Cadastro criado com sucesso. Não foi possível iniciar o checkout automaticamente.";
-                return;
-            }
-
-            Navigation.NavigateTo(result.CheckoutUrl, forceLoad: true);
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Erro no fluxo de cadastro.");
-            erro = ex.Message.Contains("E-mail", StringComparison.OrdinalIgnoreCase)
-                ? ex.Message
-                : "Não foi possível concluir o cadastro. Verifique os dados e tente novamente.";
-        }
-        finally
-        {
-            isSaving = false;
-        }
-    }
-
     private async Task HandleSubmitAsync(EditContext editContext)
     {
         erro = null;
@@ -144,11 +85,55 @@
 
         if (!valido)
         {
-            erro = "Verifique os campos informados.";
+            erro = "Verifique os campos informados antes de continuar.";
             Logger.LogWarning("Cadastro: formulário inválido.");
             return;
         }
 
-        await HandleCadastroAsync();
+        await CadastrarAsync();
+    }
+
+    private async Task CadastrarAsync()
+    {
+        if (isSaving)
+            return;
+
+        isSaving = true;
+        erro = null;
+        sucesso = null;
+
+        try
+        {
+            if (!PlanoId.HasValue || planoSelecionado is null)
+            {
+                erro = "Plano não encontrado. Volte para a tela de planos e tente novamente.";
+                return;
+            }
+
+            Logger.LogInformation("Cadastro: iniciando cadastro. PlanoId={PlanoId}, Email={Email}", PlanoId.Value, cadastroModel.Email);
+
+            var resultado = await UsuarioCadastroService.CadastrarUsuarioAsync(cadastroModel, PlanoId.Value);
+
+            Logger.LogInformation("Cadastro: usuário salvo. UsuarioId={UsuarioId}", resultado.UsuarioId);
+
+            if (!string.IsNullOrWhiteSpace(resultado.CheckoutUrl))
+            {
+                Navigation.NavigateTo(resultado.CheckoutUrl, forceLoad: true);
+                return;
+            }
+
+            sucesso = "Conta criada com sucesso. Não foi possível iniciar o checkout automaticamente.";
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Erro real ao concluir cadastro.");
+            erro = Environment.IsDevelopment()
+                ? $"Erro ao concluir cadastro: {ex.Message}"
+                : "Não foi possível concluir o cadastro. Verifique os dados e tente novamente.";
+        }
+        finally
+        {
+            isSaving = false;
+        }
     }
 }
