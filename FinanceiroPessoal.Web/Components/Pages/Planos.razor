@@ -13,7 +13,7 @@
     <MudStack Spacing="1" Class="text-center mb-6">
         <MudText Typo="Typo.h4" Class="planos-title">Planos para organizar sua vida financeira</MudText>
         <MudText Typo="Typo.body1" Class="planos-subtitle">Escolha o plano ideal para acompanhar receitas, despesas, contas, categorias e sua evolução financeira.</MudText>
-        <div><MudChip Color="Color.Success" Variant="Variant.Filled">14 dias grátis em qualquer plano</MudChip></div>
+        <div><MudChip T="string" Color="Color.Success" Variant="Variant.Filled">14 dias grátis em qualquer plano</MudChip></div>
     </MudStack>
 
     <div class="billing-toggle mb-6">
@@ -34,8 +34,8 @@
             var planoId = anual ? card.PlanoAnualId : card.PlanoMensalId;
 
             <MudItem xs="12" md="6">
-                <MudPaper Class="plan-card @(card.IsPlus ? "plus" : "mensal")">
-                    <MudChip Class="mb-3" Color="@(card.IsPlus ? Color.Success : Color.Primary)" Variant="Variant.Filled">@card.Badge</MudChip>
+                <MudPaper Class="@GetPlanoCardClass(card)">
+                    <MudChip T="string" Class="mb-3" Color="@(card.IsPlus ? Color.Success : Color.Primary)" Variant="Variant.Filled">@card.Badge</MudChip>
                     <MudText Typo="Typo.h5">@card.Titulo</MudText>
                     <MudText Typo="Typo.body2" Class="mb-2">@card.Descricao</MudText>
                     <MudText Typo="Typo.h4" Class="price">@($"R$ {preco:N2}") <span>@periodo</span></MudText>
@@ -116,6 +116,12 @@
     {
         return planos.FirstOrDefault(p => p.Intervalo.Equals(intervalo, StringComparison.OrdinalIgnoreCase)
             && (plus ? p.Nome.Contains("plus", StringComparison.OrdinalIgnoreCase) : !p.Nome.Contains("plus", StringComparison.OrdinalIgnoreCase)))?.Id;
+    }
+
+
+    private static string GetPlanoCardClass(CardPlano card)
+    {
+        return card.IsPlus ? "plan-card plus" : "plan-card mensal";
     }
 
     private void Assinar(int? planoId, bool anualSelecionado)
