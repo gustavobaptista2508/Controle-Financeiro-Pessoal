@@ -73,6 +73,7 @@ public class StripeSubscriptionService(
             },
             SubscriptionData = new Stripe.Checkout.SessionSubscriptionDataOptions
             {
+                TrialPeriodDays = 14,
                 Metadata = new Dictionary<string, string>
                 {
                     ["usuarioId"] = usuario.Id.ToString(),
@@ -84,7 +85,10 @@ public class StripeSubscriptionService(
         var checkoutSession = await checkoutService.CreateAsync(checkoutOptions);
 
         logger.LogInformation("CHECKOUT STRIPE CRIADO {usuarioId} {planoId} {sessionId}", usuarioId, planoId, checkoutSession.Id);
-        return checkoutSession.Url!;
+        if (string.IsNullOrWhiteSpace(checkoutSession.Url))
+            throw new Exception("Stripe Checkout retornou URL inválida.");
+
+        return checkoutSession.Url;
     }
 
     public async Task<string> CriarPortalSessionAsync(int usuarioId)
