@@ -19,6 +19,7 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
     public DbSet<Assinatura> Assinaturas => Set<Assinatura>();
     public DbSet<IaConversa> IaConversas => Set<IaConversa>();
     public DbSet<Investimento> Investimentos => Set<Investimento>();
+    public DbSet<ObjetivoFinanceiro> ObjetivosFinanceiros => Set<ObjetivoFinanceiro>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -177,12 +178,32 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
             entity.Property(x => x.DataAtualizacao).HasColumnName("data_atualizacao");
         });
 
+
+        modelBuilder.Entity<ObjetivoFinanceiro>(entity =>
+        {
+            entity.ToTable("objetivos_financeiros");
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.Id).HasColumnName("id");
+            entity.Property(x => x.UsuarioId).HasColumnName("usuario_id");
+            entity.Property(x => x.Nome).HasColumnName("nome").HasMaxLength(120).IsRequired();
+            entity.Property(x => x.ValorAlvo).HasColumnName("valor_alvo").HasPrecision(18, 2);
+            entity.Property(x => x.ValorAtual).HasColumnName("valor_atual").HasPrecision(18, 2);
+            entity.Property(x => x.DataMeta).HasColumnName("data_meta");
+            entity.Property(x => x.Cor).HasColumnName("cor").HasMaxLength(20);
+            entity.Property(x => x.Icone).HasColumnName("icone").HasMaxLength(80);
+            entity.Property(x => x.Ativo).HasColumnName("ativo");
+            entity.Property(x => x.DataCriacao).HasColumnName("data_criacao");
+            entity.Property(x => x.DataAtualizacao).HasColumnName("data_atualizacao");
+        });
+
         modelBuilder.Entity<Lancamento>().HasOne(x => x.Usuario).WithMany(x => x.Lancamentos).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Categoria>().HasOne(x => x.Usuario).WithMany(x => x.Categorias).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Conta>().HasOne(x => x.Usuario).WithMany(x => x.Contas).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Pessoa>().HasOne(x => x.Usuario).WithMany(x => x.Pessoas).HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<IaConversa>().HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Investimento>().HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
+        modelBuilder.Entity<ObjetivoFinanceiro>().HasOne(x => x.Usuario).WithMany().HasForeignKey(x => x.UsuarioId).OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<Lancamento>().HasIndex(x => x.UsuarioId);
         modelBuilder.Entity<Categoria>().HasIndex(x => x.UsuarioId);
@@ -190,6 +211,7 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
         modelBuilder.Entity<Pessoa>().HasIndex(x => x.UsuarioId);
         modelBuilder.Entity<IaConversa>().HasIndex(x => x.UsuarioId);
         modelBuilder.Entity<Investimento>().HasIndex(x => x.UsuarioId);
+        modelBuilder.Entity<ObjetivoFinanceiro>().HasIndex(x => x.UsuarioId);
 
         modelBuilder.Entity<Lancamento>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
         modelBuilder.Entity<Categoria>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
@@ -197,6 +219,7 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
         modelBuilder.Entity<Pessoa>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
         modelBuilder.Entity<IaConversa>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
         modelBuilder.Entity<Investimento>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
+        modelBuilder.Entity<ObjetivoFinanceiro>().HasQueryFilter(x => x.UsuarioId == FinanceiroPessoal.Core.Services.SessaoUsuario.UsuarioId);
     }
 
     public override int SaveChanges()
@@ -223,6 +246,7 @@ public FinanceiroDbContext(DbContextOptions<FinanceiroDbContext> options)
                 case Conta c when c.UsuarioId == 0: c.UsuarioId = usuarioId; break;
                 case Pessoa p when p.UsuarioId == 0: p.UsuarioId = usuarioId; break;
                 case Investimento i when i.UsuarioId == 0: i.UsuarioId = usuarioId; break;
+                case ObjetivoFinanceiro o when o.UsuarioId == 0: o.UsuarioId = usuarioId; break;
             }
         }
     }
