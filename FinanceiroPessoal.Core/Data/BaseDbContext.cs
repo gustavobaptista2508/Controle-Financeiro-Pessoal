@@ -10,6 +10,7 @@ namespace FinanceiroPessoal.Core.Data
         public Microsoft.EntityFrameworkCore.DbSet<Categoria> Categorias { get; set; }
         public Microsoft.EntityFrameworkCore.DbSet<Conta> Contas { get; set; }
         public Microsoft.EntityFrameworkCore.DbSet<Pessoa> Pessoas { get; set; }
+        public Microsoft.EntityFrameworkCore.DbSet<ObjetivoFinanceiro> ObjetivosFinanceiros { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +42,16 @@ namespace FinanceiroPessoal.Core.Data
             {
                 entity.HasKey(x => x.Id);
                 entity.Property(x => x.Nome).HasMaxLength(100).IsRequired();
+            });
+
+            modelBuilder.Entity<ObjetivoFinanceiro>(entity =>
+            {
+                entity.HasKey(x => x.Id);
+                entity.Property(x => x.Nome).HasMaxLength(120).IsRequired();
+                entity.Property(x => x.ValorAlvo).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.ValorAtual).HasColumnType("decimal(18,2)");
+                entity.Property(x => x.Cor).HasMaxLength(20);
+                entity.Property(x => x.Icone).HasMaxLength(80);
             });
         }
     }
