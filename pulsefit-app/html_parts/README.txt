@@ -1,0 +1,1 @@
+Partes base64 do HTML compactado para compilação do aplicativo.
