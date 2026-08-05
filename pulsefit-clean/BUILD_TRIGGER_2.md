@@ -1,0 +1,1 @@
+Disparo da compilação limpa via pull request target.
