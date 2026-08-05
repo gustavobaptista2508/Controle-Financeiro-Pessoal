@@ -1,9 +1,8 @@
 name: Build PulseFit Clean APK
 
 on:
-  pull_request:
-    branches:
-      - master
+  pull_request_target:
+    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 permissions:
