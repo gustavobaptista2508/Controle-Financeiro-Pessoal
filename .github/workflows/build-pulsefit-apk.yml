@@ -1,0 +1,43 @@
+name: Build PulseFit APK
+
+on:
+  push:
+    branches:
+      - build-pulsefit-apk-20260805
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Restaurar HTML incorporado
+        run: |
+          mkdir -p pulsefit-app/app/src/main/assets
+          gzip -dc pulsefit-app/index.html.gz > pulsefit-app/app/src/main/assets/index.html
+
+      - name: Compilar APK
+        run: gradle -p pulsefit-app :app:assembleDebug --no-daemon
+
+      - name: Preparar arquivo
+        run: cp pulsefit-app/app/build/outputs/apk/debug/app-debug.apk PulseFit.apk
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PulseFit-APK
+          path: PulseFit.apk
+          if-no-files-found: error
