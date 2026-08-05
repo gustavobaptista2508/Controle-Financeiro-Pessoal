@@ -6,6 +6,11 @@ on:
       - build-pulsefit-apk-20260805
     paths-ignore:
       - 'pulsefit-build/**'
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - 'pulsefit-build/**'
   workflow_dispatch:
 
 permissions:
@@ -52,6 +57,7 @@ jobs:
           if-no-files-found: error
 
       - name: Salvar APK na branch
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
