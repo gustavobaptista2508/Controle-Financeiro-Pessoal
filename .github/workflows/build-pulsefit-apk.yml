@@ -4,7 +4,12 @@ on:
   push:
     branches:
       - build-pulsefit-apk-20260805
+    paths-ignore:
+      - 'pulsefit-build/**'
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -12,6 +17,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: build-pulsefit-apk-20260805
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -33,11 +40,21 @@ jobs:
         run: gradle -p pulsefit-app :app:assembleDebug --no-daemon
 
       - name: Preparar arquivo
-        run: cp pulsefit-app/app/build/outputs/apk/debug/app-debug.apk PulseFit.apk
+        run: |
+          mkdir -p pulsefit-build
+          cp pulsefit-app/app/build/outputs/apk/debug/app-debug.apk pulsefit-build/PulseFit.apk
 
-      - name: Publicar APK
+      - name: Publicar APK como artefato
         uses: actions/upload-artifact@v4
         with:
           name: PulseFit-APK
-          path: PulseFit.apk
+          path: pulsefit-build/PulseFit.apk
           if-no-files-found: error
+
+      - name: Salvar APK na branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add pulsefit-build/PulseFit.apk
+          git commit -m "Adicionar APK PulseFit compilado" || exit 0
+          git push origin HEAD:build-pulsefit-apk-20260805
