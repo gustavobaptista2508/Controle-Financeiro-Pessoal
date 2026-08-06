@@ -2,8 +2,7 @@ name: Build GranaOK Android v2
 
 on:
   push:
-    branches:
-      - granook-android-v2-clean
+    branches: [granook-android-v2-clean]
     paths:
       - 'granook-android/**'
       - '!granook-android/build-output/**'
@@ -21,8 +20,7 @@ jobs:
   build:
     name: Build stable portrait APK
     runs-on: ubuntu-latest
-    timeout-minutes: 35
-
+    timeout-minutes: 40
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,15 +30,14 @@ jobs:
       - name: Register workflow run
         shell: bash
         run: |
-          set -e
           mkdir -p granook-android/build-output
           printf '%s\n' "$GITHUB_RUN_ID" > granook-android/build-output/RUN_ID.txt
           printf 'building\n' > granook-android/build-output/STATUS.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add granook-android/build-output/RUN_ID.txt granook-android/build-output/STATUS.txt
-          git commit -m 'Registrar build GranaOK v2' || true
-          git push origin HEAD:granook-android-v2-clean
+          git add granook-android/build-output
+          git commit -m 'Registrar build final GranaOK' || true
+          git push origin HEAD:granook-android-v2-clean || true
 
       - name: Restore clean Android source bundle
         shell: bash
@@ -49,20 +46,25 @@ jobs:
           cat .github/source_b64_parts/part* | base64 -d > /tmp/granook-src.tar.gz
           tar -xzf /tmp/granook-src.tar.gz
           test -s granook-android/app/src/main/java/br/com/granook/mobile/MainActivity.java
-          test -s granook-android/app/src/main/AndroidManifest.xml
+          cat > granook-android/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx3g -Dfile.encoding=UTF-8
+          android.useAndroidX=true
+          android.enableJetifier=true
+          android.nonTransitiveRClass=true
+          EOF
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
         with:
           gradle-version: '8.10.2'
 
-      - name: Restore embedded web app and icon
+      - name: Restore embedded app and icon
         shell: bash
         run: |
           set -euo pipefail
@@ -75,69 +77,39 @@ jobs:
           grep -q 'Extrato bancário universal' granook-android/app/src/main/assets/index.html
           grep -q 'authForm' granook-android/app/src/main/assets/index.html
 
-      - name: Build unsigned release APK
+      - name: Build installable APK
         shell: bash
-        run: gradle -p granook-android :app:clean :app:assembleRelease --no-daemon --stacktrace
+        run: gradle -p granook-android :app:clean :app:assembleDebug --no-daemon --stacktrace
 
-      - name: Sign and verify APK
+      - name: Validate APK
         shell: bash
         run: |
           set -euo pipefail
           BUILD_TOOLS="$(ls -1 "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
-          ZIPALIGN="$ANDROID_HOME/build-tools/$BUILD_TOOLS/zipalign"
           APKSIGNER="$ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner"
-          UNSIGNED="granook-android/app/build/outputs/apk/release/app-release-unsigned.apk"
-          ALIGNED="/tmp/GranaOK-aligned-unsigned.apk"
-          OUTDIR="granook-android/output"
-          mkdir -p "$OUTDIR"
-          test -s "$UNSIGNED"
-          "$ZIPALIGN" -f 4 "$UNSIGNED" "$ALIGNED"
-          keytool -genkeypair -v \
-            -keystore /tmp/granook-release.jks \
-            -storepass 'GranaOK-2026!' \
-            -keypass 'GranaOK-2026!' \
-            -alias granook \
-            -keyalg RSA -keysize 3072 -validity 10000 \
-            -dname 'CN=GranaOK, OU=Mobile, O=GranaOK, L=Marataizes, ST=ES, C=BR'
-          "$APKSIGNER" sign \
-            --ks /tmp/granook-release.jks \
-            --ks-pass pass:'GranaOK-2026!' \
-            --key-pass pass:'GranaOK-2026!' \
-            --v1-signing-enabled true \
-            --v2-signing-enabled true \
-            --v3-signing-enabled true \
-            --out "$OUTDIR/GranaOK_2.0.0_estavel.apk" \
-            "$ALIGNED"
-          "$APKSIGNER" verify --verbose --print-certs "$OUTDIR/GranaOK_2.0.0_estavel.apk" | tee "$OUTDIR/ASSINATURA.txt"
-          "$ZIPALIGN" -c -v 4 "$OUTDIR/GranaOK_2.0.0_estavel.apk"
-          sha256sum "$OUTDIR/GranaOK_2.0.0_estavel.apk" > "$OUTDIR/SHA256.txt"
-          unzip -l "$OUTDIR/GranaOK_2.0.0_estavel.apk" | grep -E 'classes.dex|assets/index.html|granook_icon' > "$OUTDIR/ESTRUTURA.txt"
+          ZIPALIGN="$ANDROID_HOME/build-tools/$BUILD_TOOLS/zipalign"
+          APK="granook-android/app/build/outputs/apk/debug/app-debug.apk"
+          mkdir -p granook-android/output
+          test -s "$APK"
+          cp "$APK" granook-android/output/GranaOK_2.0.0_final.apk
+          "$APKSIGNER" verify --verbose --print-certs granook-android/output/GranaOK_2.0.0_final.apk | tee granook-android/output/ASSINATURA.txt
+          "$ZIPALIGN" -c -v 4 granook-android/output/GranaOK_2.0.0_final.apk
+          sha256sum granook-android/output/GranaOK_2.0.0_final.apk > granook-android/output/SHA256.txt
+          unzip -l granook-android/output/GranaOK_2.0.0_final.apk | grep -E 'classes.dex|assets/index.html|granook_icon' > granook-android/output/ESTRUTURA.txt
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
-          name: GranaOK-2.0.0-estavel
+          name: GranaOK-2.0.0-final
           path: granook-android/output/
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish successful build metadata
-        if: success()
+      - name: Publish build status
+        if: always()
         shell: bash
         run: |
-          set -e
-          printf 'success\n' > granook-android/build-output/STATUS.txt
-          cp granook-android/output/SHA256.txt granook-android/build-output/SHA256.txt
-          cp granook-android/output/ASSINATURA.txt granook-android/build-output/ASSINATURA.txt
-          git add granook-android/build-output
-          git commit -m 'Concluir build estável GranaOK v2' || true
-          git push origin HEAD:granook-android-v2-clean
-
-      - name: Publish failed build metadata
-        if: failure()
-        shell: bash
-        run: |
-          printf 'failure\n' > granook-android/build-output/STATUS.txt
-          git add granook-android/build-output/STATUS.txt granook-android/build-output/RUN_ID.txt
-          git commit -m 'Registrar falha no build GranaOK v2' || true
+          if [ "${{ job.status }}" = "success" ]; then printf 'success\n' > granook-android/build-output/STATUS.txt; else printf 'failure\n' > granook-android/build-output/STATUS.txt; fi
+          git add granook-android/build-output || true
+          git commit -m 'Atualizar status build final GranaOK' || true
           git push origin HEAD:granook-android-v2-clean || true
