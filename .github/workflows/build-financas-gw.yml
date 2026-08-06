@@ -1,0 +1,57 @@
+name: Build Financas GW Android
+
+on:
+  push:
+    branches:
+      - pulsefit-clean-build-final-20260805
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Restaurar HTML incorporado
+        run: |
+          mkdir -p pulsefit-clean/app/src/main/assets
+          cat pulsefit-clean/html_b64_parts/part*.txt | base64 -d | gzip -dc > pulsefit-clean/app/src/main/assets/index.html
+          test -s pulsefit-clean/app/src/main/assets/index.html
+          grep -q 'Finanças GW' pulsefit-clean/app/src/main/assets/index.html
+
+      - name: Compilar APK assinado
+        run: gradle -p pulsefit-clean :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Verificar APK
+        run: |
+          APK=pulsefit-clean/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+          mkdir -p output
+          cp "$APK" output/Financas_GW_Android_v1.0.0.apk
+          sha256sum output/Financas_GW_Android_v1.0.0.apk > output/SHA256.txt
+
+      - name: Publicar APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Financas-GW-Android-v1.0.0
+          path: output/
+          if-no-files-found: error
+          retention-days: 30
