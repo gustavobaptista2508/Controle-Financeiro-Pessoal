@@ -2,25 +2,52 @@ plugins {
     id 'com.android.application'
 }
 
+def keyStorePath = System.getenv('PULSEFIT_KEYSTORE')
+def keyStorePassword = System.getenv('PULSEFIT_STORE_PASSWORD')
+def keyAliasName = System.getenv('PULSEFIT_KEY_ALIAS')
+def keyPasswordValue = System.getenv('PULSEFIT_KEY_PASSWORD')
+def hasReleaseKey = keyStorePath && keyStorePassword && keyAliasName && keyPasswordValue
+
 android {
     namespace 'com.gustavobaptista.pulsefitclean'
     compileSdk 35
 
     defaultConfig {
-        applicationId 'com.gustavobaptista.pulsefitclean'
+        applicationId 'com.gustavobaptista.pulsefitstable'
         minSdk 23
         targetSdk 35
-        versionCode 1
-        versionName '1.0.0'
+        versionCode 200
+        versionName '2.0.0'
+    }
+
+    signingConfigs {
+        release {
+            if (hasReleaseKey) {
+                storeFile file(keyStorePath)
+                storePassword keyStorePassword
+                keyAlias keyAliasName
+                keyPassword keyPasswordValue
+                enableV1Signing true
+                enableV2Signing true
+                enableV3Signing true
+                enableV4Signing false
+            }
+        }
     }
 
     buildTypes {
         debug {
-            applicationIdSuffix ''
-            versionNameSuffix ''
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+            minifyEnabled false
         }
         release {
             minifyEnabled false
+            shrinkResources false
+            if (hasReleaseKey) {
+                signingConfig signingConfigs.release
+            }
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
@@ -28,4 +55,22 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    androidResources {
+        noCompress 'html'
+    }
+
+    lint {
+        abortOnError true
+        checkReleaseBuilds true
+        warningsAsErrors false
+    }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
 }
