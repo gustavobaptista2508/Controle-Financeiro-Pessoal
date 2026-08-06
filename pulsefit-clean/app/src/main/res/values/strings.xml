@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PulseFit Rotinas</string>
+    <string name="app_name">PulseFit</string>
+    <string name="loading">Carregando seus treinos…</string>
+    <string name="retry">Tentar novamente</string>
 </resources>
