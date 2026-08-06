@@ -1,0 +1,1 @@
+Trigger do build GranaOK v2 no Ubuntu 24.04.
