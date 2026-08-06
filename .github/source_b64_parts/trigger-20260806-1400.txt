@@ -1,0 +1,1 @@
+Trigger do workflow ativo para gerar GranaOK 2.0.0.
