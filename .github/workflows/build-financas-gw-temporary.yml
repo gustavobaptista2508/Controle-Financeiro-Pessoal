@@ -70,3 +70,15 @@ jobs:
             --target pulsefit-clean-build-final-20260805 \
             --title 'Finanças GW Android v1.0.0' \
             --notes 'Aplicativo Android gerado a partir da planilha Controle Financeiro Gustavo e Wanessa.'
+
+      - name: Registrar resultado na branch de build
+        run: |
+          mkdir -p pulsefit-clean/build-output
+          base64 -w 4000 output/Financas_GW_Android_v1.0.0.apk > pulsefit-clean/build-output/Financas_GW_Android_v1.0.0.apk.b64
+          cp output/SHA256.txt pulsefit-clean/build-output/SHA256.txt
+          printf 'sucesso\n' > pulsefit-clean/build-output/STATUS.txt
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pulsefit-clean/build-output
+          git commit -m 'Publicar APK Finanças GW compilado' || true
+          git push origin HEAD:pulsefit-clean-build-final-20260805
