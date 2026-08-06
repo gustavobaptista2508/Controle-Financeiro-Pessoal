@@ -1,0 +1,67 @@
+plugins {
+    id 'com.android.application'
+}
+
+def encodedKey = rootProject.file('ci/financas-gw.keystore.b64')
+def decodedKey = rootProject.file('ci/financas-gw.keystore')
+
+if (!encodedKey.exists()) {
+    throw new GradleException('Arquivo de assinatura ausente.')
+}
+decodedKey.parentFile.mkdirs()
+decodedKey.bytes = encodedKey.text.replaceAll('\\s', '').decodeBase64()
+
+android {
+    namespace 'com.gustavobaptista.financasgw'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.gustavobaptista.financasgw'
+        minSdk 28
+        targetSdk 35
+        versionCode 100
+        versionName '1.0.0'
+    }
+
+    signingConfigs {
+        stable {
+            storeFile decodedKey
+            storePassword 'FinGW2026!'
+            keyAlias 'financasgw'
+            keyPassword 'FinGW2026!'
+            enableV1Signing true
+            enableV2Signing true
+            enableV3Signing true
+            enableV4Signing false
+        }
+    }
+
+    buildTypes {
+        debug {
+            signingConfig signingConfigs.stable
+            minifyEnabled false
+            debuggable false
+            applicationIdSuffix ''
+            versionNameSuffix ''
+        }
+        release {
+            signingConfig signingConfigs.stable
+            minifyEnabled false
+            shrinkResources false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    androidResources {
+        noCompress 'html'
+    }
+}
