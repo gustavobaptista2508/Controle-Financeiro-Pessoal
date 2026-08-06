@@ -1,1 +1,1 @@
-8c6c590025952327056643cae788bbf069c52ed4ab78171424a02eda69bea0f4  output/Financas_GW_Android_v1.0.0.apk
+9ec4661f7cb34957b280699123823ebd0436545ca1481e3c05c43a947e831300  output/Financas_GW_Android_v1.0.0.apk
