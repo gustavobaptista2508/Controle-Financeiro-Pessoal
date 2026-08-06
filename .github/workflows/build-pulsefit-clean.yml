@@ -1,8 +1,6 @@
 name: Build GranaOK v2 Clean APK
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
   pull_request_target:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -11,12 +9,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: granook-v2-clean
+  group: granook-v2-clean-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
 
     steps:
