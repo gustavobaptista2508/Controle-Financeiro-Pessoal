@@ -1,12 +1,9 @@
-name: Build PulseFit Clean APK
+name: Build PulseFit Stable APK
 
 on:
   push:
     branches:
       - pulsefit-clean-build-20260805
-  pull_request:
-    branches:
-      - master
   workflow_dispatch:
 
 permissions:
@@ -15,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,34 +26,132 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
-      - name: Confirmar Android SDK
+      - name: Setup Android SDK
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
 
-      - name: Restaurar HTML incorporado
+      - name: Restore and harden embedded HTML
         run: |
           mkdir -p pulsefit-clean/app/src/main/assets
           cat pulsefit-clean/html_b64_parts/part*.txt | base64 -d | gzip -dc > pulsefit-clean/app/src/main/assets/index.html
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('pulsefit-clean/app/src/main/assets/index.html')
+          text = p.read_text(encoding='utf-8')
+          text = text.replace('<title>PulseFit · Rotinas</title>', '<title>PulseFit</title>')
+          replacements = [
+              (
+                  '.timer{position:fixed;z-index:60;left:50%;bottom:calc(80px + var(--safe));width:min(430px,calc(100% - 26px));transform:translate(-50%,130%);transition:.25s;padding:13px 14px;border:1px solid rgba(255,255,255,.14);border-radius:18px;color:#fff;background:rgba(8,40,61,.97);box-shadow:0 18px 42px rgba(0,0,0,.38)}.timer.show{transform:translate(-50%,0)}',
+                  '.timer{display:none;position:fixed;z-index:60;left:50%;bottom:calc(80px + var(--safe));width:min(430px,calc(100% - 26px));transform:translate(-50%,0);padding:13px 14px;border:1px solid rgba(255,255,255,.14);border-radius:18px;color:#fff;background:rgba(8,40,61,.97);box-shadow:0 18px 42px rgba(0,0,0,.38)}.timer.show{display:block}'
+              ),
+              (
+                  "let store=loadStore(),filterProgram='all',editorState=null,pendingConfirm=null,timerState={remaining:0,interval:null},clockInterval=null,wakeLock=null;",
+                  "let store=loadStore(),filterProgram='all',editorState=null,pendingConfirm=null,timerState={remaining:0,endAt:0,interval:null},clockInterval=null,wakeLock=null;"
+              ),
+              (
+                  "function startRest(sec){stopTimer(false);timerState.remaining=sec;$('#timer').classList.add('show');renderTimer();timerState.interval=setInterval(()=>{timerState.remaining--;renderTimer();if(timerState.remaining<=0){stopTimer(false);$('#timer').classList.remove('show');if(navigator.vibrate)navigator.vibrate([180,80,180]);toast('Descanso concluído.')}},1000)}function renderTimer(){$('#timerText').textContent=fmtDur(timerState.remaining)}function stopTimer(hide=true){clearInterval(timerState.interval);timerState.interval=null;if(hide)$('#timer').classList.remove('show')}",
+                  "function startRest(sec){stopTimer(false);timerState.remaining=Math.max(1,Number(sec)||90);timerState.endAt=Date.now()+timerState.remaining*1000;$('#timer').classList.add('show');renderTimer();timerState.interval=setInterval(renderTimer,250)}function renderTimer(){if(timerState.endAt){timerState.remaining=Math.max(0,Math.ceil((timerState.endAt-Date.now())/1000))}$('#timerText').textContent=fmtDur(timerState.remaining||0);if(timerState.endAt&&timerState.remaining<=0){stopTimer();if(navigator.vibrate)navigator.vibrate([180,80,180]);toast('Descanso concluído.')}}function stopTimer(hide=true){clearInterval(timerState.interval);timerState.interval=null;if(hide){timerState.remaining=0;timerState.endAt=0;$('#timer').classList.remove('show')}}"
+              ),
+              (
+                  "$('#add30').onclick=()=>{timerState.remaining+=30;renderTimer()};",
+                  "$('#add30').onclick=()=>{if(!$('#timer').classList.contains('show'))return;timerState.endAt=(timerState.endAt||Date.now())+30000;renderTimer()};"
+              ),
+              (
+                  "document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&store.activeSession&&!wakeLock)requestWake()});",
+                  "document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){if(store.activeSession&&!wakeLock)requestWake();if($('#timer').classList.contains('show'))renderTimer()}});"
+              ),
+              (
+                  'migrateOld();applyTheme();renderAll();',
+                  "window.addEventListener('error',e=>{console.error('PulseFit error',e.error||e.message);try{toast('O app encontrou um erro e manteve seus dados salvos.')}catch{}});window.addEventListener('unhandledrejection',e=>{console.error('PulseFit promise error',e.reason);try{toast('Uma operação não foi concluída. Tente novamente.')}catch{}});try{migrateOld();stopTimer();applyTheme();renderAll()}catch(e){console.error(e);document.body.innerHTML='<main style=\"padding:28px;color:#eef7fb;background:#071923;min-height:100vh;font-family:Arial\"><h1>PulseFit</h1><p>Não foi possível carregar a interface. Feche e abra o aplicativo novamente. Seus dados permanecem salvos.</p></main>'}"
+              )
+          ]
+          for old, new in replacements:
+              if old not in text:
+                  raise SystemExit('Required hardening pattern not found: ' + old[:80])
+              text = text.replace(old, new)
+          p.write_text(text, encoding='utf-8')
+          PY
           test -s pulsefit-clean/app/src/main/assets/index.html
-          grep -q "PulseFit" pulsefit-clean/app/src/main/assets/index.html
+          grep -q '<title>PulseFit</title>' pulsefit-clean/app/src/main/assets/index.html
 
-      - name: Compilar APK do zero
-        run: gradle -p pulsefit-clean :app:assembleDebug --no-daemon --stacktrace
+      - name: Validate JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          html = Path('pulsefit-clean/app/src/main/assets/index.html').read_text(encoding='utf-8')
+          scripts = re.findall(r'<script>(.*?)</script>', html, re.S)
+          if len(scripts) != 1:
+              raise SystemExit(f'Expected one inline script, found {len(scripts)}')
+          Path('/tmp/pulsefit.js').write_text(scripts[0], encoding='utf-8')
+          PY
+          node --check /tmp/pulsefit.js
 
-      - name: Preparar APK
+      - name: Restore fixed signing key
+        run: base64 -d pulsefit-clean/ci/pulsefit-release.keystore.b64 > pulsefit-clean/ci/pulsefit-release.keystore
+
+      - name: Lint release
+        env:
+          PULSEFIT_KEYSTORE: ${{ github.workspace }}/pulsefit-clean/ci/pulsefit-release.keystore
+          PULSEFIT_STORE_PASSWORD: PulseFit2026!
+          PULSEFIT_KEY_ALIAS: pulsefit
+          PULSEFIT_KEY_PASSWORD: PulseFit2026!
+        run: gradle -p pulsefit-clean :app:lintRelease --no-daemon --stacktrace
+
+      - name: Build signed release APK
+        env:
+          PULSEFIT_KEYSTORE: ${{ github.workspace }}/pulsefit-clean/ci/pulsefit-release.keystore
+          PULSEFIT_STORE_PASSWORD: PulseFit2026!
+          PULSEFIT_KEY_ALIAS: pulsefit
+          PULSEFIT_KEY_PASSWORD: PulseFit2026!
+        run: gradle -p pulsefit-clean :app:assembleRelease --no-daemon --stacktrace
+
+      - name: Verify package, alignment and signature
+        run: |
+          APK='pulsefit-clean/app/build/outputs/apk/release/app-release.apk'
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose --print-certs "$APK" | tee /tmp/apksigner.txt
+          "$ANDROID_HOME/build-tools/35.0.0/aapt" dump badging "$APK" | tee /tmp/badging.txt
+          grep -q "package: name='com.gustavobaptista.pulsefitstable'" /tmp/badging.txt
+          grep -q "application-label:'PulseFit'" /tmp/badging.txt
+          grep -q "minSdkVersion:'23'" /tmp/badging.txt
+          grep -q "targetSdkVersion:'35'" /tmp/badging.txt
+
+      - name: Smoke test on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 29
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: |
+            adb install -r pulsefit-clean/app/build/outputs/apk/release/app-release.apk
+            adb shell am start -W -n com.gustavobaptista.pulsefitstable/com.gustavobaptista.pulsefitclean.MainActivity
+            sleep 7
+            adb shell dumpsys activity activities | grep -q 'com.gustavobaptista.pulsefitstable/com.gustavobaptista.pulsefitclean.MainActivity'
+            if adb logcat -d | grep -E 'FATAL EXCEPTION|Process: com.gustavobaptista.pulsefitstable' ; then
+              exit 1
+            fi
+
+      - name: Prepare verified release
         run: |
           mkdir -p output
-          cp pulsefit-clean/app/build/outputs/apk/debug/app-debug.apk output/PulseFit_Rotinas_Build_Limpa.apk
+          cp pulsefit-clean/app/build/outputs/apk/release/app-release.apk output/PulseFit_Stable_v2.0.0.apk
+          sha256sum output/PulseFit_Stable_v2.0.0.apk | tee output/SHA256.txt
+          cp /tmp/apksigner.txt output/assinatura.txt
+          cp /tmp/badging.txt output/metadados-apk.txt
 
-      - name: Publicar APK
+      - name: Upload verified APK
         uses: actions/upload-artifact@v4
         with:
-          name: PulseFit-Rotinas-Build-Limpa
-          path: output/PulseFit_Rotinas_Build_Limpa.apk
+          name: PulseFit-Stable-v2.0.0
+          path: output/
           if-no-files-found: error
+          retention-days: 30
