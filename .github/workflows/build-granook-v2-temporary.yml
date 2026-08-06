@@ -3,6 +3,8 @@ name: Build GranaOK v2 Temporary
 on:
   issue_comment:
     types: [created]
+  pull_request_target:
+    types: [synchronize, reopened, ready_for_review]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +12,7 @@ permissions:
 
 jobs:
   build:
-    if: github.event_name == 'workflow_dispatch' || (github.event.issue.pull_request && contains(github.event.comment.body, '/build-granook-v2'))
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request_target' || (github.event.issue.pull_request && contains(github.event.comment.body, '/build-granook-v2'))
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
