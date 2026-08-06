@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -18,6 +18,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: pulsefit-clean-build-final-20260805
+          fetch-depth: 0
 
       - name: Setup Java 17
         uses: actions/setup-java@v4
@@ -50,10 +51,22 @@ jobs:
           cp "$APK" output/Financas_GW_Android_v1.0.0.apk
           sha256sum output/Financas_GW_Android_v1.0.0.apk > output/SHA256.txt
 
-      - name: Publicar APK
+      - name: Publicar artefato temporário
         uses: actions/upload-artifact@v4
         with:
           name: Financas-GW-Android-v1.0.0
           path: output/
           if-no-files-found: error
           retention-days: 30
+
+      - name: Publicar release temporária
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete financas-gw-v1.0.0 --cleanup-tag --yes || true
+          gh release create financas-gw-v1.0.0 \
+            output/Financas_GW_Android_v1.0.0.apk \
+            output/SHA256.txt \
+            --target pulsefit-clean-build-final-20260805 \
+            --title 'Finanças GW Android v1.0.0' \
+            --notes 'Aplicativo Android gerado a partir da planilha Controle Financeiro Gustavo e Wanessa.'
