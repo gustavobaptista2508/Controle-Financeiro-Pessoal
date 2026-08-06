@@ -77,6 +77,7 @@ jobs:
           base64 -w 4000 output/Financas_GW_Android_v1.0.0.apk > pulsefit-clean/build-output/Financas_GW_Android_v1.0.0.apk.b64
           cp output/SHA256.txt pulsefit-clean/build-output/SHA256.txt
           printf 'sucesso\n' > pulsefit-clean/build-output/STATUS.txt
+          printf '%s\n' "$GITHUB_RUN_ID" > pulsefit-clean/build-output/RUN_ID.txt
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add pulsefit-clean/build-output
