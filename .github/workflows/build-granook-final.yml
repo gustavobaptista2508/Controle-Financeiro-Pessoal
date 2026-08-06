@@ -1,0 +1,91 @@
+name: Build GranaOK Final APK
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/build-granook-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build GranaOK final
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout GranaOK source branch
+        uses: actions/checkout@v4
+        with:
+          ref: granook-android-v2-clean
+          fetch-depth: 1
+
+      - name: Restore clean Android source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .github/source_b64_parts/part* | base64 -d > /tmp/granook-src.tar.gz
+          tar -xzf /tmp/granook-src.tar.gz
+          test -s granook-android/app/src/main/java/br/com/granook/mobile/MainActivity.java
+          test -s granook-android/app/src/main/AndroidManifest.xml
+          cat > granook-android/gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx3072m -Dfile.encoding=UTF-8
+          EOF
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Restore embedded app and icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p granook-android/app/src/main/assets
+          mkdir -p granook-android/app/src/main/res/drawable-nodpi
+          cat granook-android/html_b64_parts/part* | base64 -d | gzip -dc > granook-android/app/src/main/assets/index.html
+          cat granook-android/icon_b64_parts/part* | base64 -d > granook-android/app/src/main/res/drawable-nodpi/granook_icon.png
+          test -s granook-android/app/src/main/assets/index.html
+          test -s granook-android/app/src/main/res/drawable-nodpi/granook_icon.png
+          grep -q 'Extrato bancário universal' granook-android/app/src/main/assets/index.html
+          grep -q 'authForm' granook-android/app/src/main/assets/index.html
+
+      - name: Build installable APK
+        shell: bash
+        run: gradle -p granook-android :app:clean :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Validate and package APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUILD_TOOLS="$(ls -1 "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          APKSIGNER="$ANDROID_HOME/build-tools/$BUILD_TOOLS/apksigner"
+          ZIPALIGN="$ANDROID_HOME/build-tools/$BUILD_TOOLS/zipalign"
+          APK="granook-android/app/build/outputs/apk/debug/app-debug.apk"
+          mkdir -p output
+          test -s "$APK"
+          cp "$APK" output/GranaOK_2.0.0_final.apk
+          "$APKSIGNER" verify --verbose --print-certs output/GranaOK_2.0.0_final.apk | tee output/ASSINATURA.txt
+          "$ZIPALIGN" -c -v 4 output/GranaOK_2.0.0_final.apk
+          sha256sum output/GranaOK_2.0.0_final.apk > output/SHA256.txt
+          unzip -l output/GranaOK_2.0.0_final.apk | grep -E 'classes.dex|assets/index.html|granook_icon' > output/ESTRUTURA.txt
+
+      - name: Upload final APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: GranaOK-2.0.0-final
+          path: output/
+          if-no-files-found: error
+          retention-days: 30
