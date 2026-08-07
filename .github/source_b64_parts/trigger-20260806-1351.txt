@@ -1,0 +1,1 @@
+Trigger da compilação limpa do GranaOK Android v2 em 06/08/2026.
