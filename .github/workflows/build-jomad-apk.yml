@@ -50,6 +50,8 @@ jobs:
           unzip -q jomad-ponto/source.zip -d jomad-ponto/work
           test -f jomad-ponto/work/android/app/build.gradle.kts
           test -f jomad-ponto/work/android/app/src/main/assets/index.html
+          sed -i 's/jvmTarget = "17"/jvmTarget = "1.8"/' jomad-ponto/work/android/app/build.gradle.kts
+          grep -q 'jvmTarget = "1.8"' jomad-ponto/work/android/app/build.gradle.kts
 
       - name: Install Android SDK 35
         shell: bash
@@ -64,11 +66,12 @@ jobs:
         shell: bash
         run: gradle --no-daemon --stacktrace :app:assembleDebug
 
-      - name: Prepare final artifact
+      - name: Prepare and verify final APK
         shell: bash
         run: |
           set -euxo pipefail
           cp jomad-ponto/work/android/app/build/outputs/apk/debug/app-debug.apk JOMAD_Ponto_v1.1_Final.apk
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose JOMAD_Ponto_v1.1_Final.apk
           sha256sum JOMAD_Ponto_v1.1_Final.apk > JOMAD_Ponto_v1.1_Final.apk.sha256
           ls -lh JOMAD_Ponto_v1.1_Final.apk
 
