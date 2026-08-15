@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - jomad-ponto-build-20260814
+  pull_request:
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
