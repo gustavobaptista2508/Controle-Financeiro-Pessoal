@@ -6,8 +6,7 @@
     };
   }catch(e){}
 
-  // Atualiza apenas o conteúdo já renderizado. Não observa a própria alteração,
-  // evitando o loop de MutationObserver que travava a WebView.
+  // Atualiza apenas o conteúdo já renderizado, sem observação recursiva da própria alteração.
   document.querySelectorAll('.brand small').forEach(el=>{
     if(el.textContent!==version) el.textContent=version;
   });
