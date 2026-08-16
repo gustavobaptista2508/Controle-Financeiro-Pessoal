@@ -40,6 +40,18 @@ jobs:
             exit 1
           fi
 
+      - name: Verify WebView freeze fix
+        shell: bash
+        run: |
+          if grep -q 'MutationObserver' GranaOk/android/app/src/main/assets/www/safe-version.js; then
+            echo 'Recursive version observer must not be present'
+            exit 1
+          fi
+          if grep -q 'brand small' GranaOk/android/app/src/main/assets/www/defaults.js; then
+            echo 'defaults.js must not mutate the version badge'
+            exit 1
+          fi
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
@@ -61,12 +73,12 @@ jobs:
         run: gradle -p GranaOk/android :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.3.4.apk
+        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.3.5.apk
 
       - name: Upload beta APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOk-Beta-v0.3.4
-          path: GranaOk-Beta-v0.3.4.apk
+          name: GranaOk-Beta-v0.3.5
+          path: GranaOk-Beta-v0.3.5.apk
           if-no-files-found: error
           retention-days: 30
