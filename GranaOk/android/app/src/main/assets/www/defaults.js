@@ -19,6 +19,8 @@
     fill('dbuser',defaults.user);
     const ssl=document.getElementById('ssl');
     if(ssl) ssl.value=defaults.ssl;
+    const version=document.querySelector('.brand small');
+    if(version) version.textContent='BETA 0.3.2';
   }
 
   document.addEventListener('DOMContentLoaded',apply);
