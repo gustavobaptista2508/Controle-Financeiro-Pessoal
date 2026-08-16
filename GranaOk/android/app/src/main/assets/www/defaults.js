@@ -18,12 +18,14 @@
     fill('db',defaults.database);
     fill('dbuser',defaults.user);
     const ssl=document.getElementById('ssl');
-    if(ssl) ssl.value=defaults.ssl;
-    const version=document.querySelector('.brand small');
-    if(version) version.textContent='BETA 0.3.2';
+    if(ssl && !ssl.dataset.defaultApplied){
+      ssl.value=defaults.ssl;
+      ssl.dataset.defaultApplied='1';
+    }
   }
 
-  document.addEventListener('DOMContentLoaded',apply);
-  new MutationObserver(apply).observe(document.documentElement,{childList:true,subtree:true});
+  document.addEventListener('DOMContentLoaded',apply,{once:true});
+  const observer=new MutationObserver(()=>apply());
+  observer.observe(document.getElementById('app'),{childList:true,subtree:true});
   setTimeout(apply,0);
 })();
