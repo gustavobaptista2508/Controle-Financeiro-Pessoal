@@ -1,0 +1,39 @@
+.nav.nav-five{grid-template-columns:repeat(5,1fr)}
+.finance-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.finance-head h3{margin:0 0 2px}
+.finance-head .mini{width:auto;white-space:nowrap}
+.finance-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.finance-mini-grid button{margin:0;padding:12px 8px;background:#f7faf8;border:1px solid #dce9e0;color:#1f2937;text-align:left}
+.finance-mini-grid span,.finance-mini-grid small{display:block;font-size:10px;color:#6b7280}
+.finance-mini-grid b{display:block;font-size:18px;margin:5px 0 2px;color:#0b7a3b}
+.finance-menu{display:flex;flex-direction:column;gap:10px;margin:14px 0}
+.finance-menu-card{margin:0;background:#fff;border:1px solid #e5e7eb;box-shadow:0 5px 18px rgba(17,24,39,.04);display:grid;grid-template-columns:46px 1fr 20px;align-items:center;text-align:left;gap:10px;color:#1f2937}
+.finance-menu-card>div{display:flex;flex-direction:column;gap:3px}
+.finance-menu-card b{font-size:15px}
+.finance-menu-card small{font-size:11px;color:#6b7280;line-height:1.35;font-weight:500}
+.finance-menu-card>span:last-child{font-size:25px;color:#9ca3af;text-align:right}
+.finance-menu-icon{font-size:28px}
+.finance-list-card{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.finance-title{font-weight:850;font-size:15px}
+.finance-list-card small,.finance-value small{display:block;color:#6b7280;margin-top:4px;font-size:11px}
+.finance-value{text-align:right}
+.finance-value b{font-size:17px;color:#0b7a3b}
+.empty-finance{background:#fff;border:1px dashed #cfd8d3;border-radius:18px;padding:28px 18px;text-align:center;margin:14px 0}
+.empty-finance>span{font-size:38px;display:block;margin-bottom:8px}
+.empty-finance b{display:block;font-size:16px}
+.empty-finance p{color:#6b7280;font-size:13px;margin:7px 0 14px}
+.credit-card-ui{background:linear-gradient(135deg,#062943,#064439);color:#fff;border:0;box-shadow:0 10px 25px rgba(6,41,67,.2)}
+.credit-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.credit-top small{display:block;font-size:9px;letter-spacing:1.2px;color:#b9d5ce}
+.credit-top b{display:block;font-size:19px;margin-top:4px}
+.credit-top>span{font-size:28px}
+.credit-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0 14px}
+.credit-stats small{display:block;color:#b9d5ce;font-size:10px}
+.credit-stats b{display:block;margin-top:4px;font-size:17px}
+.credit-footer{display:flex;justify-content:space-between;gap:10px;border-top:1px solid rgba(255,255,255,.16);padding-top:12px;font-size:11px;color:#d6e8e3}
+.financing-card{padding-bottom:15px}
+.progress-track{height:8px;border-radius:99px;background:#edf1ef;overflow:hidden;margin:14px 0 10px}
+.progress-track span{display:block;height:100%;background:#12b85b;border-radius:99px}
+.financing-foot{display:flex;justify-content:space-between;gap:10px;color:#6b7280;font-size:11px}
+.financing-foot b{color:#374151}
+@media(max-width:390px){.finance-mini-grid{grid-template-columns:1fr}.finance-mini-grid button{display:grid;grid-template-columns:1fr auto;align-items:center}.finance-mini-grid small{grid-column:1/-1}.finance-head{align-items:flex-start}.credit-stats{grid-template-columns:1fr 1fr}.financing-foot{flex-direction:column;gap:5px}}
