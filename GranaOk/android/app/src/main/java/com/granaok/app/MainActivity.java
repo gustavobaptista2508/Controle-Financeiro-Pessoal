@@ -3,7 +3,6 @@ package com.granaok.app;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
 import android.util.Base64;
@@ -22,6 +21,9 @@ import androidx.fragment.app.FragmentActivity;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.math.BigDecimal;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.security.MessageDigest;
@@ -51,7 +53,20 @@ public class MainActivity extends FragmentActivity {
     private static final String KEY_ALIAS = "granaok_db_key";
     private WebView webView;
     private SharedPreferences securePrefs;
-    private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
+    private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "GranaOk-DB");
+        t.setUncaughtExceptionHandler((thread, error) -> {
+            try {
+                JSONObject out = new JSONObject();
+                out.put("ok", false);
+                out.put("stage", "runtime");
+                out.put("error", cleanThrowable(error));
+                callback("GranaOkDbTest", out);
+            } catch (Throwable ignored) {
+            }
+        });
+        return t;
+    });
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -92,7 +107,9 @@ public class MainActivity extends FragmentActivity {
 
     public class AndroidBridge {
         @JavascriptInterface
-        public boolean isNative() { return true; }
+        public boolean isNative() {
+            return true;
+        }
 
         @JavascriptInterface
         public boolean hasDatabaseConfig() {
@@ -117,7 +134,7 @@ public class MainActivity extends FragmentActivity {
                 safe.put("ssl", c.optBoolean("ssl", false));
                 safe.put("prefix", c.optString("prefix", "granaok_"));
                 return safe.toString();
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 return "{}";
             }
         }
@@ -128,15 +145,26 @@ public class MainActivity extends FragmentActivity {
                 JSONObject out = new JSONObject();
                 try {
                     JSONObject c = new JSONObject(configJson);
-                    try (Connection conn = openConnection(c)) {
+                    String host = c.optString("host", "").trim();
+                    int port = c.optInt("port", 3306);
+
+                    out.put("stage", "tcp");
+                    preflightTcp(host, port);
+
+                    out.put("stage", "driver");
+                    Class.forName("org.mariadb.jdbc.Driver");
+
+                    out.put("stage", "mysql");
+                    try (Connection conn = openConnection(c, false)) {
                         DatabaseMetaData meta = conn.getMetaData();
                         out.put("ok", true);
+                        out.put("stage", "done");
                         out.put("product", meta.getDatabaseProductName());
                         out.put("version", meta.getDatabaseProductVersion());
                         out.put("driver", meta.getDriverName() + " " + meta.getDriverVersion());
                         out.put("database", c.optString("database"));
-                        out.put("host", c.optString("host"));
-                        out.put("port", c.optInt("port", 3306));
+                        out.put("host", host);
+                        out.put("port", port);
                         out.put("user", c.optString("user"));
                         try (Statement st = conn.createStatement();
                              ResultSet rs = st.executeQuery("SELECT CURRENT_USER(), USER(), DATABASE(), @@version")) {
@@ -148,13 +176,15 @@ public class MainActivity extends FragmentActivity {
                             }
                         }
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     try {
                         out.put("ok", false);
-                        out.put("error", cleanError(e));
-                    } catch (Exception ignored) {}
+                        if (!out.has("stage")) out.put("stage", "unknown");
+                        out.put("error", cleanThrowable(e));
+                    } catch (Throwable ignored) {
+                    }
                 }
-                callback("GranaOkDbTest", out);
+                safeCallback("GranaOkDbTest", out);
             });
         }
 
@@ -167,7 +197,8 @@ public class MainActivity extends FragmentActivity {
                     JSONObject a = new JSONObject(adminJson);
                     String prefix = sanitizePrefix(c.optString("prefix", "granaok_"));
                     c.put("prefix", prefix);
-                    try (Connection conn = openConnection(c)) {
+                    preflightTcp(c.optString("host").trim(), c.optInt("port", 3306));
+                    try (Connection conn = openConnection(c, true)) {
                         createSchema(conn, prefix);
                         seedAdmin(conn, prefix, a.optString("name", "Administrador"));
                     }
@@ -176,13 +207,14 @@ public class MainActivity extends FragmentActivity {
                     setAdminPasswordInternal(a.optString("configPassword"));
                     out.put("ok", true);
                     out.put("message", "Banco conectado e estrutura GranaOk criada.");
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     try {
                         out.put("ok", false);
-                        out.put("error", cleanError(e));
-                    } catch (Exception ignored) {}
+                        out.put("error", cleanThrowable(e));
+                    } catch (Throwable ignored) {
+                    }
                 }
-                callback("GranaOkInstallResult", out);
+                safeCallback("GranaOkInstallResult", out);
             });
         }
 
@@ -197,7 +229,7 @@ public class MainActivity extends FragmentActivity {
                 byte[] expected = Base64.decode(hashB64, Base64.NO_WRAP);
                 byte[] actual = pbkdf2(password == null ? "" : password, salt);
                 return MessageDigest.isEqual(expected, actual);
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 return false;
             }
         }
@@ -209,12 +241,12 @@ public class MainActivity extends FragmentActivity {
 
         @JavascriptInterface
         public void loadDashboard() {
-            dbExecutor.execute(() -> callback("GranaOkDashboard", buildDashboard()));
+            dbExecutor.execute(() -> safeCallback("GranaOkDashboard", buildDashboard()));
         }
 
         @JavascriptInterface
         public void loadTransactions() {
-            dbExecutor.execute(() -> callback("GranaOkTransactions", buildTransactions()));
+            dbExecutor.execute(() -> safeCallback("GranaOkTransactions", buildTransactions()));
         }
 
         @JavascriptInterface
@@ -225,23 +257,27 @@ public class MainActivity extends FragmentActivity {
                     JSONObject tx = new JSONObject(transactionJson);
                     JSONObject c = readDbConfig();
                     String prefix = sanitizePrefix(c.optString("prefix", "granaok_"));
-                    try (Connection conn = openConnection(c)) {
+                    try (Connection conn = openConnection(c, true)) {
                         Long categoryId = ensureCategory(conn, prefix, tx.optString("category", "Outros"), tx.optString("type", "expense"));
                         String sql = "INSERT INTO " + prefix + "transactions (category_id,type,description,amount,due_date,status,source) VALUES (?,?,?,?,?,'pending','manual')";
                         try (PreparedStatement ps = conn.prepareStatement(sql)) {
                             if (categoryId == null) ps.setNull(1, java.sql.Types.BIGINT); else ps.setLong(1, categoryId);
                             ps.setString(2, tx.optString("type", "expense"));
                             ps.setString(3, tx.optString("description", "Lançamento"));
-                            ps.setBigDecimal(4, new java.math.BigDecimal(tx.optString("amount", "0").replace(',', '.')));
+                            ps.setBigDecimal(4, new BigDecimal(tx.optString("amount", "0").replace(',', '.')));
                             ps.setString(5, tx.optString("dueDate", new SimpleDateFormat("yyyy-MM-dd", Locale.US).format(new Date())));
                             ps.executeUpdate();
                         }
                     }
                     out.put("ok", true);
-                } catch (Exception e) {
-                    try { out.put("ok", false); out.put("error", cleanError(e)); } catch (Exception ignored) {}
+                } catch (Throwable e) {
+                    try {
+                        out.put("ok", false);
+                        out.put("error", cleanThrowable(e));
+                    } catch (Throwable ignored) {
+                    }
                 }
-                callback("GranaOkTransactionSaved", out);
+                safeCallback("GranaOkTransactionSaved", out);
             });
         }
 
@@ -276,8 +312,16 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
-    private Connection openConnection(JSONObject c) throws Exception {
-        Class.forName("org.mariadb.jdbc.Driver");
+    private static void preflightTcp(String host, int port) throws Exception {
+        if (host == null || host.trim().isEmpty()) throw new IllegalArgumentException("Host do MySQL não informado.");
+        if (port < 1 || port > 65535) throw new IllegalArgumentException("Porta MySQL inválida.");
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host.trim(), port), 7000);
+        }
+    }
+
+    private Connection openConnection(JSONObject c, boolean loadDriver) throws Exception {
+        if (loadDriver) Class.forName("org.mariadb.jdbc.Driver");
         String host = c.optString("host").trim();
         int port = c.optInt("port", 3306);
         String database = c.optString("database").trim();
@@ -286,11 +330,12 @@ public class MainActivity extends FragmentActivity {
         boolean ssl = c.optBoolean("ssl", false);
         if (host.isEmpty() || database.isEmpty() || user.isEmpty()) throw new IllegalArgumentException("Host, banco e usuário são obrigatórios.");
         DriverManager.setLoginTimeout(10);
-        String url = "jdbc:mariadb://" + host + ":" + port + "/" + database
-                + "?useSsl=" + (ssl ? "true" : "false")
-                + (ssl ? "&trustServerCertificate=true" : "")
-                + "&connectTimeout=10000&socketTimeout=12000&useUnicode=true&characterEncoding=UTF-8";
-        return DriverManager.getConnection(url, user, password);
+        StringBuilder url = new StringBuilder("jdbc:mariadb://")
+            .append(host).append(':').append(port).append('/').append(database)
+            .append("?connectTimeout=10000&socketTimeout=12000&tcpKeepAlive=true");
+        if (ssl) url.append("&useSsl=true&trustServerCertificate=true");
+        else url.append("&useSsl=false");
+        return DriverManager.getConnection(url.toString(), user, password);
     }
 
     private void createSchema(Connection conn, String p) throws Exception {
@@ -325,17 +370,21 @@ public class MainActivity extends FragmentActivity {
     }
 
     private Long ensureCategory(Connection conn, String p, String name, String kind) throws Exception {
-        if (name == null || name.trim().isEmpty()) name = "Outros";
+        String n = (name == null || name.trim().isEmpty()) ? "Outros" : name.trim();
         try (PreparedStatement ps = conn.prepareStatement("SELECT id FROM " + p + "categories WHERE name=? AND kind=? LIMIT 1")) {
-            ps.setString(1, name.trim());
+            ps.setString(1, n);
             ps.setString(2, kind);
-            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getLong(1); }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
         }
         try (PreparedStatement ps = conn.prepareStatement("INSERT INTO " + p + "categories(name,kind) VALUES(?,?)", Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, name.trim());
+            ps.setString(1, n);
             ps.setString(2, kind);
             ps.executeUpdate();
-            try (ResultSet rs = ps.getGeneratedKeys()) { if (rs.next()) return rs.getLong(1); }
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) return rs.getLong(1);
+            }
         }
         return null;
     }
@@ -345,7 +394,7 @@ public class MainActivity extends FragmentActivity {
         try {
             JSONObject c = readDbConfig();
             String p = sanitizePrefix(c.optString("prefix", "granaok_"));
-            try (Connection conn = openConnection(c)) {
+            try (Connection conn = openConnection(c, true)) {
                 double income = scalar(conn, "SELECT COALESCE(SUM(amount),0) FROM " + p + "transactions WHERE type='income' AND DATE_FORMAT(due_date,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m')");
                 double expenses = scalar(conn, "SELECT COALESCE(SUM(amount),0) FROM " + p + "transactions WHERE type='expense' AND source<>'card_invoice' AND DATE_FORMAT(due_date,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m')");
                 double invoices = scalar(conn, "SELECT COALESCE(SUM(amount),0) FROM " + p + "card_invoices WHERE DATE_FORMAT(due_date,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m')");
@@ -363,7 +412,10 @@ public class MainActivity extends FragmentActivity {
                 String qCats = "SELECT COALESCE(c.name,'Sem categoria') category,COALESCE(SUM(t.amount),0) total FROM " + p + "transactions t LEFT JOIN " + p + "categories c ON c.id=t.category_id WHERE t.type='expense' AND t.source<>'card_invoice' AND DATE_FORMAT(t.due_date,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m') GROUP BY c.name ORDER BY total DESC LIMIT 8";
                 try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(qCats)) {
                     while (rs.next()) {
-                        JSONObject x = new JSONObject(); x.put("name", rs.getString(1)); x.put("total", rs.getDouble(2)); cats.put(x);
+                        JSONObject x = new JSONObject();
+                        x.put("name", rs.getString(1));
+                        x.put("total", rs.getDouble(2));
+                        cats.put(x);
                     }
                 }
                 out.put("categories", cats);
@@ -372,13 +424,22 @@ public class MainActivity extends FragmentActivity {
                 String qUp = "SELECT description,due_date,amount,type FROM " + p + "transactions WHERE status<>'paid' AND due_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(),INTERVAL 14 DAY) ORDER BY due_date ASC LIMIT 10";
                 try (Statement st = conn.createStatement(); ResultSet rs = st.executeQuery(qUp)) {
                     while (rs.next()) {
-                        JSONObject x = new JSONObject(); x.put("description", rs.getString(1)); x.put("due_date", rs.getString(2)); x.put("amount", rs.getDouble(3)); x.put("type", rs.getString(4)); upcoming.put(x);
+                        JSONObject x = new JSONObject();
+                        x.put("description", rs.getString(1));
+                        x.put("due_date", rs.getString(2));
+                        x.put("amount", rs.getDouble(3));
+                        x.put("type", rs.getString(4));
+                        upcoming.put(x);
                     }
                 }
                 out.put("upcoming", upcoming);
             }
-        } catch (Exception e) {
-            try { out.put("ok", false); out.put("error", cleanError(e)); } catch (Exception ignored) {}
+        } catch (Throwable e) {
+            try {
+                out.put("ok", false);
+                out.put("error", cleanThrowable(e));
+            } catch (Throwable ignored) {
+            }
         }
         return out;
     }
@@ -389,18 +450,29 @@ public class MainActivity extends FragmentActivity {
             JSONObject c = readDbConfig();
             String p = sanitizePrefix(c.optString("prefix", "granaok_"));
             JSONArray rows = new JSONArray();
-            try (Connection conn = openConnection(c);
+            try (Connection conn = openConnection(c, true);
                  Statement st = conn.createStatement();
                  ResultSet rs = st.executeQuery("SELECT t.id,t.type,t.description,t.amount,t.due_date,t.status,COALESCE(c.name,'Sem categoria') FROM " + p + "transactions t LEFT JOIN " + p + "categories c ON c.id=t.category_id WHERE DATE_FORMAT(t.due_date,'%Y-%m')=DATE_FORMAT(CURDATE(),'%Y-%m') ORDER BY t.due_date DESC,t.id DESC LIMIT 80")) {
                 while (rs.next()) {
                     JSONObject x = new JSONObject();
-                    x.put("id", rs.getLong(1)); x.put("type", rs.getString(2)); x.put("description", rs.getString(3));
-                    x.put("amount", rs.getDouble(4)); x.put("due_date", rs.getString(5)); x.put("status", rs.getString(6)); x.put("category", rs.getString(7)); rows.put(x);
+                    x.put("id", rs.getLong(1));
+                    x.put("type", rs.getString(2));
+                    x.put("description", rs.getString(3));
+                    x.put("amount", rs.getDouble(4));
+                    x.put("due_date", rs.getString(5));
+                    x.put("status", rs.getString(6));
+                    x.put("category", rs.getString(7));
+                    rows.put(x);
                 }
             }
-            out.put("ok", true); out.put("rows", rows);
-        } catch (Exception e) {
-            try { out.put("ok", false); out.put("error", cleanError(e)); } catch (Exception ignored) {}
+            out.put("ok", true);
+            out.put("rows", rows);
+        } catch (Throwable e) {
+            try {
+                out.put("ok", false);
+                out.put("error", cleanThrowable(e));
+            } catch (Throwable ignored) {
+            }
         }
         return out;
     }
@@ -415,10 +487,9 @@ public class MainActivity extends FragmentActivity {
         SecretKey key = getOrCreateKey();
         Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
         cipher.init(Cipher.ENCRYPT_MODE, key);
-        byte[] iv = cipher.getIV();
         byte[] encrypted = cipher.doFinal(c.toString().getBytes(StandardCharsets.UTF_8));
         securePrefs.edit()
-            .putString("db_iv", Base64.encodeToString(iv, Base64.NO_WRAP))
+            .putString("db_iv", Base64.encodeToString(cipher.getIV(), Base64.NO_WRAP))
             .putString("db_cipher", Base64.encodeToString(encrypted, Base64.NO_WRAP))
             .apply();
     }
@@ -448,7 +519,8 @@ public class MainActivity extends FragmentActivity {
 
     private void saveLocalLogin(String email, String password) throws Exception {
         if (email == null || email.trim().isEmpty() || password == null || password.length() < 4) throw new IllegalArgumentException("E-mail e senha de login são obrigatórios.");
-        byte[] salt = new byte[16]; new SecureRandom().nextBytes(salt);
+        byte[] salt = new byte[16];
+        new SecureRandom().nextBytes(salt);
         byte[] hash = pbkdf2(password, salt);
         securePrefs.edit()
             .putString("login_email", email.trim().toLowerCase(Locale.ROOT))
@@ -473,11 +545,17 @@ public class MainActivity extends FragmentActivity {
         return prefix;
     }
 
-    private static String cleanError(Exception e) {
+    private static String cleanThrowable(Throwable e) {
         String m = e.getMessage();
         if (m == null || m.trim().isEmpty()) m = e.getClass().getSimpleName();
+        Throwable cause = e.getCause();
+        if (cause != null && cause != e) {
+            String cm = cause.getMessage();
+            if (cm != null && !cm.trim().isEmpty() && !m.contains(cm)) m += " · " + cm;
+        }
         m = m.replaceAll("(?i)password=[^&\\s]+", "password=***");
-        return m.length() > 280 ? m.substring(0, 280) : m;
+        m = m.replaceAll("(?i)(password|senha)[=:]\\s*[^\\s,;]+", "$1=***");
+        return m.length() > 420 ? m.substring(0, 420) : m;
     }
 
     private static String sha256(String value) {
@@ -492,9 +570,23 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    private void safeCallback(String fn, JSONObject payload) {
+        try {
+            callback(fn, payload);
+        } catch (Throwable ignored) {
+        }
+    }
+
     private void callback(String fn, JSONObject payload) {
         final String js = "window." + fn + " && window." + fn + "(" + JSONObject.quote(payload.toString()) + ")";
-        runOnUiThread(() -> webView.evaluateJavascript(js, null));
+        runOnUiThread(() -> {
+            if (webView != null) {
+                try {
+                    webView.evaluateJavascript(js, null);
+                } catch (Throwable ignored) {
+                }
+            }
+        });
     }
 
     private void showBiometricPrompt() {
@@ -504,14 +596,14 @@ public class MainActivity extends FragmentActivity {
                 @Override
                 public void onAuthenticationSucceeded(BiometricPrompt.AuthenticationResult result) {
                     super.onAuthenticationSucceeded(result);
-                    webView.evaluateJavascript("window.GranaOkNativeAuth && window.GranaOkNativeAuth(true, '')", null);
+                    if (webView != null) webView.evaluateJavascript("window.GranaOkNativeAuth && window.GranaOkNativeAuth(true, '')", null);
                 }
 
                 @Override
                 public void onAuthenticationError(int errorCode, CharSequence errString) {
                     super.onAuthenticationError(errorCode, errString);
                     String msg = errString.toString().replace("'", "\\'");
-                    webView.evaluateJavascript("window.GranaOkNativeAuth && window.GranaOkNativeAuth(false, '" + msg + "')", null);
+                    if (webView != null) webView.evaluateJavascript("window.GranaOkNativeAuth && window.GranaOkNativeAuth(false, '" + msg + "')", null);
                 }
             });
 
