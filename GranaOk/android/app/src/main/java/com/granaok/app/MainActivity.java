@@ -40,6 +40,10 @@ import java.util.Locale;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -51,6 +55,7 @@ import javax.crypto.spec.PBEKeySpec;
 public class MainActivity extends FragmentActivity {
     private static final String PREFS = "granaok_secure";
     private static final String KEY_ALIAS = "granaok_db_key";
+    private static final int TEST_TIMEOUT_SECONDS = 16;
     private WebView webView;
     private SharedPreferences securePrefs;
     private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor(r -> {
@@ -67,6 +72,7 @@ public class MainActivity extends FragmentActivity {
         });
         return t;
     });
+    private final ExecutorService testExecutor = Executors.newCachedThreadPool();
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -101,6 +107,7 @@ public class MainActivity extends FragmentActivity {
     @Override
     protected void onDestroy() {
         dbExecutor.shutdownNow();
+        testExecutor.shutdownNow();
         if (webView != null) webView.destroy();
         super.onDestroy();
     }
@@ -141,50 +148,86 @@ public class MainActivity extends FragmentActivity {
 
         @JavascriptInterface
         public void testDatabase(String configJson) {
-            dbExecutor.execute(() -> {
+            final AtomicBoolean delivered = new AtomicBoolean(false);
+            final Future<?> task = testExecutor.submit(() -> {
                 JSONObject out = new JSONObject();
                 try {
-                    JSONObject c = new JSONObject(configJson);
-                    String host = c.optString("host", "").trim();
-                    int port = c.optInt("port", 3306);
+                    JSONObject original = new JSONObject(configJson);
+                    String requestedHost = original.optString("host", "").trim();
+                    int port = original.optInt("port", 3306);
+                    Throwable firstFailure = null;
+                    String[] hosts = uolHostCandidates(requestedHost);
 
-                    out.put("stage", "tcp");
-                    preflightTcp(host, port);
+                    for (int i = 0; i < hosts.length; i++) {
+                        String candidate = hosts[i];
+                        JSONObject c = new JSONObject(original.toString());
+                        c.put("host", candidate);
+                        try {
+                            progress("tcp", "Verificando rede e porta 3306", candidate);
+                            preflightTcp(candidate, port);
 
-                    out.put("stage", "driver");
-                    Class.forName("org.mariadb.jdbc.Driver");
+                            progress("driver", "Carregando conector MySQL", candidate);
+                            Class.forName("org.mariadb.jdbc.Driver");
 
-                    out.put("stage", "mysql");
-                    try (Connection conn = openConnection(c, false)) {
-                        DatabaseMetaData meta = conn.getMetaData();
-                        out.put("ok", true);
-                        out.put("stage", "done");
-                        out.put("product", meta.getDatabaseProductName());
-                        out.put("version", meta.getDatabaseProductVersion());
-                        out.put("driver", meta.getDriverName() + " " + meta.getDriverVersion());
-                        out.put("database", c.optString("database"));
-                        out.put("host", host);
-                        out.put("port", port);
-                        out.put("user", c.optString("user"));
-                        try (Statement st = conn.createStatement();
-                             ResultSet rs = st.executeQuery("SELECT CURRENT_USER(), USER(), DATABASE(), @@version")) {
-                            if (rs.next()) {
-                                out.put("currentUser", rs.getString(1));
-                                out.put("loginUser", rs.getString(2));
-                                out.put("currentDatabase", rs.getString(3));
-                                out.put("serverVersion", rs.getString(4));
+                            progress("mysql", "Autenticando no MySQL", candidate);
+                            try (Connection conn = openConnection(c, false)) {
+                                DatabaseMetaData meta = conn.getMetaData();
+                                out.put("ok", true);
+                                out.put("stage", "done");
+                                out.put("product", meta.getDatabaseProductName());
+                                out.put("version", meta.getDatabaseProductVersion());
+                                out.put("driver", meta.getDriverName() + " " + meta.getDriverVersion());
+                                out.put("database", c.optString("database"));
+                                out.put("host", candidate);
+                                out.put("requestedHost", requestedHost);
+                                out.put("fallbackUsed", !candidate.equalsIgnoreCase(requestedHost));
+                                out.put("port", port);
+                                out.put("user", c.optString("user"));
+                                try (Statement st = conn.createStatement();
+                                     ResultSet rs = st.executeQuery("SELECT CURRENT_USER(), USER(), DATABASE(), @@version")) {
+                                    if (rs.next()) {
+                                        out.put("currentUser", rs.getString(1));
+                                        out.put("loginUser", rs.getString(2));
+                                        out.put("currentDatabase", rs.getString(3));
+                                        out.put("serverVersion", rs.getString(4));
+                                    }
+                                }
                             }
+                            break;
+                        } catch (Throwable e) {
+                            if (firstFailure == null) firstFailure = e;
+                            if (i == hosts.length - 1) throw e;
+                            progress("fallback", "Tentando endereço alternativo da UOL Host", hosts[i + 1]);
                         }
                     }
                 } catch (Throwable e) {
                     try {
                         out.put("ok", false);
-                        if (!out.has("stage")) out.put("stage", "unknown");
+                        if (!out.has("stage")) out.put("stage", "connection");
                         out.put("error", cleanThrowable(e));
                     } catch (Throwable ignored) {
                     }
                 }
-                safeCallback("GranaOkDbTest", out);
+                if (delivered.compareAndSet(false, true)) safeCallback("GranaOkDbTest", out);
+            });
+
+            testExecutor.execute(() -> {
+                try {
+                    task.get(TEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                } catch (TimeoutException timeout) {
+                    task.cancel(true);
+                    if (delivered.compareAndSet(false, true)) {
+                        try {
+                            JSONObject out = new JSONObject();
+                            out.put("ok", false);
+                            out.put("stage", "timeout");
+                            out.put("error", "O teste excedeu " + TEST_TIMEOUT_SECONDS + " segundos e foi interrompido. Verifique rede, DNS ou bloqueio da porta 3306.");
+                            safeCallback("GranaOkDbTest", out);
+                        } catch (Throwable ignored) {
+                        }
+                    }
+                } catch (Throwable ignored) {
+                }
             });
         }
 
@@ -312,11 +355,33 @@ public class MainActivity extends FragmentActivity {
         }
     }
 
+    private String[] uolHostCandidates(String host) {
+        if (host == null) return new String[]{""};
+        String h = host.trim();
+        if (h.isEmpty()) return new String[]{h};
+        if (h.equalsIgnoreCase("mysql.uhserver.com")) return new String[]{h};
+        if (h.toLowerCase(Locale.ROOT).endsWith(".mysql.uhserver.com")) {
+            return new String[]{h, "mysql.uhserver.com"};
+        }
+        return new String[]{h};
+    }
+
+    private void progress(String stage, String message, String host) {
+        try {
+            JSONObject out = new JSONObject();
+            out.put("stage", stage);
+            out.put("message", message);
+            out.put("host", host);
+            safeCallback("GranaOkDbProgress", out);
+        } catch (Throwable ignored) {
+        }
+    }
+
     private static void preflightTcp(String host, int port) throws Exception {
         if (host == null || host.trim().isEmpty()) throw new IllegalArgumentException("Host do MySQL não informado.");
         if (port < 1 || port > 65535) throw new IllegalArgumentException("Porta MySQL inválida.");
         try (Socket socket = new Socket()) {
-            socket.connect(new InetSocketAddress(host.trim(), port), 7000);
+            socket.connect(new InetSocketAddress(host.trim(), port), 3500);
         }
     }
 
@@ -329,10 +394,10 @@ public class MainActivity extends FragmentActivity {
         String password = c.optString("password");
         boolean ssl = c.optBoolean("ssl", false);
         if (host.isEmpty() || database.isEmpty() || user.isEmpty()) throw new IllegalArgumentException("Host, banco e usuário são obrigatórios.");
-        DriverManager.setLoginTimeout(10);
+        DriverManager.setLoginTimeout(5);
         StringBuilder url = new StringBuilder("jdbc:mariadb://")
             .append(host).append(':').append(port).append('/').append(database)
-            .append("?connectTimeout=10000&socketTimeout=12000&tcpKeepAlive=true");
+            .append("?connectTimeout=5000&socketTimeout=7000&tcpKeepAlive=true");
         if (ssl) url.append("&useSsl=true&trustServerCertificate=true");
         else url.append("&useSsl=false");
         return DriverManager.getConnection(url.toString(), user, password);
