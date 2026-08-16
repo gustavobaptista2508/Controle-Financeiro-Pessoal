@@ -10,8 +10,8 @@ android {
         applicationId 'com.granaok.app'
         minSdk 23
         targetSdk 35
-        versionCode 2
-        versionName '0.2.0-beta'
+        versionCode 3
+        versionName '0.2.1-beta'
     }
 
     buildTypes {
@@ -32,6 +32,32 @@ configurations.configureEach {
         force 'org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.22'
         force 'org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.22'
     }
+}
+
+tasks.register('decodeGranaOkBranding') {
+    doLast {
+        def brandingDir = file("${rootDir}/branding")
+        def parts = brandingDir.listFiles()
+            .findAll { it.name.startsWith('granaok_icon.b64.part') }
+            .sort { a, b -> a.name <=> b.name }
+        if (parts.isEmpty()) {
+            throw new GradleException('Arquivos da identidade visual GranaOk não encontrados.')
+        }
+        def encoded = parts.collect { it.getText('UTF-8').replaceAll('\\s', '') }.join('')
+        def bytes = java.util.Base64.getDecoder().decode(encoded)
+
+        def drawableDir = file('src/main/res/drawable-nodpi')
+        drawableDir.mkdirs()
+        file("${drawableDir}/granaok_icon.webp").bytes = bytes
+
+        def webDir = file('src/main/assets/www')
+        webDir.mkdirs()
+        file("${webDir}/granaok_icon.webp").bytes = bytes
+    }
+}
+
+tasks.named('preBuild').configure {
+    dependsOn tasks.named('decodeGranaOkBranding')
 }
 
 dependencies {
