@@ -17,6 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate GranaOk MySQL endpoint
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import socket
+          host = 'gadobd.mysql.uhserver.com'
+          port = 3306
+          print(f'Testing TCP {host}:{port} ...')
+          with socket.create_connection((host, port), timeout=10) as s:
+              print('MySQL endpoint reachable:', s.getpeername())
+          PY
+
       - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
