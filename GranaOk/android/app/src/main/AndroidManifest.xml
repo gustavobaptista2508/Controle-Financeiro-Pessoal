@@ -16,10 +16,16 @@
             android:exported="false"
             android:process=":mysql" />
 
+        <service
+            android:name=".FinanceWorkerService"
+            android:exported="false"
+            android:process=":mysql" />
+
         <activity
-            android:name=".MainActivitySafe"
+            android:name=".MainActivityUi"
             android:exported="true"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
