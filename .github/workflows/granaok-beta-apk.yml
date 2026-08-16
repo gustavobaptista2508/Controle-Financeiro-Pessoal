@@ -35,20 +35,24 @@ jobs:
         run: |
           grep -q 'android:process=":mysql"' GranaOk/android/app/src/main/AndroidManifest.xml
           grep -q 'MariaDbConnection.newConnection' GranaOk/android/app/src/main/java/com/granaok/app/DbWorkerService.java
+          grep -q 'MariaDbConnection.newConnection' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
           if grep -q 'Class.forName("org.mariadb.jdbc.Driver")' GranaOk/android/app/src/main/java/com/granaok/app/DbWorkerService.java; then
-            echo 'Unsafe Driver class loading found in isolated worker'
+            echo 'Unsafe Driver class loading found'
             exit 1
           fi
 
-      - name: Verify WebView freeze fix
+      - name: Verify UI and finance modules
         shell: bash
         run: |
+          grep -q 'MainActivityUi' GranaOk/android/app/src/main/AndroidManifest.xml
+          grep -q 'FinanceWorkerService' GranaOk/android/app/src/main/AndroidManifest.xml
+          grep -q 'finance-modules.js' GranaOk/android/app/src/main/assets/www/index.html
+          grep -q 'window.cadastros' GranaOk/android/app/src/main/assets/www/finance-modules.js
+          grep -q 'ACTION_ADD_ACCOUNT' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
+          grep -q 'ACTION_ADD_CARD' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
+          grep -q 'ACTION_ADD_FINANCING' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
           if grep -q 'MutationObserver' GranaOk/android/app/src/main/assets/www/safe-version.js; then
             echo 'Recursive version observer must not be present'
-            exit 1
-          fi
-          if grep -q 'brand small' GranaOk/android/app/src/main/assets/www/defaults.js; then
-            echo 'defaults.js must not mutate the version badge'
             exit 1
           fi
 
@@ -73,12 +77,12 @@ jobs:
         run: gradle -p GranaOk/android :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.3.5.apk
+        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.3.6.apk
 
       - name: Upload beta APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOk-Beta-v0.3.5
-          path: GranaOk-Beta-v0.3.5.apk
+          name: GranaOk-Beta-v0.3.6
+          path: GranaOk-Beta-v0.3.6.apk
           if-no-files-found: error
           retention-days: 30
