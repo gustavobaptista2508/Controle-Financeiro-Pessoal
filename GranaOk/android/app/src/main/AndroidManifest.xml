@@ -10,8 +10,14 @@
         android:icon="@drawable/granaok_icon"
         android:roundIcon="@drawable/granaok_icon"
         android:theme="@style/AppTheme">
+
+        <service
+            android:name=".DbWorkerService"
+            android:exported="false"
+            android:process=":mysql" />
+
         <activity
-            android:name=".MainActivity"
+            android:name=".MainActivitySafe"
             android:exported="true"
             android:screenOrientation="portrait">
             <intent-filter>
