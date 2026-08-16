@@ -26,7 +26,7 @@ jobs:
           host = 'gadobd.mysql.uhserver.com'
           port = 3306
           print(f'Testing TCP {host}:{port} ...')
-          with socket.create_connection((host, port), timeout=10) as s:
+          with socket.create_connection((host, port), timeout=8) as s:
               print('MySQL endpoint reachable:', s.getpeername())
           PY
 
@@ -51,12 +51,12 @@ jobs:
         run: gradle -p GranaOk/android :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.3.2.apk
+        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.3.3.apk
 
       - name: Upload beta APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOk-Beta-v0.3.2
-          path: GranaOk-Beta-v0.3.2.apk
+          name: GranaOk-Beta-v0.3.3
+          path: GranaOk-Beta-v0.3.3.apk
           if-no-files-found: error
           retention-days: 30
