@@ -10,8 +10,8 @@ android {
         applicationId 'com.granaok.app'
         minSdk 23
         targetSdk 35
-        versionCode 8
-        versionName '0.3.3-beta'
+        versionCode 9
+        versionName '0.3.4-beta'
     }
 
     compileOptions {
@@ -74,5 +74,8 @@ tasks.named('preBuild').configure {
 dependencies {
     implementation 'androidx.biometric:biometric:1.1.0'
     implementation 'androidx.fragment:fragment:1.8.2'
-    implementation 'org.mariadb.jdbc:mariadb-java-client:1.7.6'
+    // 2.7.13 includes the Android compatibility fix. The app does not load
+    // org.mariadb.jdbc.Driver; DbWorkerService opens via UrlParser/MariaDbConnection
+    // in a separate Android process, avoiding java.sql.DriverAction on Android.
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.13'
 }
