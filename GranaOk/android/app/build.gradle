@@ -10,8 +10,13 @@ android {
         applicationId 'com.granaok.app'
         minSdk 23
         targetSdk 35
-        versionCode 4
-        versionName '0.2.2-beta'
+        versionCode 5
+        versionName '0.3.0-beta'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     buildTypes {
@@ -22,6 +27,12 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE', 'META-INF/LICENSE.txt', 'META-INF/NOTICE', 'META-INF/NOTICE.txt']
         }
     }
 }
@@ -63,4 +74,5 @@ tasks.named('preBuild').configure {
 dependencies {
     implementation 'androidx.biometric:biometric:1.1.0'
     implementation 'androidx.fragment:fragment:1.8.2'
+    implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.13'
 }
