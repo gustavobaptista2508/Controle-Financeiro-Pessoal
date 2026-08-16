@@ -1,6 +1,7 @@
 package com.granaok.app;
 
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
@@ -14,16 +15,21 @@ import androidx.biometric.BiometricPrompt;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.FragmentActivity;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.concurrent.Executor;
 
 public class MainActivity extends FragmentActivity {
     private WebView webView;
+    private SharedPreferences securePrefs;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE);
+        securePrefs = getSharedPreferences("granaok_secure", MODE_PRIVATE);
 
         webView = new WebView(this);
         setContentView(webView);
@@ -55,6 +61,42 @@ public class MainActivity extends FragmentActivity {
         @JavascriptInterface
         public void authenticate() {
             runOnUiThread(MainActivity.this::showBiometricPrompt);
+        }
+
+        @JavascriptInterface
+        public boolean hasAdminPassword() {
+            return securePrefs.contains("admin_password_hash");
+        }
+
+        @JavascriptInterface
+        public void setAdminPassword(String password) {
+            if (password == null || password.length() < 4) return;
+            securePrefs.edit().putString("admin_password_hash", sha256(password)).apply();
+        }
+
+        @JavascriptInterface
+        public boolean verifyAdminPassword(String password) {
+            if (password == null) return false;
+            String saved = securePrefs.getString("admin_password_hash", null);
+            return saved != null && constantTimeEquals(saved, sha256(password));
+        }
+    }
+
+    private static boolean constantTimeEquals(String a, String b) {
+        byte[] x = a.getBytes(StandardCharsets.UTF_8);
+        byte[] y = b.getBytes(StandardCharsets.UTF_8);
+        return MessageDigest.isEqual(x, y);
+    }
+
+    private static String sha256(String value) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(value.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hex = new StringBuilder();
+            for (byte b : hash) hex.append(String.format("%02x", b));
+            return hex.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 indisponível", e);
         }
     }
 
