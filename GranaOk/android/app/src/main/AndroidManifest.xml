@@ -7,6 +7,8 @@
         android:allowBackup="false"
         android:usesCleartextTraffic="false"
         android:label="GranaOk Beta"
+        android:icon="@drawable/ic_granaok"
+        android:roundIcon="@drawable/ic_granaok"
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
