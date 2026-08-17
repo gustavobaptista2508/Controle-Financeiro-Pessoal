@@ -1,6 +1,10 @@
 name: Build AutoLog IA Isolated APK
 
 on:
+  push:
+    branches: [autolog-ia-build]
+    paths:
+      - '.github/workflows/build-autolog-ia-isolated.yml'
   workflow_dispatch:
 
 permissions:
