@@ -52,12 +52,17 @@
             android:process=":mysql" />
 
         <service
+            android:name=".HouseholdFinanceService"
+            android:exported="false"
+            android:process=":mysql" />
+
+        <service
             android:name=".InvestmentRadarService"
             android:exported="false"
             android:process=":radar" />
 
         <activity
-            android:name=".MainActivityV040"
+            android:name=".MainActivityV050"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
