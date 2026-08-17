@@ -34,23 +34,27 @@ jobs:
         shell: bash
         run: |
           grep -q 'android:process=":mysql"' GranaOk/android/app/src/main/AndroidManifest.xml
+          grep -q 'FinanceExtrasService' GranaOk/android/app/src/main/AndroidManifest.xml
           grep -q 'MariaDbConnection.newConnection' GranaOk/android/app/src/main/java/com/granaok/app/DbWorkerService.java
           grep -q 'MariaDbConnection.newConnection' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
-          if grep -q 'Class.forName("org.mariadb.jdbc.Driver")' GranaOk/android/app/src/main/java/com/granaok/app/DbWorkerService.java; then
+          grep -q 'MariaDbConnection.newConnection' GranaOk/android/app/src/main/java/com/granaok/app/FinanceExtrasService.java
+          if grep -R -q 'Class.forName("org.mariadb.jdbc.Driver")' GranaOk/android/app/src/main/java/com/granaok/app; then
             echo 'Unsafe Driver class loading found'
             exit 1
           fi
 
-      - name: Verify UI and finance modules
+      - name: Verify beta 0.3.7 features
         shell: bash
         run: |
-          grep -q 'MainActivityUi' GranaOk/android/app/src/main/AndroidManifest.xml
-          grep -q 'FinanceWorkerService' GranaOk/android/app/src/main/AndroidManifest.xml
-          grep -q 'finance-modules.js' GranaOk/android/app/src/main/assets/www/index.html
-          grep -q 'window.cadastros' GranaOk/android/app/src/main/assets/www/finance-modules.js
-          grep -q 'ACTION_ADD_ACCOUNT' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
-          grep -q 'ACTION_ADD_CARD' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
-          grep -q 'ACTION_ADD_FINANCING' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
+          grep -q 'MainActivityV037' GranaOk/android/app/src/main/AndroidManifest.xml
+          grep -q 'windowOptOutEdgeToEdgeEnforcement' GranaOk/android/app/src/main/res/values/styles.xml
+          grep -q 'ACTION_ADD_EXPENSE' GranaOk/android/app/src/main/java/com/granaok/app/FinanceExtrasService.java
+          grep -q 'DEFAULT_CATEGORIES' GranaOk/android/app/src/main/java/com/granaok/app/FinanceExtrasService.java
+          grep -q 'ACTION_ADD_CATEGORY' GranaOk/android/app/src/main/java/com/granaok/app/FinanceExtrasService.java
+          grep -q 'bank_code' GranaOk/android/app/src/main/java/com/granaok/app/FinanceExtrasService.java
+          grep -q 'improvements-037.js' GranaOk/android/app/src/main/assets/www/index.html
+          grep -q 'categoriesView' GranaOk/android/app/src/main/assets/www/improvements-037.js
+          grep -q 'txinstallments' GranaOk/android/app/src/main/assets/www/improvements-037.js
           if grep -q 'MutationObserver' GranaOk/android/app/src/main/assets/www/safe-version.js; then
             echo 'Recursive version observer must not be present'
             exit 1
@@ -77,12 +81,12 @@ jobs:
         run: gradle -p GranaOk/android :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.3.6.apk
+        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.3.7.apk
 
       - name: Upload beta APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOk-Beta-v0.3.6
-          path: GranaOk-Beta-v0.3.6.apk
+          name: GranaOk-Beta-v0.3.7
+          path: GranaOk-Beta-v0.3.7.apk
           if-no-files-found: error
           retention-days: 30
