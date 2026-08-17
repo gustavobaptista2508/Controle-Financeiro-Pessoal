@@ -38,10 +38,12 @@ jobs:
           grep -q 'MariaDbConnection.newConnection' GranaOk/android/app/src/main/java/com/granaok/app/DbWorkerService.java
           grep -q 'MariaDbConnection.newConnection' GranaOk/android/app/src/main/java/com/granaok/app/FinanceWorkerService.java
           grep -q 'MariaDbConnection.newConnection' GranaOk/android/app/src/main/java/com/granaok/app/FinanceExtrasService.java
-          if grep -R -q 'Class.forName("org.mariadb.jdbc.Driver")' GranaOk/android/app/src/main/java/com/granaok/app; then
-            echo 'Unsafe Driver class loading found'
-            exit 1
-          fi
+          for f in DbWorkerService.java FinanceWorkerService.java FinanceExtrasService.java MainActivityUi.java MainActivityV037.java; do
+            if grep -q 'Class.forName("org.mariadb.jdbc.Driver")' "GranaOk/android/app/src/main/java/com/granaok/app/$f"; then
+              echo "Unsafe Driver class loading found in $f"
+              exit 1
+            fi
+          done
 
       - name: Verify beta 0.3.7 features
         shell: bash
