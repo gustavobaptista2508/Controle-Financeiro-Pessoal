@@ -10,8 +10,8 @@ android {
         applicationId 'com.granaok.app'
         minSdk 23
         targetSdk 35
-        versionCode 16
-        versionName '0.5.1-beta'
+        versionCode 17
+        versionName '0.5.2-beta'
     }
 
     compileOptions {
@@ -76,8 +76,6 @@ dependencies {
     implementation 'androidx.fragment:fragment:1.8.2'
     implementation 'androidx.core:core:1.13.1'
     implementation 'org.mariadb.jdbc:mariadb-java-client:2.7.13'
-    // Modelo latino empacotado no APK: OCR funciona sem download posterior do modelo.
     implementation 'com.google.mlkit:text-recognition:16.0.1'
-    // Extrai primeiro a camada de texto de PDFs bancários; OCR fica como fallback.
     implementation 'com.tom-roush:pdfbox-android:2.0.27.0'
 }
