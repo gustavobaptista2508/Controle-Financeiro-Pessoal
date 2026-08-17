@@ -11,6 +11,16 @@
         android:roundIcon="@drawable/granaok_icon"
         android:theme="@style/AppTheme">
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <service
             android:name=".DbWorkerService"
             android:exported="false"
@@ -31,8 +41,23 @@
             android:exported="false"
             android:process=":mysql" />
 
+        <service
+            android:name=".FinanceManageService"
+            android:exported="false"
+            android:process=":mysql" />
+
+        <service
+            android:name=".ImportFinanceService"
+            android:exported="false"
+            android:process=":mysql" />
+
+        <service
+            android:name=".InvestmentRadarService"
+            android:exported="false"
+            android:process=":radar" />
+
         <activity
-            android:name=".MainActivityV038"
+            android:name=".MainActivityV040"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
