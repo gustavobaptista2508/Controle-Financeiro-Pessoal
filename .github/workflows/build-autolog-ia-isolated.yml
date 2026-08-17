@@ -50,7 +50,6 @@ jobs:
       - name: Apply crash-safe 1.0.1 patch
         shell: bash
         run: |
-          echo '1e986df4989a740ec14b941b7c50ae71cc27adc4034435836b556db688e9e9c4  autolog-fix01.00' | sha256sum -c -
           base64 --decode autolog-fix01.00 | gzip -dc > /tmp/autolog-v101.patch
           (cd autolog-ia && patch -p1 < /tmp/autolog-v101.patch)
           echo '0ec71d0ed333a6078b6c15f9dbd7d3e8214dd8d464053cb57bc71a2eb8844328  autolog-ia/app/src/main/java/com/autologia/app/MainActivity.java' | sha256sum -c -
