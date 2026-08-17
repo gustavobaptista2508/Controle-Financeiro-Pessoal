@@ -21,48 +21,18 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <service
-            android:name=".DbWorkerService"
-            android:exported="false"
-            android:process=":mysql" />
-
-        <service
-            android:name=".FinanceWorkerService"
-            android:exported="false"
-            android:process=":mysql" />
-
-        <service
-            android:name=".FinanceExtrasService"
-            android:exported="false"
-            android:process=":mysql" />
-
-        <service
-            android:name=".PlanningService"
-            android:exported="false"
-            android:process=":mysql" />
-
-        <service
-            android:name=".FinanceManageService"
-            android:exported="false"
-            android:process=":mysql" />
-
-        <service
-            android:name=".ImportFinanceService"
-            android:exported="false"
-            android:process=":mysql" />
-
-        <service
-            android:name=".HouseholdFinanceService"
-            android:exported="false"
-            android:process=":mysql" />
-
-        <service
-            android:name=".InvestmentRadarService"
-            android:exported="false"
-            android:process=":radar" />
+        <service android:name=".DbWorkerService" android:exported="false" android:process=":mysql" />
+        <service android:name=".FinanceWorkerService" android:exported="false" android:process=":mysql" />
+        <service android:name=".FinanceExtrasService" android:exported="false" android:process=":mysql" />
+        <service android:name=".PlanningService" android:exported="false" android:process=":mysql" />
+        <service android:name=".FinanceManageService" android:exported="false" android:process=":mysql" />
+        <service android:name=".ImportFinanceService" android:exported="false" android:process=":mysql" />
+        <service android:name=".HouseholdFinanceService" android:exported="false" android:process=":mysql" />
+        <service android:name=".FinancingLifecycleService" android:exported="false" android:process=":mysql" />
+        <service android:name=".InvestmentRadarService" android:exported="false" android:process=":radar" />
 
         <activity
-            android:name=".MainActivityV051"
+            android:name=".MainActivityV052"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
