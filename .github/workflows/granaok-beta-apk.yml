@@ -75,7 +75,7 @@ jobs:
           grep -q 'parseReceipt' GranaOk/android/app/src/main/java/com/granaok/app/DocumentParser.java
           grep -q 'parseStatement' GranaOk/android/app/src/main/java/com/granaok/app/DocumentParser.java
           grep -q 'import_hash' GranaOk/android/app/src/main/java/com/granaok/app/ImportFinanceService.java
-          grep -q 'bcdata.sgs.1178' GranaOk/android/app/src/main/java/com/granaok/app/InvestmentRadarService.java
+          grep -q 'latestBcb(1178' GranaOk/android/app/src/main/java/com/granaok/app/InvestmentRadarService.java
           grep -q 'tesourodireto.com.br' GranaOk/android/app/src/main/java/com/granaok/app/InvestmentRadarService.java
           grep -q 'management-039.js' GranaOk/android/app/src/main/assets/www/index.html
           grep -q 'tools-040.js' GranaOk/android/app/src/main/assets/www/index.html
