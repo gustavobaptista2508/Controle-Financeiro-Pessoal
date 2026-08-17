@@ -4,7 +4,7 @@ on:
   push:
     branches: [autolog-ia-build]
     paths:
-      - 'autolog-ia-source.zip.b64'
+      - 'autolog-ia-source.part*'
       - '.github/workflows/build-autolog-ia-isolated.yml'
   workflow_dispatch:
 
@@ -18,11 +18,18 @@ jobs:
       - name: Checkout isolated branch
         uses: actions/checkout@v4
 
-      - name: Restore AutoLog IA source
+      - name: Restore and verify AutoLog IA source
         shell: bash
         run: |
-          base64 --decode autolog-ia-source.zip.b64 > /tmp/AutoLogIA_source.zip
+          echo 'Source chunks:'
+          wc -c autolog-ia-source.part*
+          sha256sum autolog-ia-source.part*
+          cat autolog-ia-source.part* > /tmp/AutoLogIA_source.b64
+          echo 'aadede6392191a634ee364a50b38660472397998d2af34aec88add1c2cab66b7  /tmp/AutoLogIA_source.b64' | sha256sum -c -
+          base64 --decode /tmp/AutoLogIA_source.b64 > /tmp/AutoLogIA_source.zip
+          echo '7a79b5fa4674e92e046c2618ba2ce1152ff14f4372b922c6947784eb620150e5  /tmp/AutoLogIA_source.zip' | sha256sum -c -
           unzip -t /tmp/AutoLogIA_source.zip
+          rm -rf /tmp/autolog-src
           unzip -q /tmp/AutoLogIA_source.zip -d /tmp/autolog-src
           mv /tmp/autolog-src/AutoLogIA ./autolog-ia
 
