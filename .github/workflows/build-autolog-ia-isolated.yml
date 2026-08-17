@@ -13,27 +13,44 @@ jobs:
       - name: Checkout isolated branch
         uses: actions/checkout@v4
 
-      - name: Restore and verify AutoLog IA source
+      - name: Restore AutoLog IA source
         shell: bash
         run: |
-          echo 'Verify source chunks:'
-          echo '8beabd8243db72616d1ffdfbfa66d62ab43ba3c0ba3bf9107b9fa1ab8aa4800b  autolog-ia-source.part00' | sha256sum -c -
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('autolog-ia-source.part04')
+          s = p.read_text()
+          for pos in (1125, 2221, 3257, 3749):
+              assert s[pos] == 'I', (pos, s[pos])
+              s = s[:pos] + 'Y' + s[pos+1:]
+          p.write_text(s)
+          PY
+          echo 'c699d85353421b5ce0bd918acf9ea5cd477266bea55e6e98afceb6e8cb7112d6  autolog-ia-source.part00' | sha256sum -c -
           echo 'e0be702e72900dfb01313dec7a4912e8b6016b24c6af1b05d387f9e1af3071de  autolog-ia-source.part01' | sha256sum -c -
-          echo 'e31e4a0e199c20e2f0c6492e9b3a0043a1dc6550337940136342786933d73ead  autolog-ia-source.part02' | sha256sum -c -
-          echo '8c391aaa15f340c7e47e7fec453e0a620486e87e0db29cc91db2ad5609a8ec6a  autolog-ia-source.part03' | sha256sum -c -
-          echo 'f3bc53e9cb302ff283f559e0e25b70a0da427b80027105cae8ba2d2345402e82  autolog-ia-source.part04' | sha256sum -c -
-          echo '2c7531f7888472988842ac1ead763853f1caeb39e4161032a8cccf7ea9ec60dd  autolog-ia-source.part05' | sha256sum -c -
-          echo '0829b3ec0ee74c16001cb552e9f199534f996307f5f6e2cf6a7b53097a51f221  autolog-ia-source.part06' | sha256sum -c -
-          echo '071d0b02cb4560f55c30b7426c6131e76774667d94465f45c8ce88d482529be2  autolog-ia-source.part07' | sha256sum -c -
-          echo '3d3b1974c81488d6998b4f577b192c47b0f5a934f1dfe2a9b58b12703bb7fb9d  autolog-ia-source.part08' | sha256sum -c -
+          echo 'fe0893edac0ed809dcf70938dceb97370fa29cfe60ff09e72250743111d4d609  autolog-ia-source.part02' | sha256sum -c -
+          echo 'b308e6bf66c4f59133d010c662c8c9a086dca979466fa0d8a04f637193f30168  autolog-ia-source.part03' | sha256sum -c -
+          echo 'f9360a0c5e89b5c1c63d4e505ec0715b94eade0f55b37479f4cd85c3e3f23176  autolog-ia-source.part04' | sha256sum -c -
+          echo 'fdf4112d6c136447852406530b0b08904167201212619ca62d74cad2f6ca1ff2  autolog-ia-source.part05' | sha256sum -c -
+          echo '85aee144f3d597d172fcf91220d84d59eea9561bf8fb6f13acbe35779c31f8f1  autolog-ia-source.part06' | sha256sum -c -
+          echo '585eb22497a47b876bb4afdce4f0f82e7b51a96702c50f2aa8dbd3aa3f0a44d3  autolog-ia-source.part07' | sha256sum -c -
+          echo '9af0f0349988b279e2c71aa4943fb664825da429a1ac0319d65b011251ca1148  autolog-ia-source.part08' | sha256sum -c -
           cat autolog-ia-source.part00 autolog-ia-source.part01 autolog-ia-source.part02 autolog-ia-source.part03 autolog-ia-source.part04 autolog-ia-source.part05 autolog-ia-source.part06 autolog-ia-source.part07 autolog-ia-source.part08 > /tmp/AutoLogIA_source.b64
-          echo '85b826a0311aae032c2f8d6f7a52eb4c646b0d5816647dc303149ab7d095c800  /tmp/AutoLogIA_source.b64' | sha256sum -c -
+          echo 'aadede6392191a634ee364a50b38660472397998d2af34aec88add1c2cab66b7  /tmp/AutoLogIA_source.b64' | sha256sum -c -
           base64 --decode /tmp/AutoLogIA_source.b64 > /tmp/AutoLogIA_source.zip
-          echo 'a0cbf5f53f3040700acf972c88b01f1d266da752b6e174eec3e186b38abde7ef  /tmp/AutoLogIA_source.zip' | sha256sum -c -
+          echo '7a79b5fa4674e92e046c2618ba2ce1152ff14f4372b922c6947784eb620150e5  /tmp/AutoLogIA_source.zip' | sha256sum -c -
           unzip -t /tmp/AutoLogIA_source.zip
           rm -rf /tmp/autolog-src autolog-ia
           unzip -q /tmp/AutoLogIA_source.zip -d /tmp/autolog-src
           mv /tmp/autolog-src/AutoLogIA ./autolog-ia
+
+      - name: Apply crash-safe 1.0.1 patch
+        shell: bash
+        run: |
+          echo '1e986df4989a740ec14b941b7c50ae71cc27adc4034435836b556db688e9e9c4  autolog-fix01.00' | sha256sum -c -
+          base64 --decode autolog-fix01.00 | gzip -dc > /tmp/autolog-v101.patch
+          (cd autolog-ia && patch -p1 < /tmp/autolog-v101.patch)
+          echo '0ec71d0ed333a6078b6c15f9dbd7d3e8214dd8d464053cb57bc71a2eb8844328  autolog-ia/app/src/main/java/com/autologia/app/MainActivity.java' | sha256sum -c -
+          echo '5d6f068484865f739d1252da6a563b45e17c1d91319c61cdd479da26d96cc277  autolog-ia/app/build.gradle' | sha256sum -c -
 
       - name: Java 17
         uses: actions/setup-java@v4
