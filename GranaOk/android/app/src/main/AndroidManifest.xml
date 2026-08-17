@@ -62,7 +62,7 @@
             android:process=":radar" />
 
         <activity
-            android:name=".MainActivityV050"
+            android:name=".MainActivityV051"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
