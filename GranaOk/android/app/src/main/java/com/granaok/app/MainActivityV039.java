@@ -22,8 +22,8 @@ import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
-/** Beta 0.3.9: bridge de edição e filtros de lançamentos/contas. */
-public class MainActivityV039 extends MainActivityV037 {
+/** Beta 0.3.9+: bridge de edição e filtros de lançamentos/contas. */
+public class MainActivityV039 extends MainActivityV038 {
     private static final String PREFS = "granaok_secure";
     private static final String KEY_ALIAS = "granaok_db_key";
     private WebView manageWeb;
