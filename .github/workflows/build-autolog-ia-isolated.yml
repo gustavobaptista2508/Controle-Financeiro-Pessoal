@@ -50,7 +50,15 @@ jobs:
       - name: Apply crash-safe 1.0.1 patch
         shell: bash
         run: |
-          base64 --decode autolog-fix01.00 | gzip -dc > /tmp/autolog-v101.patch
+          echo 'ad906ee1ac8a51d0f46bfe7ea317470923446fddfb6942e1cf6f5f1b1e9a7ed4  autolog-fix01.00' | sha256sum -c -
+          echo '9d16d110f83fa9427f727a7fe005d6754bc90d1d099f8d5b0b37ba9098a1dfb1  autolog-fix01.01' | sha256sum -c -
+          echo '6d6c0fbbdddd3ab215191be1d368e27843b9c586b0e9cb17fe38c7b8b3c002e7  autolog-fix01.02' | sha256sum -c -
+          echo 'e8e86f273dccd48ba9bd9b2d4860f6a1bd6edbb0376ab924072fad1ba4cdf3d1  autolog-fix01.03' | sha256sum -c -
+          echo 'eeac45061cacf934b9388a9d2a963812852a26bcc0dee6efcd04fb3bf548477d  autolog-fix01.04' | sha256sum -c -
+          echo '61ea2a8b1dfad6e9e536ce46a08050346af52d4b445bc633577a68320f976a76  autolog-fix01.05' | sha256sum -c -
+          cat autolog-fix01.00 autolog-fix01.01 autolog-fix01.02 autolog-fix01.03 autolog-fix01.04 autolog-fix01.05 > /tmp/autolog-v101.patch.gz.b64
+          echo '1e986df4989a740ec14b941b7c50ae71cc27adc4034435836b556db688e9e9c4  /tmp/autolog-v101.patch.gz.b64' | sha256sum -c -
+          base64 --decode /tmp/autolog-v101.patch.gz.b64 | gzip -dc > /tmp/autolog-v101.patch
           (cd autolog-ia && patch -p1 < /tmp/autolog-v101.patch)
           echo '0ec71d0ed333a6078b6c15f9dbd7d3e8214dd8d464053cb57bc71a2eb8844328  autolog-ia/app/src/main/java/com/autologia/app/MainActivity.java' | sha256sum -c -
           echo '5d6f068484865f739d1252da6a563b45e17c1d91319c61cdd479da26d96cc277  autolog-ia/app/build.gradle' | sha256sum -c -
