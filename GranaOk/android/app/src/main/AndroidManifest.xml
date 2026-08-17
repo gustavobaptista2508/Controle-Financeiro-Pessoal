@@ -21,8 +21,13 @@
             android:exported="false"
             android:process=":mysql" />
 
+        <service
+            android:name=".FinanceExtrasService"
+            android:exported="false"
+            android:process=":mysql" />
+
         <activity
-            android:name=".MainActivityUi"
+            android:name=".MainActivityV037"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
