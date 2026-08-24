@@ -63,6 +63,45 @@ jobs:
           echo '0ec71d0ed333a6078b6c15f9dbd7d3e8214dd8d464053cb57bc71a2eb8844328  autolog-ia/app/src/main/java/com/autologia/app/MainActivity.java' | sha256sum -c -
           echo '5d6f068484865f739d1252da6a563b45e17c1d91319c61cdd479da26d96cc277  autolog-ia/app/build.gradle' | sha256sum -c -
 
+      - name: Apply AutoLog IA 1.1.0 features
+        shell: bash
+        run: |
+          echo 'd6fdd3db2894726175efcb9a950dbcf8d1d2d97dda442f6158cc34099434d115  autolog-fix02.00' | sha256sum -c -
+          echo '315a97f41b626a6e0ea3e614ca05cabede45e9ef9309e7ba8a25ba4e2eb45cf4  autolog-fix02.01' | sha256sum -c -
+          echo '443a632944ff18266114fbaa11ee2b0b0fb56f3aba0e35a8e9d3d3d562d2dffd  autolog-fix02.02' | sha256sum -c -
+          echo 'f087852e889b8123b4e5901228ae7a34886fc098744c80026ea6cb6e0091c014  autolog-fix02.03' | sha256sum -c -
+          echo '9d59d46e4a24662b11ace83bad49d0f1f088779f5dc2d7a7421e5b6e061cd5f2  autolog-fix02.04' | sha256sum -c -
+          echo 'ae443265bfa063077d28e53614853ac6573be2277aaec21a48e179d88d881180  autolog-fix02.05' | sha256sum -c -
+          echo 'a075b2e7bea1ddee35e768e04520a17f2aec4ec4c71824defa815239686709f0  autolog-fix02.06' | sha256sum -c -
+          echo '9aa8e7fa1a6346d33d4ea6feb28c309ba53a26f92370aabdf261fd1f3aac495c  autolog-fix02.07' | sha256sum -c -
+          echo '29da2996fbf0216b7fe5bd2a2bd49caa17fe4ee0701c9918a046f20e331a1561  autolog-fix02.08' | sha256sum -c -
+          echo 'abf98b97a9a550755a938e8634388420f9f996c556d57a9f7d7a3fb4ed6672b6  autolog-fix02.09' | sha256sum -c -
+          cat autolog-fix02.00 autolog-fix02.01 autolog-fix02.02 autolog-fix02.03 autolog-fix02.04 autolog-fix02.05 autolog-fix02.06 autolog-fix02.07 autolog-fix02.08 autolog-fix02.09 > /tmp/autolog-v110.patch.gz.b64
+          echo '8e695d185ee013bd22f163a20cc064af82be6b7e534de0e4cb2328df1f2c8220  /tmp/autolog-v110.patch.gz.b64' | sha256sum -c -
+          base64 --decode /tmp/autolog-v110.patch.gz.b64 | gzip -dc > /tmp/autolog-v110.patch
+          echo 'aac37af486f04fcb73b661466705296c4f5eac31d3cfec4a47794dd70101057a  /tmp/autolog-v110.patch' | sha256sum -c -
+          (cd autolog-ia && patch -p1 < /tmp/autolog-v110.patch)
+          python - <<'PY'
+          from pathlib import Path
+          gradle = Path('autolog-ia/app/build.gradle')
+          s = gradle.read_text()
+          assert "versionCode 2" in s
+          assert "versionName '1.0.1-beta'" in s
+          s = s.replace('versionCode 2', 'versionCode 3').replace("versionName '1.0.1-beta'", "versionName '1.1.0-beta'")
+          gradle.write_text(s)
+          main = Path('autolog-ia/app/src/main/java/com/autologia/app/MainActivity.java')
+          m = main.read_text()
+          assert '1.0.1' in m
+          main.write_text(m.replace('1.0.1','1.1.0'))
+          PY
+          echo '265fca016ce75d98bce688bd25779f2e3d42414c370113c7e75b0fd9946effdf  autolog-ia/app/src/main/assets/web/app.js' | sha256sum -c -
+          echo 'f07a374ff58ed109871b34f997360224b7abfe3fa49ceaf3cf457d2181b4429f  autolog-ia/app/src/main/assets/web/index.html' | sha256sum -c -
+          echo '10c6599d06d007199d1c5522bc2aff55f78aabfb710ec29b661661d1a0b577eb  autolog-ia/app/src/main/assets/web/app.css' | sha256sum -c -
+          grep -q "versionCode 3" autolog-ia/app/build.gradle
+          grep -q "versionName '1.1.0-beta'" autolog-ia/app/build.gradle
+          grep -q '1.1.0' autolog-ia/app/src/main/java/com/autologia/app/MainActivity.java
+          node --check autolog-ia/app/src/main/assets/web/app.js
+
       - name: Java 17
         uses: actions/setup-java@v4
         with:
@@ -86,6 +125,9 @@ jobs:
           curl --fail --location --retry 3 https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css -o autolog-ia/app/src/main/assets/web/vendor/bootstrap.min.css
           curl --fail --location --retry 3 https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js -o autolog-ia/app/src/main/assets/web/vendor/bootstrap.bundle.min.js
 
+      - name: Prepare source archive
+        run: (cd autolog-ia && zip -qr ../AutoLogIA-1.1.0-source.zip . -x 'app/build/*' '.gradle/*')
+
       - name: Build APK
         working-directory: autolog-ia
         run: gradle --no-daemon :app:assembleDebug
@@ -96,11 +138,18 @@ jobs:
           $ANDROID_HOME/build-tools/35.0.0/zipalign -c -P 16 -v 4 autolog-ia/app/build/outputs/apk/debug/app-debug.apk
 
       - name: Prepare artifact
-        run: cp autolog-ia/app/build/outputs/apk/debug/app-debug.apk AutoLog-IA-1.0.1-beta.apk
+        run: cp autolog-ia/app/build/outputs/apk/debug/app-debug.apk AutoLog-IA-1.1.0-beta.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: AutoLog-IA-APK-1.0.1
-          path: AutoLog-IA-1.0.1-beta.apk
+          name: AutoLog-IA-APK-1.1.0
+          path: AutoLog-IA-1.1.0-beta.apk
+          if-no-files-found: error
+
+      - name: Upload source
+        uses: actions/upload-artifact@v4
+        with:
+          name: AutoLog-IA-Source-1.1.0
+          path: AutoLogIA-1.1.0-source.zip
           if-no-files-found: error
