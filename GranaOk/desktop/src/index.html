@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f172a">
+<title>GranaOk Desktop</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<section id="setup" class="setup hidden">
+  <div class="setup-card">
+    <div class="logo">Grana<span>Ok</span><small>DESKTOP 0.1</small></div>
+    <h1>Conectar ao seu GranaOk</h1>
+    <p class="muted">A conexão é feita diretamente deste computador para o MySQL. A senha é criptografada pelo Windows e não fica no HTML.</p>
+    <div class="form-grid">
+      <div class="full"><label>Servidor MySQL</label><input id="cfg-host" placeholder="exemplo.mysql.uhserver.com"></div>
+      <div><label>Porta</label><input id="cfg-port" type="number" value="3306"></div>
+      <div><label>Banco</label><input id="cfg-db"></div>
+      <div><label>Usuário</label><input id="cfg-user"></div>
+      <div><label>Senha</label><input id="cfg-pass" type="password" placeholder="Senha do MySQL"></div>
+      <div><label>Prefixo</label><input id="cfg-prefix" value="granaok_"></div>
+      <div><label>SSL</label><select id="cfg-ssl"><option value="0">Desativado</option><option value="1">Ativado</option></select></div>
+      <div class="full actions"><button class="secondary" id="cfg-test">Testar conexão</button><button class="primary" id="cfg-save">Salvar e entrar</button></div>
+      <div class="full" id="cfg-out"></div>
+    </div>
+  </div>
+</section>
+
+<div id="shell" class="shell hidden">
+  <aside class="sidebar">
+    <div class="logo side-logo">Grana<span>Ok</span><small>DESKTOP 0.1</small></div>
+    <nav id="nav">
+      <button data-view="dashboard" class="active">⌂ <span>Visão geral</span></button>
+      <button data-view="transactions">⇄ <span>Lançamentos</span></button>
+      <button data-view="cards">▣ <span>Cartões</span></button>
+      <button data-view="accounts">🏦 <span>Contas</span></button>
+      <button data-view="financings">▤ <span>Financiamentos</span></button>
+      <button data-view="registry">＋ <span>Cadastros</span></button>
+    </nav>
+    <div class="side-bottom">
+      <button id="backup" class="side-action">⬇ Backup JSON</button>
+      <button id="settings" class="side-action">⚙ Conexão MySQL</button>
+    </div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div><b id="title">Visão geral</b><small id="subtitle">GranaOk Desktop</small></div>
+      <button id="refresh" class="ghost">↻ Atualizar</button>
+    </header>
+    <section id="content" class="content"></section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <button id="modal-close" class="modal-close">×</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+<script src="renderer.js"></script>
+</body>
+</html>
