@@ -83,7 +83,7 @@ function safe_date(?string $date, ?string $fallback = null): string {
 function money($v): float {
     if (is_string($v)) {
         $v = trim($v);
-        if (str_contains($v, ',')) $v = str_replace(',', '.', str_replace('.', '', $v));
+        if (strpos($v, ',') !== false) $v = str_replace(',', '.', str_replace('.', '', $v));
     }
     $n = (float)$v;
     if ($n < 0) $n = abs($n);
