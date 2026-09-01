@@ -167,7 +167,8 @@ async function action(name,a) {
       const [[iv]]=await conn.execute("SELECT COALESCE(SUM(amount),0) total,COALESCE(SUM(CASE WHEN status='paid' THEN amount ELSE 0 END),0) paid,COALESCE(SUM(CASE WHEN status<>'paid' THEN amount ELSE 0 END),0) pending FROM "+p+"card_invoices WHERE reference_month>=? AND reference_month<?",[start,next]);
       const [[ov]]=await conn.query("SELECT COUNT(*) c FROM "+p+"transactions WHERE type='expense' AND status<>'paid' AND due_date<CURDATE()");
       const [[fin]]=await conn.query('SELECT COALESCE(SUM(installment_amount),0) v FROM '+p+'financings WHERE active=1');
-      const totalMonthlyExpenses=Number(tx.expenses||0)+Number(iv.total||0);\n      return {ok:true,month:m,accounts_balance:Number(bal.v||0),income:Number(tx.income||0),expenses:Number(tx.expenses||0),paid_expenses:Number(tx.paid_expenses||0),pending_expenses:Number(tx.pending_expenses||0),card_invoices:Number(iv.total||0),card_paid:Number(iv.paid||0),card_pending:Number(iv.pending||0),total_monthly_expenses:totalMonthlyExpenses,overdue_count:Number(ov.c||0),financing_monthly:Number(fin.v||0),projected:Number(bal.v||0)+Number(tx.income||0)-totalMonthlyExpenses};
+      const totalMonthlyExpenses=Number(tx.expenses||0)+Number(iv.total||0);
+      return {ok:true,month:m,accounts_balance:Number(bal.v||0),income:Number(tx.income||0),expenses:Number(tx.expenses||0),paid_expenses:Number(tx.paid_expenses||0),pending_expenses:Number(tx.pending_expenses||0),card_invoices:Number(iv.total||0),card_paid:Number(iv.paid||0),card_pending:Number(iv.pending||0),total_monthly_expenses:totalMonthlyExpenses,overdue_count:Number(ov.c||0),financing_monthly:Number(fin.v||0),projected:Number(bal.v||0)+Number(tx.income||0)-totalMonthlyExpenses};
     }
 
     if(name==='context'){
