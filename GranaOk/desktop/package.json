@@ -1,0 +1,42 @@
+{
+  "name": "granaok-desktop",
+  "version": "0.1.0",
+  "description": "GranaOk Desktop para Windows - interface HTML com acesso MySQL local",
+  "main": "main.js",
+  "author": "Luiz Gustavo Carvalho Baptista",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable --x64"
+  },
+  "dependencies": {
+    "mysql2": "^3.14.3"
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.granaok.desktop",
+    "productName": "GranaOk Desktop",
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "GranaOk-Desktop-v0.1.0-Windows-x64.exe"
+    }
+  }
+}
