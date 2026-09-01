@@ -40,12 +40,9 @@ jobs:
       - name: Verify advanced transaction filters
         shell: pwsh
         run: |
-          Select-String -Path GranaOk/desktop/src/renderer.js -Pattern 'tx-account' -Quiet | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw 'Account filter missing' }
-          Select-String -Path GranaOk/desktop/src/renderer.js -Pattern 'tx-observation' -Quiet | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw 'Observation filter missing' }
-          Select-String -Path GranaOk/desktop/main.js -Pattern "installments==='installment'" -Quiet | Out-Null
-          if ($LASTEXITCODE -ne 0) { throw 'Installment filter missing' }
+          if (-not (Select-String -Path GranaOk/desktop/src/renderer.js -Pattern 'tx-account' -Quiet)) { throw 'Account filter missing' }
+          if (-not (Select-String -Path GranaOk/desktop/src/renderer.js -Pattern 'tx-observation' -Quiet)) { throw 'Observation filter missing' }
+          if (-not (Select-String -Path GranaOk/desktop/main.js -Pattern "installments==='installment'" -Quiet)) { throw 'Installment filter missing' }
 
       - name: Install dependencies
         working-directory: GranaOk/desktop
