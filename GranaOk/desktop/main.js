@@ -180,10 +180,51 @@ async function action(name,a) {
     }
 
     if(name==='transactions:list'){
-      const m=monthOk(a.month), start=m+'-01', next=addMonths(start,1), type=['income','expense'].includes(a.type)?a.type:'', status=['paid','pending','overdue'].includes(a.status)?a.status:'', q=String(a.search||'').trim();
+      const m=monthOk(a.month), monthStart=m+'-01', monthNext=addMonths(monthStart,1);
+      const type=['income','expense'].includes(a.type)?a.type:'';
+      const status=['paid','pending','overdue'].includes(a.status)?a.status:'';
+      const description=String(a.search||'').trim();
+      const observation=String(a.observation||'').trim();
+      const source=String(a.source||'').trim();
+      const accountId=Number(a.account_id||0);
+      const personId=Number(a.person_id||0);
+      const categoryId=Number(a.category_id||0);
+      const minAmount=(a.min_amount===null||a.min_amount===undefined||String(a.min_amount).trim()==='')?null:money(a.min_amount);
+      const maxAmount=(a.max_amount===null||a.max_amount===undefined||String(a.max_amount).trim()==='')?null:money(a.max_amount);
+      const dateFrom=/^\d{4}-\d{2}-\d{2}$/.test(String(a.date_from||''))?String(a.date_from):'';
+      const dateTo=/^\d{4}-\d{2}-\d{2}$/.test(String(a.date_to||''))?String(a.date_to):'';
+      const installments=['cash','installment'].includes(a.installments)?a.installments:'';
+      const orderMap={
+        'date_asc':'t.due_date ASC,t.id ASC',
+        'date_desc':'t.due_date DESC,t.id DESC',
+        'amount_desc':'t.amount DESC,t.due_date ASC',
+        'amount_asc':'t.amount ASC,t.due_date ASC',
+        'description_asc':'t.description ASC,t.due_date ASC'
+      };
+      const orderBy=orderMap[a.order]||orderMap.date_asc;
       const effective="CASE WHEN t.status='paid' THEN 'paid' WHEN t.status='overdue' THEN 'overdue' WHEN t.status='pending' AND t.due_date<CURDATE() THEN 'overdue' ELSE t.status END";
-      const sql="SELECT t.id,t.person_id,t.account_id,t.category_id,t.type,t.description,t.amount,DATE_FORMAT(t.due_date,'%Y-%m-%d') due_date,CASE WHEN t.paid_date IS NULL THEN NULL ELSE DATE_FORMAT(t.paid_date,'%Y-%m-%d') END paid_date,t.status,"+effective+" effective_status,COALESCE(c.name,'Outros') category,COALESCE(ac.name,'') account_name,COALESCE(pe.name,'') person_name,COALESCE(t.observations,'') observations,COALESCE(t.installment_number,1) installment_number,COALESCE(t.installment_total,1) installment_total FROM "+p+"transactions t LEFT JOIN "+p+"categories c ON c.id=t.category_id LEFT JOIN "+p+"accounts ac ON ac.id=t.account_id LEFT JOIN "+p+"people pe ON pe.id=t.person_id WHERE t.due_date>=? AND t.due_date<? AND (?='' OR t.type=?) AND (?='' OR "+effective+"=?) AND (?='' OR t.description LIKE ? OR COALESCE(t.observations,'') LIKE ?) ORDER BY t.due_date,t.id";
-      const like='%'+q+'%'; const [rows]=await conn.execute(sql,[start,next,type,type,status,status,q,like,like]); return {ok:true,rows,month:m};
+
+      let sql="SELECT t.id,t.person_id,t.account_id,t.category_id,t.type,t.description,t.amount,DATE_FORMAT(t.due_date,'%Y-%m-%d') due_date,CASE WHEN t.paid_date IS NULL THEN NULL ELSE DATE_FORMAT(t.paid_date,'%Y-%m-%d') END paid_date,t.status,"+effective+" effective_status,COALESCE(c.name,'Outros') category,COALESCE(ac.name,'') account_name,COALESCE(pe.name,'') person_name,COALESCE(t.observations,'') observations,COALESCE(t.source,'') source,COALESCE(t.installment_number,1) installment_number,COALESCE(t.installment_total,1) installment_total FROM "+p+"transactions t LEFT JOIN "+p+"categories c ON c.id=t.category_id LEFT JOIN "+p+"accounts ac ON ac.id=t.account_id LEFT JOIN "+p+"people pe ON pe.id=t.person_id WHERE t.due_date>=? AND t.due_date<?";
+      const params=[monthStart,monthNext];
+
+      if(type){sql+=" AND t.type=?";params.push(type);}
+      if(status){sql+=" AND "+effective+"=?";params.push(status);}
+      if(description){sql+=" AND t.description LIKE ?";params.push('%'+description+'%');}
+      if(observation){sql+=" AND COALESCE(t.observations,'') LIKE ?";params.push('%'+observation+'%');}
+      if(source){sql+=" AND COALESCE(t.source,'') LIKE ?";params.push('%'+source+'%');}
+      if(accountId>0){sql+=" AND t.account_id=?";params.push(accountId);}
+      if(personId>0){sql+=" AND t.person_id=?";params.push(personId);}
+      if(categoryId>0){sql+=" AND t.category_id=?";params.push(categoryId);}
+      if(minAmount!==null){sql+=" AND t.amount>=?";params.push(minAmount);}
+      if(maxAmount!==null){sql+=" AND t.amount<=?";params.push(maxAmount);}
+      if(dateFrom){sql+=" AND t.due_date>=?";params.push(dateFrom);}
+      if(dateTo){sql+=" AND t.due_date<=?";params.push(dateTo);}
+      if(installments==='cash')sql+=" AND COALESCE(t.installment_total,1)<=1";
+      if(installments==='installment')sql+=" AND COALESCE(t.installment_total,1)>1";
+      sql+=" ORDER BY "+orderBy;
+
+      const [rows]=await conn.execute(sql,params);
+      return {ok:true,rows,month:m};
     }
 
     if(name==='transaction:save'){
