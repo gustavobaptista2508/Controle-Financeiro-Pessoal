@@ -132,6 +132,8 @@ async function syncInvoice(conn,p,cardId,month,dueDate) {
 }
 
 async function action(name,a) {
+  const aliases = {transactions:'transactions:list',transaction_save:'transaction:save',transaction_status:'transaction:status',account_save:'account:save',person_add:'person:add',category_add:'category:add',card_save:'card:save',card_purchase_add:'card:purchase',invoice:'invoice:get',invoice_pay:'invoice:pay',invoice_reopen:'invoice:reopen',financings:'financings:list',financing_pay:'financing:pay'};
+  name = aliases[name] || name;
   if (name === 'config:get') return publicConfig();
   if (name === 'config:test') {
     const prev=loadStoredConfig()||{};
