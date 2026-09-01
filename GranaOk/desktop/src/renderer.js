@@ -69,23 +69,88 @@ async function transactions(){
   await loadContext();
   content().innerHTML=`
     <div class="heading"><div><h1>Lançamentos</h1><p>Entradas, despesas e status por mês</p></div><button class="primary" id="new-tx">＋ Novo lançamento</button></div>
-    <div class="card toolbar">
-      <div><label>Mês</label><input id="tx-month" type="month" value="${currentMonth}"></div>
-      <div><label>Tipo</label><select id="tx-type"><option value="">Todos</option><option value="expense">Despesas</option><option value="income">Entradas</option></select></div>
-      <div><label>Status</label><select id="tx-status"><option value="">Todos</option><option value="pending">Pendentes</option><option value="paid">Pagos</option><option value="overdue">Atrasados</option></select></div>
-      <div><label>Busca</label><input id="tx-search" placeholder="Descrição ou observação"></div>
-      <button class="secondary" id="tx-filter">Filtrar</button>
+    <div class="card tx-filter-card">
+      <div class="toolbar tx-main-filters">
+        <div><label>Mês</label><input id="tx-month" type="month" value="${currentMonth}"></div>
+        <div><label>Conta</label><select id="tx-account"><option value="">Todas as contas</option>${ctx.accounts.filter(a=>Number(a.active)!==0).map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('')}</select></div>
+        <div><label>Tipo</label><select id="tx-type"><option value="">Todos</option><option value="expense">Despesas</option><option value="income">Entradas</option></select></div>
+        <div><label>Status</label><select id="tx-status"><option value="">Todos</option><option value="pending">Pendentes</option><option value="paid">Pagos</option><option value="overdue">Atrasados</option></select></div>
+        <div class="tx-search-main"><label>Descrição</label><input id="tx-search" placeholder="Buscar na descrição"></div>
+        <button class="secondary" id="tx-filter">Filtrar</button>
+      </div>
+
+      <div class="tx-filter-actions">
+        <button class="ghost" id="tx-more">⚙ Mais filtros <span id="tx-filter-count"></span></button>
+        <button class="ghost" id="tx-clear">Limpar filtros</button>
+      </div>
+
+      <div id="tx-advanced" class="tx-advanced hidden">
+        <div><label>Pessoa/Casal</label><select id="tx-person"><option value="">Todos</option>${ctx.people.filter(p=>Number(p.active)!==0).map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')}</select></div>
+        <div><label>Categoria</label><select id="tx-category"><option value="">Todas</option>${ctx.categories.filter(c=>Number(c.active)!==0).map(c=>'<option value="'+c.id+'">'+esc(c.name)+' · '+(c.kind==='income'?'Entrada':'Despesa')+'</option>').join('')}</select></div>
+        <div><label>Observação contém</label><input id="tx-observation" placeholder="Texto da observação"></div>
+        <div><label>Origem</label><input id="tx-source" placeholder="manual_import, desktop..."></div>
+        <div><label>Valor mínimo</label><input id="tx-min" inputmode="decimal" placeholder="0,00"></div>
+        <div><label>Valor máximo</label><input id="tx-max" inputmode="decimal" placeholder="0,00"></div>
+        <div><label>Vencimento de</label><input id="tx-date-from" type="date"></div>
+        <div><label>Vencimento até</label><input id="tx-date-to" type="date"></div>
+        <div><label>Parcelamento</label><select id="tx-installments"><option value="">Todos</option><option value="cash">Somente à vista</option><option value="installment">Somente parcelados</option></select></div>
+        <div><label>Ordenar por</label><select id="tx-order"><option value="date_asc">Data · mais antiga</option><option value="date_desc">Data · mais recente</option><option value="amount_desc">Maior valor</option><option value="amount_asc">Menor valor</option><option value="description_asc">Descrição A–Z</option></select></div>
+      </div>
     </div>
-    <div class="card" style="margin-top:16px"><div id="tx-list" class="table-wrap"><div class="empty">Carregando...</div></div></div>`;
+
+    <div id="tx-summary" class="tx-summary"></div>
+    <div class="card"><div id="tx-list" class="table-wrap"><div class="empty">Carregando...</div></div></div>`;
+
   $('#new-tx').onclick=()=>transactionForm();
   $('#tx-filter').onclick=()=>{currentMonth=$('#tx-month').value||currentMonth;loadTransactions()};
+  $('#tx-more').onclick=()=>{$('#tx-advanced').classList.toggle('hidden');$('#tx-more').classList.toggle('active-filter-panel',!$('#tx-advanced').classList.contains('hidden'))};
+  $('#tx-clear').onclick=()=>{
+    ['tx-account','tx-type','tx-status','tx-person','tx-category','tx-installments'].forEach(id=>{const e=$('#'+id);if(e)e.value=''});
+    ['tx-search','tx-observation','tx-source','tx-min','tx-max','tx-date-from','tx-date-to'].forEach(id=>{const e=$('#'+id);if(e)e.value=''});
+    $('#tx-order').value='date_asc';loadTransactions();
+  };
+  ['tx-month','tx-account','tx-type','tx-status'].forEach(id=>$('#'+id).addEventListener('change',()=>{if(id==='tx-month')currentMonth=$('#tx-month').value||currentMonth;loadTransactions()}));
+  $('#tx-search').addEventListener('keydown',e=>{if(e.key==='Enter')loadTransactions()});
   loadTransactions();
 }
+
+function txFilterPayload(){
+  return {
+    month:$('#tx-month')?.value||currentMonth,
+    account_id:Number($('#tx-account')?.value||0),
+    type:$('#tx-type')?.value||'',
+    status:$('#tx-status')?.value||'',
+    search:$('#tx-search')?.value||'',
+    person_id:Number($('#tx-person')?.value||0),
+    category_id:Number($('#tx-category')?.value||0),
+    observation:$('#tx-observation')?.value||'',
+    source:$('#tx-source')?.value||'',
+    min_amount:$('#tx-min')?.value||'',
+    max_amount:$('#tx-max')?.value||'',
+    date_from:$('#tx-date-from')?.value||'',
+    date_to:$('#tx-date-to')?.value||'',
+    installments:$('#tx-installments')?.value||'',
+    order:$('#tx-order')?.value||'date_asc'
+  };
+}
+function updateTxFilterCount(){
+  const p=txFilterPayload();
+  const advanced=[p.person_id,p.category_id,p.observation,p.source,p.min_amount,p.max_amount,p.date_from,p.date_to,p.installments,p.order!=='date_asc'?p.order:''].filter(Boolean).length;
+  const e=$('#tx-filter-count');if(e)e.textContent=advanced?'('+advanced+')':'';
+}
 async function loadTransactions(){
-  const el=$('#tx-list');if(!el)return;el.innerHTML='<div class="empty">Carregando...</div>';
+  const el=$('#tx-list');if(!el)return;el.innerHTML='<div class="empty">Carregando...</div>';updateTxFilterCount();
   try{
-    const d=await api('transactions',{month:$('#tx-month')?.value||currentMonth,type:$('#tx-type')?.value||'',status:$('#tx-status')?.value||'',search:$('#tx-search')?.value||''});
-    el.innerHTML=d.rows.length?`<table class="table"><thead><tr><th>Data</th><th>Descrição</th><th>Conta</th><th>Categoria</th><th>Status</th><th>Valor</th><th></th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${brDate(r.due_date)}</td><td class="desc"><b>${esc(r.description)}</b>${Number(r.installment_total)>1?'<small> · '+r.installment_number+'/'+r.installment_total+'</small>':''}</td><td>${esc(r.account_name||'—')}</td><td>${esc(r.category)}</td><td>${statusBadge(r.effective_status)}</td><td class="amount ${r.type}">${r.type==='expense'?'-':''}${money(r.amount)}</td><td><button class="ghost tx-edit" data-id="${r.id}">Editar</button>${r.status!=='paid'?'<button class="ghost tx-pay" data-id="'+r.id+'">Pagar</button>':''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Nenhum lançamento neste período.</div>';
+    const d=await api('transactions',txFilterPayload());
+    const expenses=d.rows.filter(r=>r.type==='expense').reduce((s,r)=>s+Number(r.amount||0),0);
+    const income=d.rows.filter(r=>r.type==='income').reduce((s,r)=>s+Number(r.amount||0),0);
+    const summary=$('#tx-summary');
+    if(summary)summary.innerHTML=`
+      <div><b>${d.rows.length}</b><span>resultado(s)</span></div>
+      <div class="tx-summary-expense"><b>${money(expenses)}</b><span>despesas filtradas</span></div>
+      <div class="tx-summary-income"><b>${money(income)}</b><span>entradas filtradas</span></div>`;
+
+    el.innerHTML=d.rows.length?`<table class="table"><thead><tr><th>Data</th><th>Descrição</th><th>Conta</th><th>Pessoa</th><th>Categoria</th><th>Status</th><th>Valor</th><th></th></tr></thead><tbody>${d.rows.map(r=>`<tr><td>${brDate(r.due_date)}</td><td class="desc"><b>${esc(r.description)}</b>${Number(r.installment_total)>1?'<small> · '+r.installment_number+'/'+r.installment_total+'</small>':''}${r.observations?'<div class="tx-row-note">'+esc(r.observations)+'</div>':''}</td><td>${esc(r.account_name||'—')}</td><td>${esc(r.person_name||'—')}</td><td>${esc(r.category)}</td><td>${statusBadge(r.effective_status)}</td><td class="amount ${r.type}">${r.type==='expense'?'-':''}${money(r.amount)}</td><td><button class="ghost tx-edit" data-id="${r.id}">Editar</button>${r.status!=='paid'?'<button class="ghost tx-pay" data-id="'+r.id+'">Pagar</button>':''}</td></tr>`).join('')}</tbody></table>`:'<div class="empty">Nenhum lançamento corresponde aos filtros.</div>';
     $$('.tx-edit').forEach(b=>b.onclick=()=>transactionForm(d.rows.find(x=>Number(x.id)===Number(b.dataset.id))));
     $$('.tx-pay').forEach(b=>b.onclick=async()=>{try{await api('transaction_status',{id:Number(b.dataset.id),status:'paid'});loadTransactions()}catch(e){alert(e.message)}});
   }catch(e){el.innerHTML=note(e.message,'err')}
