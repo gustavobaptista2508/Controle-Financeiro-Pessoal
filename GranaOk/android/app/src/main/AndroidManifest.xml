@@ -29,10 +29,11 @@
         <service android:name=".ImportFinanceService" android:exported="false" android:process=":mysql" />
         <service android:name=".HouseholdFinanceService" android:exported="false" android:process=":mysql" />
         <service android:name=".FinancingLifecycleService" android:exported="false" android:process=":mysql" />
+        <service android:name=".CardInvoicePaymentService" android:exported="false" android:process=":mysql" />
         <service android:name=".InvestmentRadarService" android:exported="false" android:process=":radar" />
 
         <activity
-            android:name=".MainActivityV052"
+            android:name=".MainActivityV060"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
