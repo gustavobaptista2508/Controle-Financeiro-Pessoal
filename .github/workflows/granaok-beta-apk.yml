@@ -1,4 +1,4 @@
-name: GranaOk Beta APK
+name: GranaOk Beta APK + Web
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-beta-apk:
+  build:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -39,7 +39,7 @@ jobs:
           end=datetime.date.today(); start=end-datetime.timedelta(days=60)
           q=urllib.parse.urlencode({'formato':'json','dataInicial':start.strftime('%d/%m/%Y'),'dataFinal':end.strftime('%d/%m/%Y')})
           url='https://api.bcb.gov.br/dados/serie/bcdata.sgs.1178/dados?'+q
-          req=urllib.request.Request(url,headers={'User-Agent':'GranaOk-CI/0.5.3'})
+          req=urllib.request.Request(url,headers={'User-Agent':'GranaOk-CI/0.6.0'})
           with urllib.request.urlopen(req,timeout=12) as r:
               data=json.load(r)
           assert data, 'BCB Selic returned no rows'
@@ -51,7 +51,7 @@ jobs:
         run: |
           grep -q 'android:process=":mysql"' GranaOk/android/app/src/main/AndroidManifest.xml
           grep -q 'android:process=":radar"' GranaOk/android/app/src/main/AndroidManifest.xml
-          for f in DbWorkerService.java FinanceWorkerService.java FinanceExtrasService.java PlanningService.java FinanceManageService.java ImportFinanceService.java HouseholdFinanceService.java FinancingLifecycleService.java; do
+          for f in DbWorkerService.java FinanceWorkerService.java FinanceExtrasService.java PlanningService.java FinanceManageService.java ImportFinanceService.java HouseholdFinanceService.java FinancingLifecycleService.java CardInvoicePaymentService.java; do
             grep -q 'MariaDbConnection.newConnection' "GranaOk/android/app/src/main/java/com/granaok/app/$f"
             if grep -q 'Class.forName("org.mariadb.jdbc.Driver")' "GranaOk/android/app/src/main/java/com/granaok/app/$f"; then
               echo "Unsafe Driver class loading found in $f"
@@ -72,34 +72,44 @@ jobs:
           grep -q 'ACTION_ADD_CARD_PURCHASE' GranaOk/android/app/src/main/java/com/granaok/app/HouseholdFinanceService.java
           grep -q 'investmentRadarView' GranaOk/android/app/src/main/assets/www/tools-040.js
           grep -q 'ai-chat-050' GranaOk/android/app/src/main/assets/www/assistant-050.js
-          grep -q 'household-050.js' GranaOk/android/app/src/main/assets/www/index.html
-          grep -q 'assistant-050.js' GranaOk/android/app/src/main/assets/www/index.html
-
-      - name: Verify financing lifecycle retained
-        shell: bash
-        run: |
-          grep -q 'MainActivityV052' GranaOk/android/app/src/main/AndroidManifest.xml
-          grep -q 'FinancingLifecycleService' GranaOk/android/app/src/main/AndroidManifest.xml
           grep -q 'ACTION_PAY_CURRENT' GranaOk/android/app/src/main/java/com/granaok/app/FinancingLifecycleService.java
-          grep -q 'ACTION_SET_NEXT_DUE' GranaOk/android/app/src/main/java/com/granaok/app/FinancingLifecycleService.java
-          grep -q 'financing_installments' GranaOk/android/app/src/main/java/com/granaok/app/FinancingLifecycleService.java
-          grep -q 'Marcar parcela' GranaOk/android/app/src/main/assets/www/financing-052.js
+          grep -q 'real_balance_plus_pending' GranaOk/android/app/src/main/java/com/granaok/app/PlanningService.java
 
-      - name: Verify beta 0.5.3 projection correction
+      - name: Verify beta 0.6.0 invoice payment
         shell: bash
         run: |
-          grep -q 'real_balance_plus_pending' GranaOk/android/app/src/main/java/com/granaok/app/PlanningService.java
-          grep -q 'pending_income_through_target' GranaOk/android/app/src/main/java/com/granaok/app/PlanningService.java
-          grep -q 'pending_expenses_through_target' GranaOk/android/app/src/main/java/com/granaok/app/PlanningService.java
-          grep -q 'pending_card_invoices_through_target' GranaOk/android/app/src/main/java/com/granaok/app/PlanningService.java
-          grep -q 'pending_financing_through_target' GranaOk/android/app/src/main/java/com/granaok/app/PlanningService.java
-          grep -q 'base_projected_balance' GranaOk/android/app/src/main/java/com/granaok/app/PlanningService.java
-          grep -q "BETA 0.5.3" GranaOk/android/app/src/main/assets/www/safe-version.js
-          grep -q "versionName '0.5.3-beta'" GranaOk/android/app/build.gradle
+          grep -q 'MainActivityV060' GranaOk/android/app/src/main/AndroidManifest.xml
+          grep -q 'CardInvoicePaymentService' GranaOk/android/app/src/main/AndroidManifest.xml
+          grep -q 'ACTION_PAY' GranaOk/android/app/src/main/java/com/granaok/app/CardInvoicePaymentService.java
+          grep -q "status='paid'" GranaOk/android/app/src/main/java/com/granaok/app/CardInvoicePaymentService.java
+          grep -q 'paid_date' GranaOk/android/app/src/main/java/com/granaok/app/CardInvoicePaymentService.java
+          grep -q 'Marcar fatura como paga' GranaOk/android/app/src/main/assets/www/invoice-payment-060.js
+          grep -q 'invoice-payment-060.js' GranaOk/android/app/src/main/assets/www/index.html
+          grep -q "BETA 0.6.0" GranaOk/android/app/src/main/assets/www/safe-version.js
+          grep -q "versionName '0.6.0-beta'" GranaOk/android/app/build.gradle
           if grep -q 'MutationObserver' GranaOk/android/app/src/main/assets/www/safe-version.js; then
             echo 'Recursive version observer must not be present'
             exit 1
           fi
+
+      - name: Validate GranaOk Web
+        shell: bash
+        run: |
+          test -f GranaOk/web/index.php
+          test -f GranaOk/web/api.php
+          test -f GranaOk/web/config.example.php
+          grep -q 'invoice_pay' GranaOk/web/api.php
+          grep -q 'invoice_reopen' GranaOk/web/api.php
+          grep -q 'financing_pay' GranaOk/web/api.php
+          grep -q 'Radar de investimentos' GranaOk/web/assets/app.js
+          grep -q 'web_password' GranaOk/web/config.example.php
+          for f in GranaOk/web/*.php; do php -l "$f"; done
+
+      - name: Package GranaOk Web
+        run: |
+          cd GranaOk
+          zip -r ../GranaOk-Web-v0.1.0.zip web -x 'web/config.local.php'
+          cd ..
 
       - name: Set up Java 17
         uses: actions/setup-java@v4
@@ -122,12 +132,20 @@ jobs:
         run: gradle -p GranaOk/android :app:assembleDebug --stacktrace
 
       - name: Rename APK
-        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.5.3.apk
+        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.6.0.apk
 
       - name: Upload beta APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOk-Beta-v0.5.3
-          path: GranaOk-Beta-v0.5.3.apk
+          name: GranaOk-Beta-v0.6.0
+          path: GranaOk-Beta-v0.6.0.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload web package
+        uses: actions/upload-artifact@v4
+        with:
+          name: GranaOk-Web-v0.1.0
+          path: GranaOk-Web-v0.1.0.zip
           if-no-files-found: error
           retention-days: 30
