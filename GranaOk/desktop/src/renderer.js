@@ -41,6 +41,13 @@ async function dashboard(){
         <div class="kpi bad"><small>Despesas do mês</small><b>${money(d.expenses)}</b></div>
         <div class="kpi bad"><small>Faturas dos cartões</small><b>${money(d.card_invoices)}</b></div>
       </div>
+      <div class="card total-month-card">
+        <div>
+          <small>Total de despesas do mês</small>
+          <b>${money(d.total_monthly_expenses ?? (Number(d.expenses||0)+Number(d.card_invoices||0)))}</b>
+        </div>
+        <div class="total-month-formula">Despesas ${money(d.expenses)} + faturas ${money(d.card_invoices)}</div>
+      </div>
       <div class="grid two" style="margin-top:16px">
         <div class="card"><h3>Fluxo do mês</h3>
           <div class="grid kpis" style="grid-template-columns:repeat(2,1fr)">
