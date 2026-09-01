@@ -1,4 +1,4 @@
-# GranaOk Desktop 0.1
+# GranaOk Desktop 0.1.2
 
 Aplicativo Windows baseado em HTML/CSS/JavaScript (Electron), conectado diretamente ao mesmo MySQL usado pelo GranaOk Android.
 
@@ -41,3 +41,5 @@ Use **Testar conexão**. Só depois salve.
 O app não embute credenciais do banco no executável nem no HTML. A senha informada é guardada criptografada no perfil do Windows.
 
 A conexão direta depende de o provedor MySQL permitir acesso externo na porta configurada.
+
+- Dashboard com **Total de despesas do mês = despesas + faturas dos cartões**.
