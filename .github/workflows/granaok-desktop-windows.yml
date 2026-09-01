@@ -29,6 +29,14 @@ jobs:
           node --check GranaOk/desktop/preload.js
           node --check GranaOk/desktop/src/renderer.js
 
+      - name: Reject literal escaped newlines
+        shell: pwsh
+        run: |
+          $content = Get-Content GranaOk/desktop/main.js -Raw
+          if ($content.Contains(';\n      return')) {
+            throw 'Literal \\n token found in main.js'
+          }
+
       - name: Install dependencies
         working-directory: GranaOk/desktop
         run: npm install --no-audit --no-fund
@@ -42,7 +50,7 @@ jobs:
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOk-Desktop-v0.1.1-Windows-x64
-          path: GranaOk/desktop/dist/GranaOk-Desktop-v0.1.1-Windows-x64.exe
+          name: GranaOk-Desktop-v0.1.2-Windows-x64
+          path: GranaOk/desktop/dist/GranaOk-Desktop-v0.1.2-Windows-x64.exe
           if-no-files-found: error
           retention-days: 30
