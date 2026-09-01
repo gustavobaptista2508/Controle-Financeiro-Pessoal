@@ -1,6 +1,6 @@
 {
   "name": "granaok-desktop",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "GranaOk Desktop para Windows - interface HTML com acesso MySQL local",
   "main": "main.js",
   "author": "Luiz Gustavo Carvalho Baptista",
@@ -38,7 +38,7 @@
           ]
         }
       ],
-      "artifactName": "GranaOk-Desktop-v0.1.1-Windows-x64.exe"
+      "artifactName": "GranaOk-Desktop-v0.1.2-Windows-x64.exe"
     }
   }
 }
