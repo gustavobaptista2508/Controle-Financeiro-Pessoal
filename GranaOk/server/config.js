@@ -18,7 +18,7 @@ const config = {
     port: Number(process.env.DB_PORT || 3306),
     database: String(process.env.DB_NAME || '').trim(),
     user: String(process.env.DB_USER || '').trim(),
-    password: String(process.env.DB_PASSWORD || ''),
+    password: process.env.DB_PASSWORD_B64 ? Buffer.from(String(process.env.DB_PASSWORD_B64),'base64').toString('utf8') : String(process.env.DB_PASSWORD || ''),
     ssl: bool(process.env.DB_SSL, false),
     prefix: cleanPrefix(process.env.DB_PREFIX || 'granaok_')
   },
