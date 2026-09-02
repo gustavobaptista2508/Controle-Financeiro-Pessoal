@@ -2,9 +2,16 @@ const { app, BrowserWindow, ipcMain, safeStorage, dialog } = require('electron')
 const path = require('path');
 const fs = require('fs');
 const mysql = require('mysql2/promise');
+const http = require('http');
+const os = require('os');
+const crypto = require('crypto');
+const QRCode = require('qrcode');
 
 let win = null;
 let pool = null;
+let lanServer = null;
+const lanSessions = new Map();
+const loginAttempts = new Map();
 
 function configPath() { return path.join(app.getPath('userData'), 'db-config.json'); }
 function cleanPrefix(p) { return /^[A-Za-z0-9_]{1,32}$/.test(String(p || '')) ? String(p) : 'granaok_'; }
@@ -23,11 +30,12 @@ function loadStoredConfig() {
 }
 function publicConfig() {
   const c = loadStoredConfig();
-  if (!c) return { configured:false, host:'', port:3306, database:'', user:'', ssl:false, prefix:'granaok_', hasPassword:false };
+  if (!c) return { configured:false, host:'', port:3306, database:'', user:'', ssl:false, prefix:'granaok_', hasPassword:false, lan_enabled:false, lan_port:8787 };
   return {
     configured: !!(c.host && c.database && c.user && c.password),
     host: c.host || '', port: Number(c.port || 3306), database: c.database || '',
-    user: c.user || '', ssl: !!c.ssl, prefix: cleanPrefix(c.prefix), hasPassword: !!c.password
+    user: c.user || '', ssl: !!c.ssl, prefix: cleanPrefix(c.prefix), hasPassword: !!c.password,
+    lan_enabled: !!c.lan_enabled, lan_port: Number(c.lan_port || 8787)
   };
 }
 function saveStoredConfig(input) {
@@ -41,6 +49,8 @@ function saveStoredConfig(input) {
     user: String(input.user || '').trim(),
     ssl: !!input.ssl,
     prefix: cleanPrefix(input.prefix || 'granaok_'),
+    lan_enabled: input.lan_enabled !== undefined ? !!input.lan_enabled : !!prev.lan_enabled,
+    lan_port: Number(input.lan_port || prev.lan_port || 8787),
     password_enc: safeStorage.encryptString(password).toString('base64')
   };
   if (!out.host || !out.database || !out.user || !password) throw new Error('Preencha host, banco, usuário e senha.');
@@ -97,7 +107,8 @@ async function ensureSchema(conn) {
     'CREATE TABLE IF NOT EXISTS '+p+'card_invoices (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,card_id BIGINT UNSIGNED NOT NULL,reference_month DATE NOT NULL,due_date DATE NOT NULL,amount DECIMAL(14,2) NOT NULL DEFAULT 0,status VARCHAR(20) NOT NULL DEFAULT \'open\',created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(id),KEY idx_card_ref(card_id,reference_month)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
     'CREATE TABLE IF NOT EXISTS '+p+'card_purchases (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,card_id BIGINT UNSIGNED NOT NULL,person_id BIGINT UNSIGNED NULL,category_id BIGINT UNSIGNED NULL,description VARCHAR(255) NOT NULL,purchase_date DATE NOT NULL,amount DECIMAL(14,2) NOT NULL,invoice_month DATE NOT NULL,due_date DATE NOT NULL,installment_group VARCHAR(64) NULL,installment_number INT NOT NULL DEFAULT 1,installment_total INT NOT NULL DEFAULT 1,observations LONGTEXT NULL,created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(id),KEY idx_cp_card_due(card_id,due_date)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
     'CREATE TABLE IF NOT EXISTS '+p+'financings (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,name VARCHAR(160) NOT NULL,total_amount DECIMAL(14,2) NOT NULL DEFAULT 0,installment_amount DECIMAL(14,2) NOT NULL DEFAULT 0,total_installments INT NOT NULL DEFAULT 0,paid_installments INT NOT NULL DEFAULT 0,active TINYINT(1) NOT NULL DEFAULT 1,created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
-    'CREATE TABLE IF NOT EXISTS '+p+'financing_installments (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,financing_id BIGINT UNSIGNED NOT NULL,installment_number INT NOT NULL,amount DECIMAL(14,2) NOT NULL,due_date DATE NOT NULL,status VARCHAR(20) NOT NULL DEFAULT \'pending\',paid_date DATE NULL,created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(id),UNIQUE KEY uq_fin_inst(financing_id,installment_number)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+    'CREATE TABLE IF NOT EXISTS '+p+'financing_installments (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,financing_id BIGINT UNSIGNED NOT NULL,installment_number INT NOT NULL,amount DECIMAL(14,2) NOT NULL,due_date DATE NOT NULL,status VARCHAR(20) NOT NULL DEFAULT \'pending\',paid_date DATE NULL,created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(id),UNIQUE KEY uq_fin_inst(financing_id,installment_number)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4',
+    'CREATE TABLE IF NOT EXISTS '+p+'app_users (id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,username VARCHAR(80) NOT NULL,display_name VARCHAR(120) NOT NULL,password_hash VARCHAR(255) NOT NULL,role VARCHAR(20) NOT NULL DEFAULT \'user\',person_id BIGINT UNSIGNED NULL,active TINYINT(1) NOT NULL DEFAULT 1,created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,last_login_at DATETIME NULL,PRIMARY KEY(id),UNIQUE KEY uq_app_user_username(username),KEY idx_app_user_person(person_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
   ];
   for (const q of qs) await conn.query(q);
   await addColumn(conn,p+'people','entity_kind',"VARCHAR(20) NOT NULL DEFAULT 'person'");
@@ -131,6 +142,187 @@ async function syncInvoice(conn,p,cardId,month,dueDate) {
   else await conn.execute('INSERT INTO '+p+'card_invoices(card_id,reference_month,due_date,amount,status) VALUES(?,?,?,?,\'open\')',[cardId,month+'-01',dueDate,total]);
 }
 
+
+function updateStoredMeta(patch) {
+  const file = configPath();
+  let raw = {};
+  try { raw = JSON.parse(fs.readFileSync(file, 'utf8')); } catch (_) {}
+  Object.assign(raw, patch || {});
+  fs.mkdirSync(path.dirname(file), { recursive:true });
+  fs.writeFileSync(file, JSON.stringify(raw, null, 2), 'utf8');
+}
+
+function hashAppPassword(password) {
+  password = String(password || '');
+  if (password.length < 8) throw new Error('A senha precisa ter pelo menos 8 caracteres.');
+  const salt = crypto.randomBytes(16);
+  const hash = crypto.scryptSync(password, salt, 64);
+  return 'scrypt$' + salt.toString('hex') + '$' + hash.toString('hex');
+}
+function verifyAppPassword(password, stored) {
+  try {
+    const parts = String(stored || '').split('$');
+    if (parts.length !== 3 || parts[0] !== 'scrypt') return false;
+    const salt = Buffer.from(parts[1], 'hex');
+    const expected = Buffer.from(parts[2], 'hex');
+    const actual = crypto.scryptSync(String(password || ''), salt, expected.length);
+    return expected.length === actual.length && crypto.timingSafeEqual(expected, actual);
+  } catch (_) { return false; }
+}
+function cleanUsername(v) {
+  const u = String(v || '').trim();
+  if (!/^[A-Za-z0-9._-]{3,40}$/.test(u)) throw new Error('Use um usuário de 3 a 40 caracteres: letras, números, ponto, traço ou _.');
+  return u;
+}
+function localIPv4() {
+  const out = [];
+  const nets = os.networkInterfaces();
+  for (const list of Object.values(nets)) {
+    for (const n of (list || [])) {
+      const family = typeof n.family === 'string' ? n.family : (n.family === 4 ? 'IPv4' : '');
+      if (family === 'IPv4' && !n.internal && n.address) out.push(n.address);
+    }
+  }
+  return [...new Set(out)];
+}
+function lanStatus() {
+  const cfg = publicConfig();
+  const port = Number(cfg.lan_port || 8787);
+  const running = !!lanServer;
+  return { ok:true, running, enabled:!!cfg.lan_enabled, port, urls: running ? localIPv4().map(ip=>'http://'+ip+':'+port) : [] };
+}
+function parseCookies(req) {
+  const out = {};
+  String(req.headers.cookie || '').split(';').forEach(part=>{
+    const i=part.indexOf('=');
+    if(i>0) out[part.slice(0,i).trim()] = decodeURIComponent(part.slice(i+1).trim());
+  });
+  return out;
+}
+function sessionUser(req) {
+  const token = parseCookies(req).gk_session;
+  if (!token) return null;
+  const s = lanSessions.get(token);
+  if (!s) return null;
+  if (s.expiresAt < Date.now()) { lanSessions.delete(token); return null; }
+  s.expiresAt = Date.now() + 12*60*60*1000;
+  return s;
+}
+function secureHeaders(res, contentType) {
+  res.setHeader('Content-Type', contentType || 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control','no-store');
+  res.setHeader('X-Content-Type-Options','nosniff');
+  res.setHeader('X-Frame-Options','DENY');
+  res.setHeader('Referrer-Policy','no-referrer');
+  res.setHeader('Content-Security-Policy',"default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'");
+}
+function jsonResponse(res, status, payload) {
+  secureHeaders(res,'application/json; charset=utf-8');
+  res.statusCode=status;
+  res.end(JSON.stringify(payload));
+}
+function readBody(req) {
+  return new Promise((resolve,reject)=>{
+    let data=''; let size=0;
+    req.on('data',chunk=>{ size+=chunk.length; if(size>1024*1024){reject(new Error('Requisição muito grande.')); req.destroy(); return;} data+=chunk.toString('utf8'); });
+    req.on('end',()=>{ try{resolve(data?JSON.parse(data):{});}catch(_){reject(new Error('JSON inválido.'));} });
+    req.on('error',reject);
+  });
+}
+function staticLanFile(res, name, type) {
+  const root = path.join(__dirname,'src','lan');
+  const file = path.join(root,name);
+  if (!file.startsWith(root) || !fs.existsSync(file)) { res.statusCode=404; return res.end('Not found'); }
+  secureHeaders(res,type);
+  res.end(fs.readFileSync(file));
+}
+function clientIp(req) { return String((req.socket && req.socket.remoteAddress) || 'unknown'); }
+function loginAllowed(ip) {
+  const now=Date.now(), item=loginAttempts.get(ip);
+  if(!item || now-item.first>10*60*1000){loginAttempts.delete(ip);return true;}
+  return item.count<5;
+}
+function registerFailedLogin(ip) {
+  const now=Date.now(), item=loginAttempts.get(ip);
+  if(!item || now-item.first>10*60*1000) loginAttempts.set(ip,{count:1,first:now});
+  else { item.count++; loginAttempts.set(ip,item); }
+}
+async function handleLanRequest(req,res) {
+  try {
+    const url = new URL(req.url,'http://localhost');
+    if(req.method==='GET' && url.pathname==='/') return staticLanFile(res,'index.html','text/html; charset=utf-8');
+    if(req.method==='GET' && url.pathname==='/app.js') return staticLanFile(res,'app.js','application/javascript; charset=utf-8');
+    if(req.method==='GET' && url.pathname==='/styles.css') return staticLanFile(res,'styles.css','text/css; charset=utf-8');
+    if(req.method==='GET' && url.pathname==='/manifest.json') return staticLanFile(res,'manifest.json','application/manifest+json; charset=utf-8');
+
+    if(url.pathname==='/api/session' && req.method==='GET') {
+      const s=sessionUser(req);
+      return jsonResponse(res,200,{ok:true,authenticated:!!s,user:s?{id:s.userId,username:s.username,display_name:s.displayName,role:s.role,person_id:s.personId}:null});
+    }
+    if(url.pathname==='/api/login' && req.method==='POST') {
+      const ip=clientIp(req);
+      if(!loginAllowed(ip)) return jsonResponse(res,429,{ok:false,error:'Muitas tentativas. Aguarde alguns minutos.'});
+      const body=await readBody(req), username=String(body.username||'').trim(), password=String(body.password||'');
+      const result=await withConn(async conn=>{
+        const p=await ensureSchema(conn);
+        const [all]=await conn.query('SELECT COUNT(*) c FROM '+p+'app_users WHERE active=1');
+        if(!Number(all[0].c||0)) return {none:true};
+        const [rows]=await conn.execute('SELECT id,username,display_name,password_hash,role,person_id,active FROM '+p+'app_users WHERE LOWER(username)=LOWER(?) LIMIT 1',[username]);
+        return {user:rows[0]||null,p};
+      });
+      if(result.none) return jsonResponse(res,409,{ok:false,error:'Nenhum usuário de acesso foi criado. Crie o primeiro usuário no GranaOk Desktop.'});
+      if(!result.user || !Number(result.user.active) || !verifyAppPassword(password,result.user.password_hash)) {
+        registerFailedLogin(ip);
+        return jsonResponse(res,401,{ok:false,error:'Usuário ou senha inválidos.'});
+      }
+      loginAttempts.delete(ip);
+      const token=crypto.randomBytes(32).toString('hex');
+      lanSessions.set(token,{userId:Number(result.user.id),username:result.user.username,displayName:result.user.display_name,role:result.user.role,personId:result.user.person_id?Number(result.user.person_id):null,expiresAt:Date.now()+12*60*60*1000});
+      await withConn(async conn=>{const p=cleanPrefix((loadStoredConfig()||{}).prefix);await conn.execute('UPDATE '+p+'app_users SET last_login_at=NOW() WHERE id=?',[result.user.id]);});
+      res.setHeader('Set-Cookie','gk_session='+token+'; HttpOnly; SameSite=Strict; Path=/; Max-Age=43200');
+      return jsonResponse(res,200,{ok:true,user:{id:Number(result.user.id),username:result.user.username,display_name:result.user.display_name,role:result.user.role,person_id:result.user.person_id?Number(result.user.person_id):null}});
+    }
+    if(url.pathname==='/api/logout' && req.method==='POST') {
+      const token=parseCookies(req).gk_session;if(token)lanSessions.delete(token);
+      res.setHeader('Set-Cookie','gk_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');
+      return jsonResponse(res,200,{ok:true});
+    }
+    if(url.pathname==='/api/action' && req.method==='POST') {
+      const s=sessionUser(req);
+      if(!s) return jsonResponse(res,401,{ok:false,error:'Sessão expirada.'});
+      if(String(req.headers['x-granaok-client']||'')!=='lan') return jsonResponse(res,403,{ok:false,error:'Cliente inválido.'});
+      const body=await readBody(req), requested=String(body.action||'');
+      const allowed=new Set(['dashboard','context','transactions','transaction_save','transaction_status','account_save','person_add','category_add','card_save','card_purchase_add','invoice','invoice_pay','invoice_reopen','financings','financing_pay']);
+      if(!allowed.has(requested)) return jsonResponse(res,403,{ok:false,error:'Operação não permitida no acesso móvel.'});
+      const result=await action(requested,body.payload||{});
+      return jsonResponse(res,200,Object.assign({ok:true},result||{}));
+    }
+    res.statusCode=404;secureHeaders(res,'text/plain; charset=utf-8');res.end('Não encontrado');
+  } catch(e) {
+    jsonResponse(res,500,{ok:false,error:String(e&&e.message?e.message:e)});
+  }
+}
+async function startLanServer(port, persist=true) {
+  port=Math.max(1024,Math.min(65535,Number(port||8787)));
+  if(lanServer) {
+    const current=lanServer.address(); if(current && Number(current.port)===port) return lanStatus();
+    await stopLanServer(false);
+  }
+  await new Promise((resolve,reject)=>{
+    const server=http.createServer((req,res)=>{handleLanRequest(req,res);});
+    server.on('error',reject);
+    server.listen(port,'0.0.0.0',()=>{lanServer=server;resolve();});
+  });
+  if(persist) updateStoredMeta({lan_enabled:true,lan_port:port});
+  return lanStatus();
+}
+async function stopLanServer(persist=true) {
+  if(lanServer){const s=lanServer;lanServer=null;await new Promise(resolve=>s.close(()=>resolve()));}
+  lanSessions.clear();
+  if(persist) updateStoredMeta({lan_enabled:false});
+  return lanStatus();
+}
+
 async function action(name,a) {
   const aliases = {transactions:'transactions:list',transaction_save:'transaction:save',transaction_status:'transaction:status',account_save:'account:save',person_add:'person:add',category_add:'category:add',card_save:'card:save',card_purchase_add:'card:purchase',invoice:'invoice:get',invoice_pay:'invoice:pay',invoice_reopen:'invoice:reopen',financings:'financings:list',financing_pay:'financing:pay'};
   name = aliases[name] || name;
@@ -147,9 +339,52 @@ async function action(name,a) {
     await withConn(async conn=>{await ensureSchema(conn);});
     return {ok:true,message:'Conexão salva com segurança no Windows.'};
   }
+  if (name === 'lan:status') return lanStatus();
+  if (name === 'lan:start') return startLanServer(Number(a.port||8787),true);
+  if (name === 'lan:stop') return stopLanServer(true);
+  if (name === 'lan:qr') {
+    const st=lanStatus(); const url=String(a.url||st.urls[0]||'');
+    if(!url) throw new Error('Inicie o acesso pelo celular primeiro.');
+    return {ok:true,url,qr:await QRCode.toDataURL(url,{margin:1,width:280})};
+  }
+  if (name === 'users:list') {
+    return withConn(async conn=>{
+      const p=await ensureSchema(conn);
+      const [rows]=await conn.query("SELECT u.id,u.username,u.display_name,u.role,u.person_id,u.active,DATE_FORMAT(u.created_at,'%Y-%m-%d %H:%i') created_at,CASE WHEN u.last_login_at IS NULL THEN NULL ELSE DATE_FORMAT(u.last_login_at,'%Y-%m-%d %H:%i') END last_login_at,COALESCE(pe.name,'') person_name FROM "+p+"app_users u LEFT JOIN "+p+"people pe ON pe.id=u.person_id ORDER BY u.active DESC,u.display_name,u.username");
+      return {ok:true,rows};
+    });
+  }
+  if (name === 'user:add') {
+    return withConn(async conn=>{
+      const p=await ensureSchema(conn), username=cleanUsername(a.username), display=String(a.display_name||username).trim()||username, role=a.role==='admin'?'admin':'user', personId=Number(a.person_id||0)||null, hash=hashAppPassword(a.password);
+      try { await conn.execute('INSERT INTO '+p+'app_users(username,display_name,password_hash,role,person_id,active) VALUES(?,?,?,?,?,1)',[username,display,hash,role,personId]); }
+      catch(e){ if(Number(e.errno)===1062) throw new Error('Esse nome de usuário já existe.'); throw e; }
+      return {ok:true,message:'Usuário criado.'};
+    });
+  }
+  if (name === 'user:password') {
+    return withConn(async conn=>{
+      const p=await ensureSchema(conn), id=Number(a.id||0); if(!id) throw new Error('Usuário inválido.');
+      await conn.execute('UPDATE '+p+'app_users SET password_hash=? WHERE id=?',[hashAppPassword(a.password),id]); return {ok:true,message:'Senha alterada.'};
+    });
+  }
+  if (name === 'user:toggle') {
+    return withConn(async conn=>{
+      const p=await ensureSchema(conn), id=Number(a.id||0), active=a.active?1:0;if(!id)throw new Error('Usuário inválido.');
+      if(!active){
+        const [target]=await conn.execute('SELECT role FROM '+p+'app_users WHERE id=? LIMIT 1',[id]);
+        if(target[0]&&target[0].role==='admin'){
+          const [admins]=await conn.query("SELECT COUNT(*) c FROM "+p+"app_users WHERE role='admin' AND active=1 AND id<>"+Number(id));
+          if(Number(admins[0].c||0)<1) throw new Error('Mantenha pelo menos um administrador ativo.');
+        }
+      }
+      await conn.execute('UPDATE '+p+'app_users SET active=? WHERE id=?',[active,id]); return {ok:true,message:active?'Usuário ativado.':'Usuário desativado.'};
+    });
+  }
+
   if (name === 'backup:save') {
     const p=await getPool(); const c=loadStoredConfig(); const prefix=cleanPrefix(c.prefix);
-    const tables=['people','accounts','categories','transactions','cards','card_invoices','card_purchases','financings','financing_installments'];
+    const tables=['people','accounts','categories','transactions','cards','card_invoices','card_purchases','financings','financing_installments','app_users'];
     const out={version:1,created_at:new Date().toISOString(),tables:{}};
     for(const t of tables){try{const [rows]=await p.query('SELECT * FROM '+prefix+t);out.tables[t]=rows;}catch(_){out.tables[t]=[];}}
     const r=await dialog.showSaveDialog(win,{title:'Salvar backup do GranaOk',defaultPath:'GranaOk-Backup-'+new Date().toISOString().slice(0,10)+'.json',filters:[{name:'JSON',extensions:['json']}]});
@@ -322,7 +557,9 @@ app.whenReady().then(()=>{
     catch(e){ return {ok:false,error:String(e && e.message ? e.message : e)}; }
   });
   createWindow();
+  const cfg=publicConfig();
+  if(cfg.configured && cfg.lan_enabled) startLanServer(cfg.lan_port||8787,false).catch(()=>{});
   app.on('activate',()=>{if(BrowserWindow.getAllWindows().length===0)createWindow();});
 });
 app.on('window-all-closed',()=>{if(process.platform!=='darwin')app.quit();});
-app.on('before-quit',()=>{if(pool)pool.end().catch(()=>{});});
+app.on('before-quit',()=>{if(lanServer){try{lanServer.close();}catch(_){}} if(pool)pool.end().catch(()=>{});});
