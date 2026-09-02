@@ -165,13 +165,40 @@ async function more(){
 let aiMessages=[];
 
 async function assistant(){
-  active('assistant');setTitle('Grana IA','Assistente financeiro local');
+  active('assistant');setTitle('Grana IA','Motor de Conhecimento Financeiro');
   const c=$('#content');c.innerHTML='<div class="empty">Analisando seus dados...</div>';
   try{
-    const d=await api('assistant_summary',{month});
+    const [d,k]=await Promise.all([
+      api('assistant_summary',{month}),
+      api('knowledge_summary',{}).catch(()=>({ready:false}))
+    ]);
+    const profile=k.profile||{};
+    const learningCard=k.ready
+      ? '<div class="card"><div class="heading" style="margin-bottom:10px"><div><h3>Motor de Conhecimento Financeiro</h3><div class="muted">Aprendizado comportamental com evidências e confiança</div></div><button class="secondary" id="knowledge-rebuild">↻ Reaprender</button></div>'+
+        '<div class="invest-bench">'+
+          '<div><small class="muted">Confiança</small><div class="invest-value">'+Number(k.confidence_score||0).toLocaleString('pt-BR',{maximumFractionDigits:0})+'%</div></div>'+
+          '<div><small class="muted">Meses analisados</small><div class="invest-value">'+Number(k.months_analyzed||0)+'</div></div>'+
+          '<div><small class="muted">Padrões aprendidos</small><div class="invest-value">'+Number((k.patterns||[]).length)+'</div></div>'+
+        '</div>'+
+        '<p class="muted" style="margin-top:12px">Última reconstrução: '+esc(k.last_rebuilt_at||'—')+'</p>'+
+        '<div class="grid two" style="margin-top:12px">'+
+          '<div><h4>Padrões recorrentes</h4>'+((k.patterns||[]).slice(0,6).map(x=>'<div class="insight"><b>'+esc(x.label)+'</b><p>'+esc(x.pattern_type==='recurring_income'?'Receita recorrente':'Despesa recorrente')+' · média '+money(x.avg_amount)+' · confiança '+Number(x.confidence||0).toLocaleString('pt-BR',{maximumFractionDigits:0})+'%</p></div>').join('')||'<div class="muted">Ainda não há padrões suficientes.</div>')+'</div>'+
+          '<div><h4>Perfil aprendido</h4>'+
+            '<div class="insight"><b>Entrada média</b><p>'+money(profile.average_income||0)+'</p></div>'+
+            '<div class="insight"><b>Saída média</b><p>'+money(profile.average_outflow||0)+'</p></div>'+
+            '<div class="insight"><b>Cartão médio</b><p>'+money(profile.average_card||0)+'</p></div>'+
+          '</div>'+
+        '</div></div>'
+      : '<div class="card"><h3>Motor de Conhecimento Financeiro</h3><p class="muted">O motor ainda não construiu seu perfil financeiro. A primeira análise usa os últimos meses para aprender receitas, despesas recorrentes, uso de cartões e padrões de estabelecimentos.</p><button class="primary" id="knowledge-rebuild">Iniciar aprendizado</button></div>';
+
+    const recCard=k.ready
+      ? '<div class="card"><h3>Recomendações aprendidas</h3>'+((k.recommendations||[]).length?(k.recommendations||[]).map(r=>'<div class="insight reco-item" data-id="'+r.id+'"><b>'+esc(r.title)+'</b><p>'+esc(r.message)+'</p><small class="muted">Confiança '+Number(r.confidence||0).toLocaleString('pt-BR',{maximumFractionDigits:0})+'%'+(r.source_name?' · '+esc(r.source_name):'')+'</small><div class="user-actions"><button class="secondary reco-feedback" data-id="'+r.id+'" data-feedback="useful">👍 Útil</button><button class="secondary reco-feedback" data-id="'+r.id+'" data-feedback="not_relevant">👎 Não é relevante</button><button class="secondary reco-feedback" data-id="'+r.id+'" data-feedback="done">✓ Já fiz</button><button class="secondary reco-feedback" data-id="'+r.id+'" data-feedback="later">⏰ Depois</button></div></div>').join(''):'<div class="muted">Sem novas recomendações neste momento.</div>')+'</div>'
+      : '';
+
     c.innerHTML=
-      '<div class="heading"><div><h1>Grana IA</h1><p>Assistente financeiro baseado nos seus próprios dados</p></div><span class="badge paid">IA local</span></div>'+
-      '<div class="ai-grid">'+
+      '<div class="heading"><div><h1>Grana IA</h1><p>Aprende seu comportamento financeiro e explica as sugestões</p></div><span class="badge paid">Privado</span></div>'+
+      '<div class="grid" style="gap:16px">'+learningCard+recCard+'</div>'+
+      '<div class="ai-grid" style="margin-top:16px">'+
         '<div class="card"><h3>Leitura do mês</h3><p class="muted">'+esc(mlabel(month))+'</p>'+
           (d.insights||[]).map(x=>'<div class="insight"><b>'+esc(x.title)+'</b><p>'+esc(x.text)+'</p></div>').join('')+
           '<div class="note" style="margin-top:14px">'+esc(d.privacy||'')+'</div>'+
@@ -187,11 +214,26 @@ async function assistant(){
           '<div class="ai-compose"><input id="ai-input" placeholder="Ex.: quanto tenho de faturas este mês?"><button class="primary" id="ai-send">Enviar</button></div>'+
         '</div>'+
       '</div>';
+
     renderAiMessages();
     $$('.ai-quick').forEach(b=>b.onclick=()=>sendAssistant(b.textContent));
     $('#ai-send').onclick=()=>sendAssistant($('#ai-input').value);
     $('#ai-input').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendAssistant($('#ai-input').value)}};
+    if($('#knowledge-rebuild'))$('#knowledge-rebuild').onclick=rebuildKnowledgeUi;
+    $$('.reco-feedback').forEach(b=>b.onclick=()=>sendKnowledgeFeedback(Number(b.dataset.id),b.dataset.feedback,b));
   }catch(e){c.innerHTML=note(e.message,'err')}
+}
+async function rebuildKnowledgeUi(){
+  const btn=$('#knowledge-rebuild');if(btn){btn.disabled=true;btn.textContent='Aprendendo...'}
+  try{await api('knowledge_rebuild',{months:12});await assistant()}catch(e){alert(e.message);if(btn){btn.disabled=false;btn.textContent='Tentar novamente'}}
+}
+async function sendKnowledgeFeedback(id,feedback,btn){
+  try{
+    await api('knowledge_feedback',{recommendation_id:id,feedback});
+    const item=btn&&btn.closest('.reco-item');
+    if(feedback==='not_relevant'||feedback==='done'){if(item)item.remove()}
+    else if(btn){btn.textContent=feedback==='useful'?'✓ Marcado como útil':'✓ Lembrar depois';btn.disabled=true}
+  }catch(e){alert(e.message)}
 }
 function renderAiMessages(){
   const el=$('#ai-messages');if(!el)return;
