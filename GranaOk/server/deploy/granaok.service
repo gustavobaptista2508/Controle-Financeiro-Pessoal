@@ -8,7 +8,6 @@ Type=simple
 User=granaok
 Group=granaok
 WorkingDirectory=/opt/granaok
-EnvironmentFile=/opt/granaok/.env
 ExecStart=/usr/bin/node /opt/granaok/server.js
 Restart=on-failure
 RestartSec=3
