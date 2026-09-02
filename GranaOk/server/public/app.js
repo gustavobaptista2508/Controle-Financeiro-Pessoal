@@ -26,7 +26,9 @@ function showApp(){
 function setTitle(t,s='GranaOk Web'){if($('#page-title'))$('#page-title').textContent=t;if($('#page-subtitle'))$('#page-subtitle').textContent=s}
 function active(v){
   view=v;
-  $$('[data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  const mobileView=['assistant','investments','accounts','registry','users'].includes(v)?'more':v;
+  $('.desktop-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  $('.mobile-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===mobileView));
 }
 function note(t,c=''){return '<div class="note '+c+'">'+esc(t)+'</div>'}
 function badge(s){return '<span class="badge '+esc(s)+'">'+esc({paid:'Pago',pending:'Pendente',overdue:'Atrasado',open:'Aberta'}[s]||s)+'</span>'}
@@ -150,11 +152,106 @@ async function more(){
   const c=$('#content');
   c.innerHTML='<div class="heading"><div><h1>Mais</h1><p>Atalhos e configurações</p></div></div>'+
   '<div class="grid card-grid">'+
+    '<button class="card secondary shortcut" data-go="assistant"><h3>✦ Grana IA</h3><div class="muted">Resumo, perguntas e alertas financeiros</div></button>'+
+    '<button class="card secondary shortcut" data-go="investments"><h3>◒ Investimentos</h3><div class="muted">Radar, benchmarks e simulador</div></button>'+
     '<button class="card secondary shortcut" data-go="accounts"><h3>Contas</h3><div class="muted">Saldos e bancos</div></button>'+
     '<button class="card secondary shortcut" data-go="registry"><h3>Cadastros</h3><div class="muted">Pessoas e categorias</div></button>'+
     (user?.role==='admin'?'<button class="card secondary shortcut" data-go="users"><h3>Usuários</h3><div class="muted">Logins e permissões</div></button>':'')+
-  '</div><div class="card" style="margin-top:16px"><p class="muted">No iPhone: Safari → Compartilhar → Adicionar à Tela de Início.</p></div>';
+  '</div>';
   $$('.shortcut').forEach(b=>b.onclick=()=>route(b.dataset.go));
+}
+
+
+let aiMessages=[];
+
+async function assistant(){
+  active('assistant');setTitle('Grana IA','Assistente financeiro local');
+  const c=$('#content');c.innerHTML='<div class="empty">Analisando seus dados...</div>';
+  try{
+    const d=await api('assistant_summary',{month});
+    c.innerHTML=
+      '<div class="heading"><div><h1>Grana IA</h1><p>Assistente financeiro baseado nos seus próprios dados</p></div><span class="badge paid">IA local</span></div>'+
+      '<div class="ai-grid">'+
+        '<div class="card"><h3>Leitura do mês</h3><p class="muted">'+esc(mlabel(month))+'</p>'+
+          (d.insights||[]).map(x=>'<div class="insight"><b>'+esc(x.title)+'</b><p>'+esc(x.text)+'</p></div>').join('')+
+          '<div class="note" style="margin-top:14px">'+esc(d.privacy||'')+'</div>'+
+        '</div>'+
+        '<div class="card ai-chat"><h3>Pergunte ao Grana IA</h3>'+
+          '<div class="quick-questions">'+
+            '<button class="secondary ai-quick">Quanto gastei este mês?</button>'+
+            '<button class="secondary ai-quick">Onde estou gastando mais?</button>'+
+            '<button class="secondary ai-quick">Tenho contas atrasadas?</button>'+
+            '<button class="secondary ai-quick">Como está minha projeção?</button>'+
+          '</div>'+
+          '<div id="ai-messages" class="ai-messages"></div>'+
+          '<div class="ai-compose"><input id="ai-input" placeholder="Ex.: quanto tenho de faturas este mês?"><button class="primary" id="ai-send">Enviar</button></div>'+
+        '</div>'+
+      '</div>';
+    renderAiMessages();
+    $('.ai-quick').forEach(b=>b.onclick=()=>sendAssistant(b.textContent));
+    $('#ai-send').onclick=()=>sendAssistant($('#ai-input').value);
+    $('#ai-input').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendAssistant($('#ai-input').value)}};
+  }catch(e){c.innerHTML=note(e.message,'err')}
+}
+function renderAiMessages(){
+  const el=$('#ai-messages');if(!el)return;
+  el.innerHTML=aiMessages.length?aiMessages.map(m=>'<div class="ai-msg '+m.role+'">'+esc(m.text)+'</div>').join(''):'<div class="empty">Faça uma pergunta sobre despesas, categorias, cartões, atrasos ou projeção.</div>';
+  el.scrollTop=el.scrollHeight;
+}
+async function sendAssistant(question){
+  question=String(question||'').trim();if(!question)return;
+  aiMessages.push({role:'user',text:question});renderAiMessages();
+  if($('#ai-input'))$('#ai-input').value='';
+  try{
+    const d=await api('assistant_ask',{question,month});
+    aiMessages.push({role:'bot',text:d.answer||'Não consegui analisar agora.'});
+  }catch(e){aiMessages.push({role:'bot',text:'Erro: '+e.message})}
+  renderAiMessages();
+}
+
+async function investments(){
+  active('investments');setTitle('Investimentos','Radar informativo e simulador');
+  const c=$('#content');c.innerHTML='<div class="empty">Consultando referências públicas...</div>';
+  try{
+    const d=await api('investment_radar',{});
+    const b=d.benchmarks||{},selic=b.selic_target||b.selic_effective||{},eff=b.selic_effective||{},ipca=b.ipca_monthly||{};
+    c.innerHTML=
+      '<div class="heading"><div><h1>Investimentos</h1><p>Benchmarks, radar e simulação</p></div><button class="secondary" id="inv-refresh">↻ Atualizar</button></div>'+
+      '<div class="invest-bench">'+
+        '<div class="card"><small class="muted">Meta Selic</small><div class="invest-value">'+(selic.value!=null?Number(selic.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%':'—')+'</div><div class="invest-sub">'+esc(selic.date||'Fonte BCB')+'</div></div>'+
+        '<div class="card"><small class="muted">Selic efetiva</small><div class="invest-value">'+(eff.value!=null?Number(eff.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%':'—')+'</div><div class="invest-sub">'+esc(eff.date||'Fonte BCB')+'</div></div>'+
+        '<div class="card"><small class="muted">IPCA mensal</small><div class="invest-value">'+(ipca.value!=null?Number(ipca.value).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'%':'—')+'</div><div class="invest-sub">'+esc(ipca.date||'Fonte BCB')+'</div></div>'+
+      '</div>'+
+      '<div class="grid two" style="margin-top:16px">'+
+        '<div class="card"><h3>Simulador</h3><div class="form-grid">'+
+          '<div><label>Valor inicial</label><input id="sim-initial" inputmode="decimal" value="1000"></div>'+
+          '<div><label>Aporte mensal</label><input id="sim-monthly" inputmode="decimal" value="200"></div>'+
+          '<div><label>Taxa anual (%)</label><input id="sim-rate" inputmode="decimal" value="'+(selic.value||10)+'"></div>'+
+          '<div><label>Prazo (meses)</label><input id="sim-months" type="number" min="1" max="600" value="24"></div>'+
+        '</div><button class="primary" id="sim-go" style="margin-top:12px">Calcular</button><div id="sim-out"></div></div>'+
+        '<div class="card"><h3>Radar</h3><div class="radar-grid">'+(d.radar||[]).map(x=>'<div class="radar-item"><h3>'+esc(x.objective)+'</h3><b>'+esc(x.option)+'</b><p>'+esc(x.note)+'</p></div>').join('')+'</div></div>'+
+      '</div>'+
+      '<div class="card" style="margin-top:16px"><h3>Tesouro Direto</h3><div class="treasury-list">'+((d.treasury||[]).length?(d.treasury||[]).slice(0,12).map(x=>'<div class="row"><div class="main"><b>'+esc(x.name)+'</b><small>Vencimento '+esc(x.maturity||'—')+' · taxa compra '+Number(x.annual_invest_rate||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2})+'% a.a.</small></div><div class="amount">'+money(x.unit_invest_value)+'</div></div>').join(''):'<div class="empty">A fonte do Tesouro não retornou títulos neste momento.</div>')+'</div></div>'+
+      '<div class="note" style="margin-top:16px">'+esc(d.disclaimer||'Radar informativo; não é recomendação personalizada.')+'</div>';
+    $('#inv-refresh').onclick=investments;
+    $('#sim-go').onclick=runInvestmentSimulation;
+    runInvestmentSimulation();
+  }catch(e){c.innerHTML=note('Não foi possível carregar o radar agora: '+e.message,'err')}
+}
+function parsePt(v){
+  let x=String(v??'').trim();if(x.includes(','))x=x.replace(/\./g,'').replace(',','.');
+  const n=Number(x);return Number.isFinite(n)?n:0;
+}
+function runInvestmentSimulation(){
+  const initial=Math.max(0,parsePt($('#sim-initial')?.value));
+  const monthly=Math.max(0,parsePt($('#sim-monthly')?.value));
+  const annual=Math.max(0,parsePt($('#sim-rate')?.value));
+  const months=Math.max(1,Math.min(600,Number($('#sim-months')?.value||1)));
+  const r=Math.pow(1+annual/100,1/12)-1;
+  const fvInitial=initial*Math.pow(1+r,months);
+  const fvMonthly=r>0?monthly*((Math.pow(1+r,months)-1)/r):monthly*months;
+  const total=fvInitial+fvMonthly,invested=initial+monthly*months;
+  const out=$('#sim-out');if(out)out.innerHTML='<small class="muted">Valor estimado ao final</small><div class="sim-result">'+money(total)+'</div><div class="muted">Aportes: '+money(invested)+' · rendimento estimado: '+money(Math.max(0,total-invested))+'</div>';
 }
 
 async function usersApi(url,method='GET',body){
@@ -185,6 +282,8 @@ function route(v){
   if(v==='cards')return cards();
   if(v==='accounts')return accounts();
   if(v==='financings')return financings();
+  if(v==='assistant')return assistant();
+  if(v==='investments')return investments();
   if(v==='registry')return registry();
   if(v==='users')return users();
   return more();
