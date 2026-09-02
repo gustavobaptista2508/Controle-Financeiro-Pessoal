@@ -235,6 +235,74 @@ async function registry(){
   $('#cat-add').onclick=()=>{modal('<h2>Nova categoria</h2><label>Nome</label><input id="cat-name"><label>Tipo</label><select id="cat-kind"><option value="expense">Despesa</option><option value="income">Entrada</option></select><button class="primary" id="cat-save" style="margin-top:12px">Salvar</button><div id="cat-out"></div>');$('#cat-save').onclick=async()=>{try{await api('category_add',{name:$('#cat-name').value,kind:$('#cat-kind').value});closeModal();registry()}catch(e){$('#cat-out').innerHTML=note(e.message,'err')}}};
 }
 
+
+async function accessView(){
+  activateNav('access');setTitle('iPhone & Usuários','Acesso local pela sua rede Wi-Fi');
+  content().innerHTML='<div class="empty">Carregando acesso local...</div>';
+  try{
+    await loadContext();
+    const [lan,users]=await Promise.all([api('lan:status',{}),api('users:list',{})]);
+    const urls=(lan.urls||[]);
+    let qr='';
+    if(lan.running&&urls[0]){try{const q=await api('lan:qr',{url:urls[0]});qr=q.qr||''}catch(_){}}
+    content().innerHTML=`
+      <div class="heading"><div><h1>iPhone & Usuários</h1><p>O iPhone acessa este computador pela rede local; o MySQL continua protegido no Desktop.</p></div></div>
+      <div class="grid two">
+        <div class="card">
+          <div class="access-head"><div><h3>Acesso pelo celular</h3><p class="muted">Use somente na sua rede Wi-Fi. Não encaminhe esta porta no roteador para a internet.</p></div>${lan.running?'<span class="badge paid">Ativo</span>':'<span class="badge pending">Desligado</span>'}</div>
+          <div class="form-grid">
+            <div><label>Porta local</label><input id="lan-port" type="number" min="1024" max="65535" value="${lan.port||8787}"></div>
+            <div class="access-toggle-wrap"><label>Status</label><button class="${lan.running?'danger':'primary'}" id="lan-toggle">${lan.running?'Desligar acesso':'Ativar acesso'}</button></div>
+          </div>
+          <div id="lan-out"></div>
+          ${lan.running?'<div class="lan-live"><div><b>Abra no iPhone:</b>'+urls.map(u=>'<a class="lan-url" href="'+esc(u)+'">'+esc(u)+'</a>').join('')+'<p class="muted">No Safari, use Compartilhar → Adicionar à Tela de Início.</p></div>'+(qr?'<img class="lan-qr" src="'+qr+'" alt="QR Code do GranaOk">':'')+'</div>':''}
+        </div>
+        <div class="card">
+          <h3>Como funciona</h3>
+          <p>1. Crie pelo menos um usuário abaixo.</p>
+          <p>2. Ative o acesso pelo celular.</p>
+          <p>3. Escaneie o QR Code com o iPhone.</p>
+          <p>4. Entre com usuário e senha.</p>
+          <div class="note">Usuário de acesso é diferente de Pessoa/Casal. O usuário serve para login; Pessoa/Casal continua identificando de quem é cada lançamento.</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="heading"><div><h3>Usuários de acesso</h3><p>Você pode criar mais de um login para o GranaOk.</p></div><button class="primary" id="user-new">＋ Novo usuário</button></div>
+        <div class="table-wrap">
+          ${users.rows.length?'<table class="table"><thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Vinculado a</th><th>Último acesso</th><th>Status</th><th></th></tr></thead><tbody>'+users.rows.map(u=>'<tr><td><b>'+esc(u.display_name)+'</b></td><td>'+esc(u.username)+'</td><td>'+esc(u.role==='admin'?'Administrador':'Usuário')+'</td><td>'+esc(u.person_name||'—')+'</td><td>'+esc(u.last_login_at||'Nunca')+'</td><td>'+(Number(u.active)?'<span class="badge paid">Ativo</span>':'<span class="badge pending">Inativo</span>')+'</td><td><button class="ghost user-pass" data-id="'+u.id+'">Senha</button><button class="ghost user-toggle" data-id="'+u.id+'" data-active="'+(Number(u.active)?'1':'0')+'">'+(Number(u.active)?'Desativar':'Ativar')+'</button></td></tr>').join('')+'</tbody></table>':'<div class="empty">Nenhum usuário de acesso criado ainda.</div>'}
+        </div>
+      </div>`;
+
+    $('#lan-toggle').onclick=async()=>{
+      const o=$('#lan-out');o.innerHTML=note(lan.running?'Desligando...':'Ativando...');
+      try{
+        if(lan.running) await api('lan:stop',{});
+        else await api('lan:start',{port:Number($('#lan-port').value||8787)});
+        accessView();
+      }catch(e){o.innerHTML=note(e.message,'err')}
+    };
+    $('#user-new').onclick=()=>userForm();
+    $$('.user-pass').forEach(b=>b.onclick=()=>passwordForm(Number(b.dataset.id)));
+    $$('.user-toggle').forEach(b=>b.onclick=async()=>{try{await api('user:toggle',{id:Number(b.dataset.id),active:b.dataset.active!=='1'});accessView()}catch(e){alert(e.message)}});
+  }catch(e){content().innerHTML=note(e.message,'err')}
+}
+function userForm(){
+  modal(`<h2>Novo usuário de acesso</h2><div class="form-grid">
+    <div><label>Nome exibido</label><input id="u-display" placeholder="Ex.: Wanessa"></div>
+    <div><label>Usuário</label><input id="u-name" placeholder="Ex.: wanessa"></div>
+    <div><label>Senha</label><input id="u-pass" type="password" placeholder="Mínimo 8 caracteres"></div>
+    <div><label>Perfil</label><select id="u-role"><option value="user">Usuário</option><option value="admin">Administrador</option></select></div>
+    <div class="full"><label>Vincular à Pessoa/Casal (opcional)</label><select id="u-person">${options(ctx.people,0)}</select></div>
+    <div class="full"><button class="primary" id="u-save">Criar usuário</button><div id="u-out"></div></div>
+  </div>`);
+  $('#u-save').onclick=async()=>{try{await api('user:add',{display_name:$('#u-display').value,username:$('#u-name').value,password:$('#u-pass').value,role:$('#u-role').value,person_id:Number($('#u-person').value||0)});closeModal();accessView()}catch(e){$('#u-out').innerHTML=note(e.message,'err')}};
+}
+function passwordForm(id){
+  modal(`<h2>Alterar senha</h2><label>Nova senha</label><input id="up-pass" type="password" placeholder="Mínimo 8 caracteres"><button class="primary" id="up-save" style="margin-top:12px">Salvar nova senha</button><div id="up-out"></div>`);
+  $('#up-save').onclick=async()=>{try{await api('user:password',{id,password:$('#up-pass').value});closeModal();accessView()}catch(e){$('#up-out').innerHTML=note(e.message,'err')}};
+}
+
 async function radar(){
   activateNav('radar');setTitle('Radar de investimentos','Referências online');content().innerHTML='<div class="empty">Consultando Banco Central...</div>';
   try{
@@ -244,7 +312,7 @@ async function radar(){
   }catch(e){content().innerHTML=note(e.message,'err')}
 }
 
-async function route(v){try{if(v==='dashboard')return dashboard();if(v==='transactions')return transactions();if(v==='cards')return cards();if(v==='accounts')return accounts();if(v==='financings')return financings();if(v==='registry')return registry();if(v==='radar')return radar()}catch(e){content().innerHTML=note(e.message,'err')}}
+async function route(v){try{if(v==='dashboard')return dashboard();if(v==='transactions')return transactions();if(v==='cards')return cards();if(v==='accounts')return accounts();if(v==='financings')return financings();if(v==='registry')return registry();if(v==='access')return accessView();if(v==='radar')return radar()}catch(e){content().innerHTML=note(e.message,'err')}}
 $$('#nav button').forEach(b=>b.onclick=()=>{route(b.dataset.view);$('.sidebar').classList.remove('open')});
 $('#refresh').onclick=()=>route(currentView);
 $('#modal-close').onclick=closeModal;$('#modal').onclick=e=>{if(e.target===$('#modal'))closeModal()};
