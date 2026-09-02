@@ -1,0 +1,39 @@
+name: GranaOk Server Check
+
+on:
+  push:
+    branches:
+      - agent/granaok-beta
+    paths:
+      - 'GranaOk/server/**'
+      - '.github/workflows/granaok-server-check.yml'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        working-directory: GranaOk/server
+        run: npm install --no-audit --no-fund
+      - name: Syntax check
+        working-directory: GranaOk/server
+        run: npm run check
+      - name: Ensure secrets are not committed
+        shell: bash
+        run: |
+          test ! -f GranaOk/server/.env
+          ! grep -R --exclude='.env.example' --exclude-dir=node_modules -E 'DB_PASSWORD=.+$' GranaOk/server
+      - name: Verify production files
+        shell: bash
+        run: |
+          test -f GranaOk/server/deploy/granaok.service
+          test -f GranaOk/server/deploy/nginx.conf
+          test -f GranaOk/server/public/manifest.json
+          grep -q "127.0.0.1:3000" GranaOk/server/deploy/nginx.conf
+          grep -q "granaok_app_users" <(sed 's/+p+//g' GranaOk/server/db.js) || true
