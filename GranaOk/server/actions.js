@@ -1,5 +1,7 @@
 const crypto = require('crypto');
 const { withConn, ensureSchema } = require('./db');
+const { assistantSummary, assistantAsk } = require('./assistant');
+const { buildInvestmentRadar } = require('./investments');
 
 function monthOk(v){return /^\d{4}-(0[1-9]|1[0-2])$/.test(String(v||''))?String(v):new Date().toISOString().slice(0,7)}
 function dateOk(v){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v||'')))throw new Error('Data inválida.');return String(v)}
@@ -9,13 +11,16 @@ function invoiceDue(month,dueDay){const d=new Date(month+'-01T12:00:00');d.setDa
 async function categoryId(conn,p,name,kind){name=String(name||'Outros').trim()||'Outros';await conn.execute('INSERT IGNORE INTO '+p+'categories(name,kind,active) VALUES(?,?,1)',[name,kind]);const [r]=await conn.execute('SELECT id FROM '+p+'categories WHERE name=? AND kind=? LIMIT 1',[name,kind]);return r[0]?Number(r[0].id):null}
 async function syncInvoice(conn,p,cardId,month,dueDate){const [sum]=await conn.execute("SELECT COALESCE(SUM(amount),0) total FROM "+p+"card_purchases WHERE card_id=? AND DATE_FORMAT(due_date,'%Y-%m')=?",[cardId,month]);const total=Number(sum[0].total||0);const [rows]=await conn.execute("SELECT id FROM "+p+"card_invoices WHERE card_id=? AND DATE_FORMAT(reference_month,'%Y-%m')=? ORDER BY id LIMIT 1",[cardId,month]);if(rows[0])await conn.execute('UPDATE '+p+'card_invoices SET amount=?,due_date=? WHERE id=?',[total,dueDate,rows[0].id]);else await conn.execute("INSERT INTO "+p+"card_invoices(card_id,reference_month,due_date,amount,status) VALUES(?,?,?,?, 'open')",[cardId,month+'-01',dueDate,total])}
 
-const aliases={transactions:'transactions:list',transaction_save:'transaction:save',transaction_status:'transaction:status',account_save:'account:save',person_add:'person:add',category_add:'category:add',card_save:'card:save',card_purchase_add:'card:purchase',invoice:'invoice:get',invoice_pay:'invoice:pay',invoice_reopen:'invoice:reopen',financings:'financings:list',financing_pay:'financing:pay'};
+const aliases={transactions:'transactions:list',transaction_save:'transaction:save',transaction_status:'transaction:status',account_save:'account:save',person_add:'person:add',category_add:'category:add',card_save:'card:save',card_purchase_add:'card:purchase',invoice:'invoice:get',invoice_pay:'invoice:pay',invoice_reopen:'invoice:reopen',financings:'financings:list',financing_pay:'financing:pay',assistant_summary:'assistant:summary',assistant_ask:'assistant:ask',investment_radar:'investments:radar'};
 const writeActions=new Set(['transaction:save','transaction:status','account:save','person:add','category:add','card:save','card:purchase','invoice:pay','invoice:reopen','financing:pay']);
 
 async function runAction(name,a,user){
   name=aliases[name]||name;
   if(writeActions.has(name)&&user&&user.role==='readonly')throw new Error('Seu usuário é somente leitura.');
   a=Object.assign({},a||{});
+  if(name==='assistant:summary') return assistantSummary(a.month,user);
+  if(name==='assistant:ask') return assistantAsk(a.question,a.month,user);
+  if(name==='investments:radar') return buildInvestmentRadar();
   if(user&&user.person_id&&!Number(a.person_id||0))a.person_id=user.person_id;
 
   return withConn(async conn=>{
