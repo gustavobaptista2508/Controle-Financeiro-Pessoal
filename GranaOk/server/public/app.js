@@ -27,8 +27,8 @@ function setTitle(t,s='GranaOk Web'){if($('#page-title'))$('#page-title').textCo
 function active(v){
   view=v;
   const mobileView=['assistant','investments','accounts','registry','users'].includes(v)?'more':v;
-  $('.desktop-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
-  $('.mobile-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===mobileView));
+  $$('.desktop-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  $$('.mobile-nav [data-view]').forEach(b=>b.classList.toggle('active',b.dataset.view===mobileView));
 }
 function note(t,c=''){return '<div class="note '+c+'">'+esc(t)+'</div>'}
 function badge(s){return '<span class="badge '+esc(s)+'">'+esc({paid:'Pago',pending:'Pendente',overdue:'Atrasado',open:'Aberta'}[s]||s)+'</span>'}
@@ -188,7 +188,7 @@ async function assistant(){
         '</div>'+
       '</div>';
     renderAiMessages();
-    $('.ai-quick').forEach(b=>b.onclick=()=>sendAssistant(b.textContent));
+    $$('.ai-quick').forEach(b=>b.onclick=()=>sendAssistant(b.textContent));
     $('#ai-send').onclick=()=>sendAssistant($('#ai-input').value);
     $('#ai-input').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendAssistant($('#ai-input').value)}};
   }catch(e){c.innerHTML=note(e.message,'err')}
