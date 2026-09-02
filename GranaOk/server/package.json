@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "check": "node --check server.js && node --check config.js && node --check db.js && node --check auth.js && node --check actions.js && node --check assistant.js && node --check investments.js && node --check scripts/create-admin.js && node --check public/app.js"
+    "check": "node --check server.js && node --check config.js && node --check db.js && node --check auth.js && node --check actions.js && node --check assistant.js && node --check investments.js && node --check knowledge_engine.js && node --check scripts/create-admin.js && node --check public/app.js"
   },
   "dependencies": {
     "dotenv": "^16.6.1",
