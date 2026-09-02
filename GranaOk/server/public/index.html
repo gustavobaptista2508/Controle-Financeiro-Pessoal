@@ -5,41 +5,83 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#0f172a">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="GranaOk">
-<link rel="manifest" href="/manifest.json">
-<link rel="stylesheet" href="/styles.css">
+<link rel="manifest" href="/manifest.json?v=021">
+<link rel="stylesheet" href="/styles.css?v=021">
 <title>GranaOk</title>
 </head>
 <body>
+
 <section id="login" class="login hidden">
   <form id="login-form" class="login-card">
-    <div class="brand">Grana<span>Ok</span><small>WEB / PWA</small></div>
-    <h1>Entrar</h1>
-    <p>Entre com seu usuário do GranaOk.</p>
-    <label>Usuário</label><input id="login-user" autocomplete="username" required>
-    <label>Senha</label><input id="login-pass" type="password" autocomplete="current-password" required>
-    <button class="primary" type="submit">Entrar</button>
+    <div class="logo">Grana<span>Ok</span><small>WEB 0.2.1</small></div>
+    <h1>Entrar no GranaOk</h1>
+    <p class="muted">Seu financeiro, em qualquer dispositivo.</p>
+    <label>Usuário</label>
+    <input id="login-user" autocomplete="username" required>
+    <label>Senha</label>
+    <input id="login-pass" type="password" autocomplete="current-password" required>
+    <button class="primary login-submit" type="submit">Entrar</button>
     <div id="login-out"></div>
   </form>
 </section>
 
-<div id="app" class="hidden">
-  <header class="top">
-    <div><div class="brand small">Grana<span>Ok</span></div><small id="who"></small></div>
-    <button id="logout" class="ghost">Sair</button>
-  </header>
-  <main id="content"></main>
-  <nav class="bottom">
+<div id="app" class="shell hidden">
+  <aside class="sidebar">
+    <div class="logo side-logo">Grana<span>Ok</span><small>WEB 0.2.1</small></div>
+
+    <nav class="desktop-nav">
+      <button data-view="dashboard" class="active">⌂ <span>Visão geral</span></button>
+      <button data-view="transactions">⇄ <span>Lançamentos</span></button>
+      <button data-view="cards">▣ <span>Cartões</span></button>
+      <button data-view="accounts">▤ <span>Contas</span></button>
+      <button data-view="financings">▥ <span>Financiamentos</span></button>
+      <button data-view="registry">＋ <span>Cadastros</span></button>
+      <button data-view="users" class="admin-only">♙ <span>Usuários</span></button>
+    </nav>
+
+    <div class="side-bottom">
+      <div class="signed-user">
+        <small>Conectado como</small>
+        <b id="who-side"></b>
+      </div>
+      <button id="logout-side" class="side-action">↪ Sair</button>
+    </div>
+  </aside>
+
+  <main class="main-area">
+    <header class="topbar">
+      <div class="topbar-title">
+        <b id="page-title">Visão geral</b>
+        <small id="page-subtitle">GranaOk Web</small>
+      </div>
+      <div class="top-actions">
+        <span id="who-top" class="top-user"></span>
+        <button id="refresh" class="ghost">↻ Atualizar</button>
+        <button id="logout" class="ghost">Sair</button>
+      </div>
+    </header>
+
+    <section id="content" class="content"></section>
+  </main>
+
+  <nav class="mobile-nav">
     <button data-view="dashboard" class="active">⌂<span>Início</span></button>
     <button data-view="transactions">⇄<span>Lançamentos</span></button>
     <button data-view="cards">▣<span>Cartões</span></button>
-    <button data-view="financings">▤<span>Financ.</span></button>
+    <button data-view="financings">▥<span>Financ.</span></button>
     <button data-view="more">•••<span>Mais</span></button>
   </nav>
 </div>
 
-<div id="modal" class="modal hidden"><div class="modal-card"><button id="modal-close" class="modal-close">×</button><div id="modal-content"></div></div></div>
-<script src="/app.js"></script>
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <button id="modal-close" class="modal-close">×</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script src="/app.js?v=021"></script>
 </body>
 </html>
