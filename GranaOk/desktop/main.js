@@ -356,7 +356,9 @@ async function action(name,a) {
   }
   if (name === 'user:add') {
     return withConn(async conn=>{
-      const p=await ensureSchema(conn), username=cleanUsername(a.username), display=String(a.display_name||username).trim()||username, role=a.role==='admin'?'admin':'user', personId=Number(a.person_id||0)||null, hash=hashAppPassword(a.password);
+      const p=await ensureSchema(conn), username=cleanUsername(a.username), display=String(a.display_name||username).trim()||username, personId=Number(a.person_id||0)||null, hash=hashAppPassword(a.password);
+      const [countRows]=await conn.query('SELECT COUNT(*) c FROM '+p+'app_users');
+      const role=Number(countRows[0].c||0)===0?'admin':(a.role==='admin'?'admin':'user');
       try { await conn.execute('INSERT INTO '+p+'app_users(username,display_name,password_hash,role,person_id,active) VALUES(?,?,?,?,?,1)',[username,display,hash,role,personId]); }
       catch(e){ if(Number(e.errno)===1062) throw new Error('Esse nome de usuário já existe.'); throw e; }
       return {ok:true,message:'Usuário criado.'};
