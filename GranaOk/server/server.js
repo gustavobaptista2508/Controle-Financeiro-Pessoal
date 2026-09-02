@@ -120,7 +120,7 @@ app.post('/api/users/:id/toggle',authRequired,adminRequired,webClientRequired,as
 
 const publicDir=path.join(__dirname,'public');
 app.use(express.static(publicDir,{index:false,maxAge:'1h'}));
-app.get('*',(req,res)=>res.sendFile(path.join(publicDir,'index.html')));
+app.use((req,res,next)=>{if(req.method!=='GET')return next();res.sendFile(path.join(publicDir,'index.html'))});
 
 async function start(){
   const info=await initDb();
