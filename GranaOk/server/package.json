@@ -1,0 +1,16 @@
+{
+  "name": "granaok-server",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GranaOk Web/PWA + API Node.js",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check config.js && node --check db.js && node --check auth.js && node --check actions.js && node --check scripts/create-admin.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "express": "^5.1.0",
+    "mysql2": "^3.14.4"
+  }
+}
