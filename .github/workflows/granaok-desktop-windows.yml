@@ -44,6 +44,17 @@ jobs:
           if (-not (Select-String -Path GranaOk/desktop/src/renderer.js -Pattern 'tx-observation' -Quiet)) { throw 'Observation filter missing' }
           if (-not (Select-String -Path GranaOk/desktop/main.js -Pattern "installments==='installment'" -Quiet)) { throw 'Installment filter missing' }
 
+      - name: Verify LAN multi-user mode
+        shell: pwsh
+        run: |
+          if (-not (Select-String -Path GranaOk/desktop/main.js -Pattern 'app_users' -Quiet)) { throw 'Multi-user table missing' }
+          if (-not (Select-String -Path GranaOk/desktop/main.js -Pattern 'scryptSync' -Quiet)) { throw 'Password hashing missing' }
+          if (-not (Select-String -Path GranaOk/desktop/main.js -Pattern "listen(port,'0.0.0.0'" -Quiet)) { throw 'LAN listener missing' }
+          if (-not (Select-String -Path GranaOk/desktop/src/renderer.js -Pattern 'iPhone & Usuários' -Quiet)) { throw 'Desktop LAN screen missing' }
+          if (-not (Test-Path GranaOk/desktop/src/lan/index.html)) { throw 'LAN mobile index missing' }
+          if (-not (Test-Path GranaOk/desktop/src/lan/app.js)) { throw 'LAN mobile app missing' }
+          node --check GranaOk/desktop/src/lan/app.js
+
       - name: Install dependencies
         working-directory: GranaOk/desktop
         run: npm install --no-audit --no-fund
@@ -57,7 +68,7 @@ jobs:
       - name: Upload Windows executable
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOk-Desktop-v0.1.3-Windows-x64
-          path: GranaOk/desktop/dist/GranaOk-Desktop-v0.1.3-Windows-x64.exe
+          name: GranaOk-Desktop-v0.2.0-Windows-x64
+          path: GranaOk/desktop/dist/GranaOk-Desktop-v0.2.0-Windows-x64.exe
           if-no-files-found: error
           retention-days: 30
