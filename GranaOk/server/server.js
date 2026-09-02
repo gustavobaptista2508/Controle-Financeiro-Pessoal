@@ -94,7 +94,7 @@ app.post('/api/logout',authRequired,async(req,res)=>{
 app.post('/api/action',authRequired,webClientRequired,async(req,res)=>{
   try{
     const action=String((req.body&&req.body.action)||'');
-    const allowed=new Set(['dashboard','context','transactions','transaction_save','transaction_status','account_save','person_add','category_add','card_save','card_purchase_add','invoice','invoice_pay','invoice_reopen','financings','financing_pay']);
+    const allowed=new Set(['dashboard','context','transactions','transaction_save','transaction_status','account_save','person_add','category_add','card_save','card_purchase_add','invoice','invoice_pay','invoice_reopen','financings','financing_pay','assistant_summary','assistant_ask','investment_radar']);
     if(!allowed.has(action))return res.status(403).json({ok:false,error:'Operação não permitida.'});
     const result=await runAction(action,(req.body&&req.body.payload)||{},req.user);
     res.json(Object.assign({ok:true},result||{}));
