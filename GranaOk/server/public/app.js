@@ -135,7 +135,7 @@ async function accounts(){
     '<button class="secondary account-balance" data-id="'+a.id+'" data-name="'+esc(a.name)+'" data-balance="'+Number(a.current_balance||0)+'" style="margin-top:14px">Ajustar saldo atual</button>'+
   '</div>').join('')+'</div>'+
   '<div class="note" style="margin-top:16px">O saldo atual é a referência do dashboard. A partir desta versão, novos lançamentos pagos vinculados a uma conta passam a movimentá-lo automaticamente. Lançamentos antigos não são recalculados para evitar duplicidade.</div>';
-  $('.account-balance').forEach(b=>b.onclick=()=>accountBalanceForm(Number(b.dataset.id),b.dataset.name,Number(b.dataset.balance||0)));
+  $$('.account-balance').forEach(b=>b.onclick=()=>accountBalanceForm(Number(b.dataset.id),b.dataset.name,Number(b.dataset.balance||0)));
 }
 function accountBalanceForm(id,name,current){
   modal('<h2>Ajustar saldo</h2><p class="muted">'+esc(name)+'</p>'+
@@ -257,6 +257,7 @@ async function sendKnowledgeFeedback(id,feedback,btn){
   }catch(e){alert(e.message)}
 }
 function renderAiMessages(){
+  renderFloatAi();
   const el=$('#ai-messages');if(!el)return;
   el.innerHTML=aiMessages.length?aiMessages.map(m=>'<div class="ai-msg '+m.role+'">'+esc(m.text)+'</div>').join(''):'<div class="empty">Faça uma pergunta sobre despesas, categorias, cartões, atrasos ou projeção.</div>';
   el.scrollTop=el.scrollHeight;
@@ -318,6 +319,31 @@ function runInvestmentSimulation(){
   const out=$('#sim-out');if(out)out.innerHTML='<small class="muted">Valor estimado ao final</small><div class="sim-result">'+money(total)+'</div><div class="muted">Aportes: '+money(invested)+' · rendimento estimado: '+money(Math.max(0,total-invested))+'</div>';
 }
 
+function floatAiOpen(){
+  const panel=$('#ai-float-panel');if(!panel)return;
+  panel.classList.remove('hidden');renderFloatAi();
+  setTimeout(()=>$('#ai-float-input')?.focus(),40);
+}
+function floatAiClose(){const panel=$('#ai-float-panel');if(panel)panel.classList.add('hidden')}
+function renderFloatAi(){
+  const el=$('#ai-float-messages');if(!el)return;
+  const msgs=aiMessages.slice(-10);
+  el.innerHTML=msgs.length?msgs.map(m=>'<div class="ai-msg '+m.role+'">'+esc(m.text)+'</div>').join(''):'<div class="float-ai-welcome"><b>Oi! Eu sou a Grana IA.</b><span>Pergunte sobre este mês, próximo mês, faturas, gastos, saldo ou previsão dos próximos meses.</span></div>';
+  el.scrollTop=el.scrollHeight;
+}
+async function sendFloatAi(){
+  const input=$('#ai-float-input');if(!input)return;
+  const question=String(input.value||'').trim();if(!question)return;
+  const history=aiMessages.slice(-12).map(m=>({role:m.role,text:m.text}));
+  aiMessages.push({role:'user',text:question});input.value='';renderFloatAi();
+  const send=$('#ai-float-send');if(send){send.disabled=true;send.textContent='...'}
+  try{
+    const d=await api('assistant_ask',{question,month,history});
+    aiMessages.push({role:'bot',text:d.answer||'Não consegui analisar agora.'});
+  }catch(e){aiMessages.push({role:'bot',text:'Não consegui consultar agora: '+e.message})}
+  if(send){send.disabled=false;send.textContent='Enviar'}
+  renderFloatAi();renderAiMessages();
+}
 async function usersApi(url,method='GET',body){
   const r=await fetch(url,{method,credentials:'same-origin',headers:{'Content-Type':'application/json','X-GranaOk-Client':'web'},body:body?JSON.stringify(body):undefined});
   const d=await r.json();if(!r.ok||!d.ok)throw new Error(d.error||'Falha.');return d;
@@ -353,6 +379,10 @@ function route(v){
   return more();
 }
 $$('[data-view]').forEach(b=>b.onclick=()=>route(b.dataset.view));
+$('#ai-fab').onclick=floatAiOpen;
+$('#ai-float-close').onclick=floatAiClose;
+$('#ai-float-send').onclick=sendFloatAi;
+$('#ai-float-input').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendFloatAi()}};
 $('#modal-close').onclick=closeModal;
 $('#modal').onclick=e=>{if(e.target===$('#modal'))closeModal()};
 async function doLogout(){await fetch('/api/logout',{method:'POST',credentials:'same-origin'}).catch(()=>{});user=null;showLogin()}
