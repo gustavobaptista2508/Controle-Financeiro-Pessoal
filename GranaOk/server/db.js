@@ -224,6 +224,22 @@ async function ensureSchema(conn) {
     }
   }
 
+  await conn.query(
+    'CREATE TABLE IF NOT EXISTS '+p+'account_balance_events ('+
+    'id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,'+
+    'account_id BIGINT UNSIGNED NOT NULL,'+
+    'user_id BIGINT UNSIGNED NULL,'+
+    'source_type VARCHAR(30) NOT NULL,'+
+    'source_id BIGINT UNSIGNED NULL,'+
+    'delta DECIMAL(14,2) NOT NULL,'+
+    'balance_after DECIMAL(14,2) NOT NULL,'+
+    'event_date DATE NULL,'+
+    'note VARCHAR(255) NULL,'+
+    'created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,'+
+    'PRIMARY KEY(id), KEY idx_balance_account(account_id), KEY idx_balance_source(source_type,source_id)'+
+    ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
+  );
+
   const needed = [
     [p+'people','entity_kind',"VARCHAR(20) NOT NULL DEFAULT 'person'"],
     [p+'people','partner_name','VARCHAR(120) NULL'],
@@ -232,7 +248,10 @@ async function ensureSchema(conn) {
     [p+'transactions','installment_group','VARCHAR(64) NULL'],
     [p+'transactions','installment_number','INT NOT NULL DEFAULT 1'],
     [p+'transactions','installment_total','INT NOT NULL DEFAULT 1'],
+    [p+'transactions','balance_applied','TINYINT(1) NOT NULL DEFAULT 0'],
     [p+'card_invoices','paid_date','DATE NULL'],
+    [p+'card_invoices','paid_account_id','BIGINT UNSIGNED NULL'],
+    [p+'card_invoices','balance_applied','TINYINT(1) NOT NULL DEFAULT 0'],
     [p+'financings','next_due_date','DATE NULL'],
     [p+'financings','last_paid_date','DATE NULL']
   ];
