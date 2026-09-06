@@ -6,6 +6,33 @@ function monthOk(v){
 function addMonth(m){
   const d=new Date(m+'-01T12:00:00'); d.setMonth(d.getMonth()+1); return d.toISOString().slice(0,7);
 }
+function shiftMonth(m,n){
+  const d=new Date(monthOk(m)+'-01T12:00:00'); d.setMonth(d.getMonth()+Number(n||0)); return d.toISOString().slice(0,7);
+}
+function monthLabel(m){
+  return new Date(monthOk(m)+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
+}
+function temporalIntent(question,baseMonth){
+  const n=normalize(question), base=monthOk(baseMonth);
+  let m=n.match(/proximos?\s+(\d{1,2})\s+meses/);
+  if(m)return {kind:'range',start:shiftMonth(base,1),count:Math.max(1,Math.min(12,Number(m[1]||3)))};
+  if(/proximos meses|meses seguintes|meses futuros|previsao dos proximos|projecao dos proximos/.test(n))
+    return {kind:'range',start:shiftMonth(base,1),count:3};
+  if(/proximo mes|mes que vem|mes seguinte/.test(n))
+    return {kind:'single',month:shiftMonth(base,1)};
+  if(/mes passado|mes anterior/.test(n))
+    return {kind:'single',month:shiftMonth(base,-1)};
+  const names={janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
+  for(const [name,num] of Object.entries(names)){
+    if(n.includes(name)){
+      const bm=new Date(base+'-01T12:00:00'), explicitYear=(n.match(/\b(20\d{2})\b/)||[])[1];
+      let year=explicitYear?Number(explicitYear):bm.getFullYear();
+      if(!explicitYear && /proxim|futur|seguinte|vem/.test(n) && num<bm.getMonth()+1)year++;
+      return {kind:'single',month:String(year)+'-'+String(num).padStart(2,'0')};
+    }
+  }
+  return {kind:'current',month:base};
+}
 function brMoney(v){
   return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 }
@@ -29,6 +56,7 @@ function safeHistory(history){
   return Array.isArray(history)?history.slice(-12).map(x=>({role:String(x&&x.role||''),text:String(x&&x.text||'').slice(0,1200)})):[];
 }
 function explicitTopic(n){
+  if(/previs|projecao|proximos?\s+mes|mes que vem|mes seguinte|futur|saldo futuro/.test(n))return 'projection';
   if(/cartao|cartoes|fatura|credito/.test(n))return 'cards';
   if(/financi|parcela/.test(n))return 'financing';
   if(/receita|entrada|salario|recebi|ganhei|renda/.test(n))return 'income';
@@ -218,6 +246,57 @@ function listTransactions(rows,max=8){
   if(rows.length>shown.length)out+='\n… e mais '+(rows.length-shown.length)+' lançamento(s).';
   return out+'\nTotal: '+brMoney(total)+'.';
 }
+async function learnedPatternsForForecast(user){
+  return withConn(async conn=>{
+    const p=await ensureSchema(conn);
+    try{
+      const [rows]=await conn.execute(
+        "SELECT pattern_type,pattern_key,label,avg_amount,confidence FROM "+p+"recurring_patterns "+
+        "WHERE user_id=? AND active=1 AND confidence>=65 ORDER BY confidence DESC,avg_amount DESC LIMIT 50",
+        [Number(user&&user.id||0)]
+      );
+      return rows.map(r=>Object.assign({},r,{avg_amount:Number(r.avg_amount||0),confidence:Number(r.confidence||0)}));
+    }catch(_){return []}
+  });
+}
+function hasPatternInSnapshot(pattern,s){
+  const key=normalize(pattern.pattern_key||pattern.label||'');
+  if(!key)return false;
+  return (s.transactions||[]).some(x=>{
+    const hay=normalize(x.description||'');
+    return hay.includes(key)||key.includes(hay);
+  });
+}
+async function forecastAnswer(baseMonth,count,user){
+  const patterns=await learnedPatternsForForecast(user);
+  const rows=[];
+  let balance=null;
+  for(let i=1;i<=count;i++){
+    const m=shiftMonth(baseMonth,i), snap=await snapshot(m,user);
+    if(balance===null)balance=Number(snap.accounts_balance||0);
+    let learnedIncome=0,learnedExpense=0;
+    for(const p of patterns){
+      if(hasPatternInSnapshot(p,snap))continue;
+      if(p.pattern_type==='recurring_income')learnedIncome+=Number(p.avg_amount||0);
+      if(p.pattern_type==='recurring_expense')learnedExpense+=Number(p.avg_amount||0);
+    }
+    const income=Number(snap.income||0)+learnedIncome;
+    const out=Number(snap.expenses||0)+Number(snap.card_invoices||0)+learnedExpense;
+    const net=income-out;
+    balance+=net;
+    rows.push({
+      month:m,known_income:Number(snap.income||0),learned_income:learnedIncome,
+      known_expenses:Number(snap.expenses||0),cards:Number(snap.card_invoices||0),
+      learned_expenses:learnedExpense,income,out,net,balance
+    });
+  }
+  let out='Previsão dos próximos '+count+' mês'+(count>1?'es':'')+' com base no que já está lançado e nos padrões recorrentes aprendidos pelo GranaOk:\n';
+  out+=rows.map(r=>'• '+monthLabel(r.month)+': entradas estimadas '+brMoney(r.income)+', saídas estimadas '+brMoney(r.out)+' → resultado '+brMoney(r.net)+' · saldo acumulado estimado '+brMoney(r.balance)).join('\n');
+  const learned=rows.some(r=>r.learned_income>0||r.learned_expenses>0);
+  out+='\n\n'+(learned?'Parte da previsão usa padrões recorrentes do Motor de Conhecimento quando o mês ainda não tem todos os lançamentos cadastrados. ':'');
+  out+='É uma estimativa: compras novas, rendas não previstas e alterações de vencimento podem mudar o resultado.';
+  return {answer:out,forecast:rows};
+}
 function naturalFallback(q,s,history){
   const matches=transactionMatches(q,s);
   if(matches.length){
@@ -330,7 +409,7 @@ function answerQuestion(q,s,historyRaw){
     return 'As entradas do mês somam '+brMoney(s.income)+'.';
 
   if(topic==='projection')
-    return 'O saldo atual das contas é '+brMoney(s.accounts_balance)+' e a projeção do mês está em '+brMoney(s.projected)+'.';
+    return 'Para '+monthLabel(s.month)+', o saldo atual das contas é '+brMoney(s.accounts_balance)+'. Considerando as entradas, despesas e faturas já registradas nesse mês, a projeção é '+brMoney(s.projected)+'.';
 
   if(topic==='transactions'&&status==='pending'){
     const rows=s.transactions.filter(x=>x.type==='expense'&&x.status!=='paid');
@@ -345,8 +424,15 @@ async function assistantSummary(month,user){
   return {snapshot:s,insights:buildInsights(s),mode:'local-contextual',privacy:'Os dados são analisados pela API privada do GranaOk e não são enviados a um serviço externo de IA.'};
 }
 async function assistantAsk(question,month,user,history){
-  const s=await snapshot(month,user);
-  return {answer:answerQuestion(question,s,history),snapshot:s,mode:'local-contextual'};
+  const base=monthOk(month), temporal=temporalIntent(question,base), n=normalize(question);
+  if(temporal.kind==='range' || (/previs|projecao|futur/.test(n) && /proximos? meses/.test(n))){
+    const count=temporal.count||3;
+    const f=await forecastAnswer(base,count,user);
+    return Object.assign(f,{mode:'local-contextual-forecast',base_month:base});
+  }
+  const target=temporal.kind==='single'?temporal.month:base;
+  const s=await snapshot(target,user);
+  return {answer:answerQuestion(question,s,history),snapshot:s,mode:'local-contextual',target_month:target};
 }
 
 module.exports={assistantSummary,assistantAsk};
