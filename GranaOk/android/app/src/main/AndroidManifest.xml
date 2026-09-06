@@ -33,7 +33,7 @@
         <service android:name=".InvestmentRadarService" android:exported="false" android:process=":radar" />
 
         <activity
-            android:name=".MainActivityV060"
+            android:name=".MainActivityV061"
             android:exported="true"
             android:screenOrientation="portrait"
             android:windowSoftInputMode="adjustResize">
