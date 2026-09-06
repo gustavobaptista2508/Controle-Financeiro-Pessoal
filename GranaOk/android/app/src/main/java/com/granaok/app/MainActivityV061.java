@@ -3,6 +3,12 @@ package com.granaok.app;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.content.Intent;
+import android.net.Uri;
+import androidx.core.content.FileProvider;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.security.MessageDigest;
 import android.util.Base64;
 import android.view.View;
 import android.view.ViewGroup;
@@ -47,11 +53,17 @@ public class MainActivityV061 extends MainActivityV060 {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         web061 = findWebViewRecursive(findViewById(android.R.id.content));
-        if (web061 != null) web061.addJavascriptInterface(new ServerAiBridge(), "GranaServerAI");
+        if (web061 != null) {
+            web061.addJavascriptInterface(new ServerAiBridge(), "GranaServerAI");
+            web061.addJavascriptInterface(new UpdateBridge(), "GranaUpdater");
+        }
     }
 
     @Override protected void onDestroy() {
-        if (web061 != null) try { web061.removeJavascriptInterface("GranaServerAI"); } catch (Throwable ignored) {}
+        if (web061 != null) {
+            try { web061.removeJavascriptInterface("GranaServerAI"); } catch (Throwable ignored) {}
+            try { web061.removeJavascriptInterface("GranaUpdater"); } catch (Throwable ignored) {}
+        }
         super.onDestroy();
     }
 
@@ -62,6 +74,66 @@ public class MainActivityV061 extends MainActivityV060 {
             for(int i=0;i<g.getChildCount();i++){ WebView w=findWebViewRecursive(g.getChildAt(i)); if(w!=null)return w; }
         }
         return null;
+    }
+
+    public class UpdateBridge {
+        @JavascriptInterface public int versionCode(){ return BuildConfig.VERSION_CODE; }
+        @JavascriptInterface public String versionName(){ return BuildConfig.VERSION_NAME; }
+
+        @JavascriptInterface public void check(){
+            new Thread(() -> {
+                try{
+                    HttpURLConnection c=(HttpURLConnection)new URL(API_BASE+"/apk/latest.json?ts="+System.currentTimeMillis()).openConnection();
+                    c.setConnectTimeout(8000);c.setReadTimeout(10000);c.setRequestMethod("GET");
+                    c.setRequestProperty("Accept","application/json");c.setRequestProperty("User-Agent","GranaOk-Android/"+BuildConfig.VERSION_NAME);
+                    int code=c.getResponseCode();
+                    InputStream in=code>=200&&code<300?c.getInputStream():c.getErrorStream();
+                    String body=read(in);c.disconnect();
+                    if(code<200||code>=300)throw new IllegalStateException("Servidor de atualização retornou HTTP "+code+".");
+                    JSONObject out=new JSONObject(body);
+                    out.put("ok",true);
+                    out.put("current_version_code",BuildConfig.VERSION_CODE);
+                    out.put("current_version_name",BuildConfig.VERSION_NAME);
+                    out.put("update_available",out.optInt("version_code",0)>BuildConfig.VERSION_CODE);
+                    callback("GranaOkUpdateInfo",out.toString());
+                }catch(Throwable e){callback("GranaOkUpdateInfo",json(false,clean(e)));}
+            },"GranaOk-Update-Check").start();
+        }
+
+        @JavascriptInterface public void install(String downloadUrl,String expectedSha256){
+            final String address=downloadUrl==null?"":downloadUrl.trim();
+            if(!address.startsWith("https://granaok.com.br/apk/")){
+                callback("GranaOkUpdateInstall",json(false,"URL de atualização não permitida."));return;
+            }
+            new Thread(() -> {
+                try{
+                    File dir=new File(getCacheDir(),"updates");if(!dir.exists()&&!dir.mkdirs())throw new IllegalStateException("Não foi possível preparar a pasta de atualização.");
+                    File apk=new File(dir,"GranaOk-update.apk");
+                    HttpURLConnection c=(HttpURLConnection)new URL(address).openConnection();
+                    c.setConnectTimeout(10000);c.setReadTimeout(30000);c.setRequestMethod("GET");
+                    c.setRequestProperty("User-Agent","GranaOk-Android/"+BuildConfig.VERSION_NAME);
+                    int code=c.getResponseCode();if(code<200||code>=300)throw new IllegalStateException("Download retornou HTTP "+code+".");
+                    long len=c.getContentLengthLong();if(len>200L*1024L*1024L)throw new IllegalStateException("APK maior que o limite permitido.");
+                    MessageDigest md=MessageDigest.getInstance("SHA-256");
+                    try(InputStream in=c.getInputStream();FileOutputStream out=new FileOutputStream(apk)){
+                        byte[] buf=new byte[32768];int n;long total=0;
+                        while((n=in.read(buf))>0){total+=n;if(total>200L*1024L*1024L)throw new IllegalStateException("APK maior que o limite permitido.");out.write(buf,0,n);md.update(buf,0,n);}
+                    }finally{c.disconnect();}
+                    String actual=hex(md.digest());
+                    if(expectedSha256!=null&&!expectedSha256.trim().isEmpty()&&!actual.equalsIgnoreCase(expectedSha256.trim())){
+                        apk.delete();throw new IllegalStateException("SHA-256 do APK não confere.");
+                    }
+                    Uri uri=FileProvider.getUriForFile(MainActivityV061.this,BuildConfig.APPLICATION_ID+".files",apk);
+                    Intent i=new Intent(Intent.ACTION_VIEW);
+                    i.setDataAndType(uri,"application/vnd.android.package-archive");
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION|Intent.FLAG_ACTIVITY_NEW_TASK);
+                    runOnUiThread(() -> {
+                        try{startActivity(i);callback("GranaOkUpdateInstall",json(true,"Instalador aberto."));}
+                        catch(Throwable e){callback("GranaOkUpdateInstall",json(false,clean(e)));}
+                    });
+                }catch(Throwable e){callback("GranaOkUpdateInstall",json(false,clean(e)));}
+            },"GranaOk-Update-Download").start();
+        }
     }
 
     public class ServerAiBridge {
@@ -188,6 +260,12 @@ public class MainActivityV061 extends MainActivityV060 {
         if(web061==null)return;
         final String js="window."+fn+" && window."+fn+"("+JSONObject.quote(json==null?"{}":json)+")";
         runOnUiThread(() -> { if(web061!=null)try{web061.evaluateJavascript(js,null);}catch(Throwable ignored){} });
+    }
+
+    private static String hex(byte[] bytes){
+        StringBuilder b=new StringBuilder(bytes.length*2);
+        for(byte x:bytes)b.append(String.format(java.util.Locale.US,"%02x",x&0xff));
+        return b.toString();
     }
 
     private static String json(boolean ok,String message){
