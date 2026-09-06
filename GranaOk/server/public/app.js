@@ -242,10 +242,11 @@ function renderAiMessages(){
 }
 async function sendAssistant(question){
   question=String(question||'').trim();if(!question)return;
+  const history=aiMessages.slice(-12).map(m=>({role:m.role,text:m.text}));
   aiMessages.push({role:'user',text:question});renderAiMessages();
   if($('#ai-input'))$('#ai-input').value='';
   try{
-    const d=await api('assistant_ask',{question,month});
+    const d=await api('assistant_ask',{question,month,history});
     aiMessages.push({role:'bot',text:d.answer||'Não consegui analisar agora.'});
   }catch(e){aiMessages.push({role:'bot',text:'Erro: '+e.message})}
   renderAiMessages();
