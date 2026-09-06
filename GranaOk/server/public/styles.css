@@ -126,3 +126,34 @@ input:focus,select:focus,textarea:focus{border-color:#86efac;box-shadow:0 0 0 3p
 .shortcut:hover{background:#f8fafc}
 @media(max-width:1000px){.ai-grid{grid-template-columns:1fr}.invest-bench{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:860px){.ai-chat{min-height:380px}.ai-compose{grid-template-columns:1fr}.invest-bench{grid-template-columns:repeat(2,minmax(0,1fr))}.radar-grid{grid-template-columns:1fr}.invest-value{font-size:20px}}
+
+.ai-fab{
+  position:fixed;right:24px;bottom:24px;width:58px;height:58px;border-radius:50%;
+  background:linear-gradient(135deg,#059669,#047857);color:#fff;font-size:26px;
+  display:grid;place-items:center;box-shadow:0 16px 36px rgba(4,120,87,.35);z-index:55;
+  border:2px solid rgba(255,255,255,.88)
+}
+.ai-fab:hover{transform:translateY(-1px)}
+.ai-float-panel{
+  position:fixed;right:24px;bottom:94px;width:min(390px,calc(100vw - 32px));height:min(590px,calc(100dvh - 130px));
+  background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 28px 70px rgba(15,23,42,.25);
+  z-index:58;display:flex;flex-direction:column;overflow:hidden
+}
+.ai-float-head{display:flex;align-items:center;gap:10px;padding:14px 15px;border-bottom:1px solid var(--line);background:#fff}
+.ai-float-head>div{flex:1}.ai-float-head b{display:block}.ai-float-head small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.ai-float-head button{font-size:21px;padding:6px 10px}
+.ai-float-messages{flex:1;overflow:auto;padding:14px;display:grid;align-content:start;gap:9px;background:#f8fafc}
+.ai-float-messages .ai-msg{max-width:92%;font-size:13px}
+.float-ai-welcome{display:grid;gap:5px;padding:13px;border-radius:14px;background:#ecfdf5;border:1px solid #bbf7d0}
+.float-ai-welcome span{font-size:12px;color:#475569;line-height:1.45}
+.ai-float-compose{display:grid;grid-template-columns:1fr auto;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff}
+.ai-float-compose textarea{resize:none;min-height:48px;max-height:110px;margin:0}
+.ai-float-compose button{align-self:stretch}
+.ai-open-full{border-radius:0;border-top:1px solid var(--line);padding:10px 12px;background:#fff}
+@media(max-width:860px){
+  .ai-fab{right:16px;bottom:calc(78px + env(safe-area-inset-bottom));width:54px;height:54px;font-size:24px}
+  .ai-float-panel{
+    left:10px;right:10px;bottom:calc(140px + env(safe-area-inset-bottom));width:auto;
+    height:min(520px,calc(100dvh - 190px));border-radius:18px
+  }
+}
