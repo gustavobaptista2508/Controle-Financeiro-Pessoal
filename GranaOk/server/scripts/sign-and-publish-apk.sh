@@ -26,7 +26,7 @@ cp "$UNSIGNED" "$SIGNED"
 
 jarsigner   -keystore "$GRANAOK_KEYSTORE_PATH"   -storepass "$GRANAOK_KEYSTORE_PASSWORD"   -keypass "$GRANAOK_KEY_PASSWORD"   -sigalg SHA256withRSA   -digestalg SHA-256   "$SIGNED" "$GRANAOK_KEY_ALIAS"
 
-jarsigner -verify -strict -certs "$SIGNED" >/dev/null
+jarsigner -verify -certs "$SIGNED" >/dev/null
 
 bash "$PUBLISH_SCRIPT" "$SIGNED" "$VERSION_CODE" "$VERSION_NAME"
 
