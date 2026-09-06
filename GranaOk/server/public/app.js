@@ -384,7 +384,8 @@ function route(v){
   if(v==='users')return users();
   return more();
 }
-$$('[data-view]').forEach(b=>b.onclick=()=>route(b.dataset.view));
+$('[data-view]').forEach(b=>b.onclick=()=>route(b.dataset.view));
+$('.ai-open-full').forEach(b=>b.onclick=()=>{floatAiClose();route('assistant')});
 $('#ai-fab').onclick=floatAiOpen;
 $('#ai-float-close').onclick=floatAiClose;
 $('#ai-float-send').onclick=sendFloatAi;
