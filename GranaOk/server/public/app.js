@@ -115,17 +115,38 @@ async function invoice(cardId,m){
     const d=await api('invoice',{card_id:cardId,month:m});
     setTitle(d.card.name,mlabel(m));
     c.innerHTML='<div class="heading"><div><h1>'+esc(d.card.name)+'</h1><p>'+esc(mlabel(m))+'</p></div><div class="month-nav"><button class="secondary" id="ip">‹</button><b>'+esc(mlabel(m))+'</b><button class="secondary" id="in">›</button></div></div>'+
-    '<div class="card"><small class="muted">Total da fatura</small><div class="invoice-total">'+money(d.total)+'</div><p>'+badge(d.status)+'</p>'+(d.status==='paid'?'<p>Pago em <b>'+br(d.paid_date)+'</b></p><button class="secondary" id="ir">Reabrir fatura</button>':'<label>Data do pagamento</label><input id="idate" type="date" value="'+today()+'"><button class="primary" id="ipay" style="margin-top:10px">✓ Marcar fatura como paga</button>')+'</div>'+
+    '<div class="card"><small class="muted">Total da fatura</small><div class="invoice-total">'+money(d.total)+'</div><p>'+badge(d.status)+'</p>'+(d.status==='paid'?'<p>Pago em <b>'+br(d.paid_date)+'</b></p><button class="secondary" id="ir">Reabrir fatura</button>':'<label>Data do pagamento</label><input id="idate" type="date" value="'+today()+'"><label>Conta usada no pagamento</label><select id="iaccount"><option value="">Não movimentar saldo agora</option>'+ctx.accounts.filter(a=>Number(a.active)!==0).map(a=>'<option value="'+a.id+'">'+esc(a.name)+' · '+money(a.current_balance)+'</option>').join('')+'</select><button class="primary" id="ipay" style="margin-top:10px">✓ Marcar fatura como paga</button>')+'</div>'+
     '<div class="list" style="margin-top:16px">'+(d.rows.length?d.rows.map(r=>'<div class="row"><div class="main"><b>'+esc(r.description)+'</b><small>'+br(r.purchase_date)+' · '+r.installment_number+'/'+r.installment_total+' · '+esc(r.category||'')+'</small></div><div class="amount expense">-'+money(r.amount)+'</div></div>').join(''):'<div class="empty">Sem compras.</div>')+'</div>';
     $('#ip').onclick=()=>invoice(cardId,shift(m,-1));$('#in').onclick=()=>invoice(cardId,shift(m,1));
-    if($('#ipay'))$('#ipay').onclick=async()=>{try{await api('invoice_pay',{card_id:cardId,month:m,paid_date:$('#idate').value});invoice(cardId,m)}catch(e){alert(e.message)}};
+    if($('#ipay'))$('#ipay').onclick=async()=>{try{await api('invoice_pay',{card_id:cardId,month:m,paid_date:$('#idate').value,account_id:Number($('#iaccount')?.value||0)});invoice(cardId,m)}catch(e){alert(e.message)}};
     if($('#ir'))$('#ir').onclick=async()=>{try{await api('invoice_reopen',{card_id:cardId,month:m});invoice(cardId,m)}catch(e){alert(e.message)}};
   }catch(e){c.innerHTML=note(e.message,'err')}
 }
 
 async function accounts(){
   active('accounts');setTitle('Contas','Saldos e bancos');await context();const c=$('#content');
-  c.innerHTML='<div class="heading"><div><h1>Contas</h1><p>Contas bancárias vinculadas ao GranaOk</p></div></div><div class="grid card-grid">'+ctx.accounts.map(a=>'<div class="card"><small class="muted">'+esc(a.bank_code||'Conta')+'</small><h3 style="margin:8px 0">'+esc(a.name)+'</h3><div class="invoice-total">'+money(a.current_balance)+'</div><div class="muted">'+esc(a.person_name||'')+'</div></div>').join('')+'</div>';
+  c.innerHTML='<div class="heading"><div><h1>Contas</h1><p>Saldo atual usado no painel e na projeção</p></div></div>'+
+  '<div class="grid card-grid">'+ctx.accounts.map(a=>'<div class="card">'+
+    '<small class="muted">'+esc(a.bank_code||'Conta')+'</small>'+
+    '<h3 style="margin:8px 0">'+esc(a.name)+'</h3>'+
+    '<small class="muted">Saldo atual</small><div class="invoice-total">'+money(a.current_balance)+'</div>'+
+    '<div class="muted">Saldo inicial cadastrado: '+money(a.initial_balance)+'</div>'+
+    (a.person_name?'<div class="muted" style="margin-top:4px">'+esc(a.person_name)+'</div>':'')+
+    '<button class="secondary account-balance" data-id="'+a.id+'" data-name="'+esc(a.name)+'" data-balance="'+Number(a.current_balance||0)+'" style="margin-top:14px">Ajustar saldo atual</button>'+
+  '</div>').join('')+'</div>'+
+  '<div class="note" style="margin-top:16px">O saldo atual é a referência do dashboard. A partir desta versão, novos lançamentos pagos vinculados a uma conta passam a movimentá-lo automaticamente. Lançamentos antigos não são recalculados para evitar duplicidade.</div>';
+  $('.account-balance').forEach(b=>b.onclick=()=>accountBalanceForm(Number(b.dataset.id),b.dataset.name,Number(b.dataset.balance||0)));
+}
+function accountBalanceForm(id,name,current){
+  modal('<h2>Ajustar saldo</h2><p class="muted">'+esc(name)+'</p>'+
+    '<label>Saldo atual da conta</label><input id="abv" inputmode="decimal" value="'+String(current).replace('.',',')+'">'+
+    '<label>Observação</label><input id="abn" value="Sincronização manual do saldo bancário">'+
+    '<button class="primary" id="abs" style="margin-top:12px">Salvar saldo</button><div id="abo"></div>');
+  $('#abs').onclick=async()=>{try{
+    const raw=$('#abv').value.trim();
+    await api('account_balance_set',{account_id:id,current_balance:raw,note:$('#abn').value});
+    closeModal();accounts();
+  }catch(e){$('#abo').innerHTML=note(e.message,'err')}};
 }
 async function financings(){
   active('financings');setTitle('Financiamentos','Parcelas e progresso');const c=$('#content');c.innerHTML='<div class="empty">Carregando...</div>';
