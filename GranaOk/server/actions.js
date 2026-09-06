@@ -20,7 +20,7 @@ async function runAction(name,a,user){
   if(writeActions.has(name)&&user&&user.role==='readonly')throw new Error('Seu usuário é somente leitura.');
   a=Object.assign({},a||{});
   if(name==='assistant:summary') return assistantSummary(a.month,user);
-  if(name==='assistant:ask') return assistantAsk(a.question,a.month,user);
+  if(name==='assistant:ask') return assistantAsk(a.question,a.month,user,a.history);
   if(name==='investments:radar') return buildInvestmentRadar();
   if(name==='knowledge:rebuild') return rebuildKnowledge(user,a.months||12);
   if(name==='knowledge:summary') return getKnowledgeSummary(user);
