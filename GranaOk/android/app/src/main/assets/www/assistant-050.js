@@ -47,10 +47,11 @@
 
   function enhanceAssistantCard(){
     const card=document.querySelector('.ai-card');if(!card||card.dataset.v050==='1')return;card.dataset.v050='1';
-    card.innerHTML=`<div class="titleicon"><span>✨</span><div><h3>Grana IA</h3><p class="muted compact">Assistente financeiro local · mantém o contexto da conversa</p></div></div><div class="ai-chat-050" id="ai-chat-050"></div><div class="chips ai-chips-050"><button onclick="quickAI('Como estão minhas finanças este mês?')">Resumo do mês</button><button onclick="quickAI('Quanto posso separar para investir?')">Quanto investir?</button><button onclick="quickAI('Simule R$ 10.000 por 2 anos')">Simular investimento</button><button onclick="quickAI('Onde estou gastando mais?')">Maiores gastos</button></div><div class="ai-composer-050"><input id="aiq" placeholder="Converse sobre gastos, saldo, faturas ou investimentos"><button class="primary" id="ask">Enviar</button></div><small class="ai-local-note">As respostas continuam sendo processadas no aparelho. O assistente usa regras financeiras, contexto da conversa e os dados do GranaOk — não é um LLM em nuvem.</small>`;
+    card.innerHTML=`<div class="titleicon"><span>✨</span><div><h3>Grana IA</h3><p class="muted compact">Assistente financeiro · Motor de Conhecimento na VPS + fallback local</p></div></div><div class="ai-server-061" id="ai-server-061"></div><div class="ai-chat-050" id="ai-chat-050"></div><div class="chips ai-chips-050"><button onclick="quickAI('Como estão minhas finanças este mês?')">Resumo do mês</button><button onclick="quickAI('Quanto posso separar para investir?')">Quanto investir?</button><button onclick="quickAI('Simule R$ 10.000 por 2 anos')">Simular investimento</button><button onclick="quickAI('Onde estou gastando mais?')">Maiores gastos</button></div><div class="ai-composer-050"><input id="aiq" placeholder="Converse sobre gastos, saldo, faturas ou investimentos"><button class="primary" id="ask">Enviar</button></div><small class="ai-local-note">As respostas continuam sendo processadas no aparelho. O assistente usa regras financeiras, contexto da conversa e os dados do GranaOk — não é um LLM em nuvem.</small>`;
     if(!history.length)history.push({role:'assistant',text:'Olá! Posso analisar seu mês, explicar seus gastos, conversar sobre faturas e fazer simulações de investimento. Pode perguntar do seu jeito.'});
     renderChat();
     document.getElementById('ask').onclick=window.askLocalAI;
+    renderServer061();
     document.getElementById('aiq').onkeydown=e=>{if(e.key==='Enter')window.askLocalAI()};
     const pending=sessionStorage.getItem('granaok_ai_pending_050');
     if(pending){sessionStorage.removeItem('granaok_ai_pending_050');setTimeout(()=>{const q=document.getElementById('aiq');if(q){q.value=pending;window.askLocalAI()}},100)}
@@ -69,7 +70,42 @@
   window.askLocalAI=function(){
     const input=document.getElementById('aiq');if(!input)return;
     const q=input.value.trim();if(!q)return;input.value='';addMessage('user',q);
+    try{
+      if(window.GranaServerAI?.isAvailable?.() && window.GranaServerAI?.hasSession?.()){
+        const payload={question:q,month:new Date().toISOString().slice(0,7),history:history.slice(-12).map(x=>({role:x.role==='assistant'?'bot':x.role,text:x.text}))};
+        window.GranaServerAI.action('assistant_ask',JSON.stringify(payload));
+        return;
+      }
+    }catch(e){}
     const answer=answerQuestion(q);setTimeout(()=>addMessage('assistant',answer),120);
+  };
+
+  function renderServer061(){
+    const el=document.getElementById('ai-server-061');if(!el)return;
+    let connected=false;try{connected=!!window.GranaServerAI?.hasSession?.()}catch(e){}
+    el.innerHTML=connected
+      ? '<div class="ai-server-ok-061"><span>● Motor de Conhecimento conectado</span><button class="ai-server-link-061" id="ai-server-disconnect-061">Desconectar</button></div>'
+      : '<div class="ai-server-off-061"><span>Motor de Conhecimento disponível na VPS</span><button class="secondary" id="ai-server-connect-061">Conectar</button></div>';
+    const c=document.getElementById('ai-server-connect-061');if(c)c.onclick=connectServer061;
+    const d=document.getElementById('ai-server-disconnect-061');if(d)d.onclick=()=>{try{window.GranaServerAI.logout()}catch(e){}};
+  }
+  function connectServer061(){
+    if(!window.GranaServerAI?.isAvailable?.()){addMessage('assistant','A conexão com o Motor de Conhecimento não está disponível nesta versão do APK.');return}
+    const username=prompt('Usuário do GranaOk Web:','gustavo');if(!username)return;
+    const password=prompt('Senha do GranaOk Web:');if(!password)return;
+    try{window.GranaServerAI.login(username,password)}catch(e){addMessage('assistant','Não consegui iniciar a conexão com o servidor.')}
+  }
+  window.GranaOkServerAiLogin=function(raw){
+    const d=aJson(raw);
+    if(d.ok){renderServer061();addMessage('assistant','Pronto. Estou conectada ao Motor de Conhecimento Financeiro do GranaOk. Agora consigo usar o mesmo aprendizado da versão Web.')}
+    else{renderServer061();addMessage('assistant','Não consegui conectar ao Motor de Conhecimento: '+(d.error||'falha de autenticação.'))}
+  };
+  window.GranaOkServerAiResult=function(raw){
+    const d=aJson(raw);
+    if(d.ok&&d.answer){addMessage('assistant',d.answer);return}
+    if(d.ok){addMessage('assistant','O Motor de Conhecimento respondeu, mas não trouxe uma mensagem para exibir.');return}
+    renderServer061();
+    addMessage('assistant',(d.error||'O Motor de Conhecimento não respondeu agora.')+' Vou continuar com o modo local quando possível.');
   };
 
   function answerQuestion(q){
