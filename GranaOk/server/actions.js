@@ -7,6 +7,7 @@ const { rebuildKnowledge, getKnowledgeSummary, saveFeedback } = require('./knowl
 function monthOk(v){return /^\d{4}-(0[1-9]|1[0-2])$/.test(String(v||''))?String(v):new Date().toISOString().slice(0,7)}
 function dateOk(v){if(!/^\d{4}-\d{2}-\d{2}$/.test(String(v||'')))throw new Error('Data inválida.');return String(v)}
 function money(v){let s=String(v==null?'0':v).trim();if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const n=Math.abs(Number(s));return Number.isFinite(n)?Math.round(n*100)/100:0}
+function signedMoney(v){let s=String(v==null?'0':v).trim();if(s.includes(','))s=s.replace(/\./g,'').replace(',','.');const n=Number(s);if(!Number.isFinite(n))throw new Error('Valor inválido.');return Math.round(n*100)/100}
 function addMonths(dateStr,n){const d=new Date(dateStr+'T12:00:00');d.setMonth(d.getMonth()+n);return d.toISOString().slice(0,10)}
 function invoiceDue(month,dueDay){const d=new Date(month+'-01T12:00:00');d.setDate(Math.min(Math.max(1,Number(dueDay||10)),new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));return d.toISOString().slice(0,10)}
 async function categoryId(conn,p,name,kind){name=String(name||'Outros').trim()||'Outros';await conn.execute('INSERT IGNORE INTO '+p+'categories(name,kind,active) VALUES(?,?,1)',[name,kind]);const [r]=await conn.execute('SELECT id FROM '+p+'categories WHERE name=? AND kind=? LIMIT 1',[name,kind]);return r[0]?Number(r[0].id):null}
@@ -58,7 +59,7 @@ async function runAction(name,a,user){
     const p=await ensureSchema(conn);
 
     if(name==='account:balance:set'){
-      return setAccountBalance(conn,p,Number(a.account_id||0),money(a.current_balance),user,a.note||'Ajuste manual pelo GranaOk Web');
+      return setAccountBalance(conn,p,Number(a.account_id||0),signedMoney(a.current_balance),user,a.note||'Ajuste manual pelo GranaOk Web');
     }
 
     if(name==='dashboard'){
@@ -161,7 +162,7 @@ async function runAction(name,a,user){
     if(name==='invoice:get'){
       const cardId=Number(a.card_id||0),m=monthOk(a.month);const [[card]]=await conn.execute('SELECT id,name,closing_day,due_day,limit_amount FROM '+p+'cards WHERE id=?',[cardId]);if(!card)throw new Error('Cartão não encontrado.');
       const [rows]=await conn.execute("SELECT cp.id,cp.description,DATE_FORMAT(cp.purchase_date,'%Y-%m-%d') purchase_date,cp.amount,cp.installment_number,cp.installment_total,COALESCE(c.name,'Outros') category,COALESCE(cp.observations,'') observations FROM "+p+"card_purchases cp LEFT JOIN "+p+"categories c ON c.id=cp.category_id WHERE cp.card_id=? AND DATE_FORMAT(cp.due_date,'%Y-%m')=? ORDER BY cp.purchase_date,cp.id",[cardId,m]);
-      const total=rows.reduce((s,r)=>s+Number(r.amount||0),0),[ir]=await conn.execute("SELECT id,status,DATE_FORMAT(due_date,'%Y-%m-%d') due_date,CASE WHEN paid_date IS NULL THEN NULL ELSE DATE_FORMAT(paid_date,'%Y-%m-%d') END paid_date FROM "+p+"card_invoices WHERE card_id=? AND DATE_FORMAT(reference_month,'%Y-%m')=? ORDER BY id LIMIT 1",[cardId,m]),inv=ir[0]||{};return {card,rows,total,month:m,status:inv.status||'open',paid_date:inv.paid_date||null,due_date:inv.due_date||invoiceDue(m,card.due_day)};
+      const total=rows.reduce((s,r)=>s+Number(r.amount||0),0),[ir]=await conn.execute("SELECT i.id,i.status,DATE_FORMAT(i.due_date,'%Y-%m-%d') due_date,CASE WHEN i.paid_date IS NULL THEN NULL ELSE DATE_FORMAT(i.paid_date,'%Y-%m-%d') END paid_date,i.paid_account_id,COALESCE(i.balance_applied,0) balance_applied,COALESCE(a.name,'') paid_account_name FROM "+p+"card_invoices i LEFT JOIN "+p+"accounts a ON a.id=i.paid_account_id WHERE i.card_id=? AND DATE_FORMAT(i.reference_month,'%Y-%m')=? ORDER BY i.id LIMIT 1",[cardId,m]),inv=ir[0]||{};return {card,rows,total,month:m,status:inv.status||'open',paid_date:inv.paid_date||null,due_date:inv.due_date||invoiceDue(m,card.due_day),paid_account_id:inv.paid_account_id||null,paid_account_name:inv.paid_account_name||'',balance_applied:Number(inv.balance_applied||0)};
     }
 
     if(name==='invoice:pay'||name==='invoice:reopen'){
@@ -183,7 +184,16 @@ async function runAction(name,a,user){
         const [[sum]]=await conn.execute("SELECT COALESCE(SUM(amount),0) total FROM "+p+"card_purchases WHERE card_id=? AND DATE_FORMAT(due_date,'%Y-%m')=?",[cardId,m]);
         const dueDate=invoiceDue(m,card?card.due_day:10),total=Number(sum.total||0);
         let invoiceId=ir[0]?Number(ir[0].id):0;
-        if(ir[0]&&ir[0].status==='paid'){await conn.rollback();return {message:'Fatura já estava paga.'}}
+        if(ir[0]&&ir[0].status==='paid'){
+          if(Number(ir[0].balance_applied)===0&&accountId){
+            const alreadyPaidAmount=Number(ir[0].amount||total||0);
+            await applyAccountDelta(conn,p,accountId,-alreadyPaidAmount,user,'card_invoice',invoiceId,paid,'Aplicação retroativa do pagamento da fatura');
+            await conn.execute('UPDATE '+p+'card_invoices SET paid_account_id=?,balance_applied=1 WHERE id=?',[accountId,invoiceId]);
+            await conn.commit();
+            return {message:'Pagamento aplicado ao saldo da conta.'};
+          }
+          await conn.rollback();return {message:'Fatura já estava paga.'};
+        }
         if(ir[0]){
           await conn.execute("UPDATE "+p+"card_invoices SET amount=?,due_date=?,status='paid',paid_date=?,paid_account_id=?,balance_applied=0 WHERE id=?",[total,dueDate,paid,accountId,invoiceId]);
         }else{
