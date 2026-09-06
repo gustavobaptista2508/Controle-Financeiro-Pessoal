@@ -12,6 +12,10 @@ android {
     namespace 'com.granaok.app'
     compileSdk 35
 
+    buildFeatures {
+        buildConfig true
+    }
+
     signingConfigs {
         if (granaokPermanentSigning) {
             permanent {
