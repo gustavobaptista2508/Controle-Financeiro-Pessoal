@@ -10,10 +10,37 @@ function money(v){let s=String(v==null?'0':v).trim();if(s.includes(','))s=s.repl
 function addMonths(dateStr,n){const d=new Date(dateStr+'T12:00:00');d.setMonth(d.getMonth()+n);return d.toISOString().slice(0,10)}
 function invoiceDue(month,dueDay){const d=new Date(month+'-01T12:00:00');d.setDate(Math.min(Math.max(1,Number(dueDay||10)),new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));return d.toISOString().slice(0,10)}
 async function categoryId(conn,p,name,kind){name=String(name||'Outros').trim()||'Outros';await conn.execute('INSERT IGNORE INTO '+p+'categories(name,kind,active) VALUES(?,?,1)',[name,kind]);const [r]=await conn.execute('SELECT id FROM '+p+'categories WHERE name=? AND kind=? LIMIT 1',[name,kind]);return r[0]?Number(r[0].id):null}
+function signedDelta(type,amount){return (type==='income'?1:-1)*Number(amount||0)}
+async function applyAccountDelta(conn,p,accountId,delta,user,sourceType,sourceId,eventDate,note){
+  accountId=Number(accountId||0);delta=Number(delta||0);
+  if(!accountId||!Number.isFinite(delta)||delta===0)return null;
+  const [rows]=await conn.execute('SELECT id,current_balance FROM '+p+'accounts WHERE id=? AND active=1 FOR UPDATE',[accountId]);
+  if(!rows[0])throw new Error('Conta não encontrada.');
+  const next=Math.round((Number(rows[0].current_balance||0)+delta)*100)/100;
+  await conn.execute('UPDATE '+p+'accounts SET current_balance=? WHERE id=?',[next,accountId]);
+  await conn.execute(
+    'INSERT INTO '+p+'account_balance_events(account_id,user_id,source_type,source_id,delta,balance_after,event_date,note) VALUES(?,?,?,?,?,?,?,?)',
+    [accountId,user&&user.id?Number(user.id):null,String(sourceType||'manual'),sourceId?Number(sourceId):null,delta,next,eventDate||null,String(note||'').slice(0,255)||null]
+  );
+  return next;
+}
+async function setAccountBalance(conn,p,accountId,newBalance,user,note){
+  accountId=Number(accountId||0);newBalance=Number(newBalance);
+  if(!accountId||!Number.isFinite(newBalance))throw new Error('Saldo inválido.');
+  const [rows]=await conn.execute('SELECT current_balance FROM '+p+'accounts WHERE id=? AND active=1 FOR UPDATE',[accountId]);
+  if(!rows[0])throw new Error('Conta não encontrada.');
+  const old=Number(rows[0].current_balance||0),next=Math.round(newBalance*100)/100,delta=Math.round((next-old)*100)/100;
+  await conn.execute('UPDATE '+p+'accounts SET current_balance=? WHERE id=?',[next,accountId]);
+  await conn.execute(
+    'INSERT INTO '+p+'account_balance_events(account_id,user_id,source_type,delta,balance_after,event_date,note) VALUES(?,?,\'manual_adjustment\',?,?,CURDATE(),?)',
+    [accountId,user&&user.id?Number(user.id):null,delta,next,String(note||'Ajuste manual de saldo').slice(0,255)]
+  );
+  return {old_balance:old,current_balance:next,delta};
+}
 async function syncInvoice(conn,p,cardId,month,dueDate){const [sum]=await conn.execute("SELECT COALESCE(SUM(amount),0) total FROM "+p+"card_purchases WHERE card_id=? AND DATE_FORMAT(due_date,'%Y-%m')=?",[cardId,month]);const total=Number(sum[0].total||0);const [rows]=await conn.execute("SELECT id FROM "+p+"card_invoices WHERE card_id=? AND DATE_FORMAT(reference_month,'%Y-%m')=? ORDER BY id LIMIT 1",[cardId,month]);if(rows[0])await conn.execute('UPDATE '+p+'card_invoices SET amount=?,due_date=? WHERE id=?',[total,dueDate,rows[0].id]);else await conn.execute("INSERT INTO "+p+"card_invoices(card_id,reference_month,due_date,amount,status) VALUES(?,?,?,?, 'open')",[cardId,month+'-01',dueDate,total])}
 
-const aliases={transactions:'transactions:list',transaction_save:'transaction:save',transaction_status:'transaction:status',account_save:'account:save',person_add:'person:add',category_add:'category:add',card_save:'card:save',card_purchase_add:'card:purchase',invoice:'invoice:get',invoice_pay:'invoice:pay',invoice_reopen:'invoice:reopen',financings:'financings:list',financing_pay:'financing:pay',assistant_summary:'assistant:summary',assistant_ask:'assistant:ask',investment_radar:'investments:radar',knowledge_rebuild:'knowledge:rebuild',knowledge_summary:'knowledge:summary',knowledge_feedback:'knowledge:feedback'};
-const writeActions=new Set(['transaction:save','transaction:status','account:save','person:add','category:add','card:save','card:purchase','invoice:pay','invoice:reopen','financing:pay']);
+const aliases={transactions:'transactions:list',transaction_save:'transaction:save',transaction_status:'transaction:status',account_save:'account:save',person_add:'person:add',category_add:'category:add',card_save:'card:save',card_purchase_add:'card:purchase',invoice:'invoice:get',invoice_pay:'invoice:pay',invoice_reopen:'invoice:reopen',financings:'financings:list',financing_pay:'financing:pay',assistant_summary:'assistant:summary',assistant_ask:'assistant:ask',investment_radar:'investments:radar',knowledge_rebuild:'knowledge:rebuild',knowledge_summary:'knowledge:summary',knowledge_feedback:'knowledge:feedback',account_balance_set:'account:balance:set'};
+const writeActions=new Set(['transaction:save','transaction:status','account:save','person:add','category:add','card:save','card:purchase','invoice:pay','invoice:reopen','financing:pay','account:balance:set']);
 
 async function runAction(name,a,user){
   name=aliases[name]||name;
@@ -29,6 +56,10 @@ async function runAction(name,a,user){
 
   return withConn(async conn=>{
     const p=await ensureSchema(conn);
+
+    if(name==='account:balance:set'){
+      return setAccountBalance(conn,p,Number(a.account_id||0),money(a.current_balance),user,a.note||'Ajuste manual pelo GranaOk Web');
+    }
 
     if(name==='dashboard'){
       const m=monthOk(a.month),start=m+'-01',next=addMonths(start,1);
@@ -61,12 +92,57 @@ async function runAction(name,a,user){
 
     if(name==='transaction:save'){
       const id=Number(a.id||0),type=a.type==='income'?'income':'expense',desc=String(a.description||'').trim(),amt=money(a.amount),due=dateOk(a.due_date),status=['paid','pending','overdue'].includes(a.status)?a.status:'pending',obs=String(a.observations||''),person=Number(a.person_id||0)||null,account=Number(a.account_id||0)||null,cat=await categoryId(conn,p,a.category||'Outros',type);if(!desc||amt<=0)throw new Error('Informe descrição e valor.');
-      if(id)await conn.execute('UPDATE '+p+'transactions SET person_id=?,account_id=?,category_id=?,type=?,description=?,amount=?,due_date=?,paid_date=?,status=?,observations=? WHERE id=?',[person,account,cat,type,desc,amt,due,status==='paid'?(a.paid_date||new Date().toISOString().slice(0,10)):null,status,obs,id]);
-      else await conn.execute("INSERT INTO "+p+"transactions(person_id,account_id,category_id,type,description,amount,due_date,paid_date,status,source,observations) VALUES(?,?,?,?,?,?,?,?,?,'web',?)",[person,account,cat,type,desc,amt,due,status==='paid'?new Date().toISOString().slice(0,10):null,status,obs]);
+      await conn.beginTransaction();
+      try{
+        if(id){
+          const [oldRows]=await conn.execute('SELECT id,account_id,type,amount,status,COALESCE(balance_applied,0) balance_applied FROM '+p+'transactions WHERE id=? FOR UPDATE',[id]);
+          if(!oldRows[0])throw new Error('Lançamento não encontrado.');
+          const old=oldRows[0];
+          if(Number(old.balance_applied)===1&&old.account_id){
+            await applyAccountDelta(conn,p,old.account_id,-signedDelta(old.type,old.amount),user,'transaction_reverse',id,due,'Reversão por edição de lançamento');
+          }
+          const paidDate=status==='paid'?(a.paid_date||new Date().toISOString().slice(0,10)):null;
+          let applied=0;
+          await conn.execute('UPDATE '+p+'transactions SET person_id=?,account_id=?,category_id=?,type=?,description=?,amount=?,due_date=?,paid_date=?,status=?,observations=?,balance_applied=0 WHERE id=?',[person,account,cat,type,desc,amt,due,paidDate,status,obs,id]);
+          if(status==='paid'&&account){
+            await applyAccountDelta(conn,p,account,signedDelta(type,amt),user,'transaction',id,paidDate||due,desc);
+            applied=1;
+            await conn.execute('UPDATE '+p+'transactions SET balance_applied=1 WHERE id=?',[id]);
+          }
+        }else{
+          const paidDate=status==='paid'?new Date().toISOString().slice(0,10):null;
+          const [ins]=await conn.execute("INSERT INTO "+p+"transactions(person_id,account_id,category_id,type,description,amount,due_date,paid_date,status,source,observations,balance_applied) VALUES(?,?,?,?,?,?,?,?,?,'web',?,0)",[person,account,cat,type,desc,amt,due,paidDate,status,obs]);
+          const newId=Number(ins.insertId||0);
+          if(status==='paid'&&account){
+            await applyAccountDelta(conn,p,account,signedDelta(type,amt),user,'transaction',newId,paidDate||due,desc);
+            await conn.execute('UPDATE '+p+'transactions SET balance_applied=1 WHERE id=?',[newId]);
+          }
+        }
+        await conn.commit();
+      }catch(e){await conn.rollback();throw e}
       return {message:id?'Lançamento atualizado.':'Lançamento criado.'};
     }
 
-    if(name==='transaction:status'){const id=Number(a.id||0),s=['paid','pending','overdue'].includes(a.status)?a.status:null;if(!id||!s)throw new Error('Dados inválidos.');await conn.execute('UPDATE '+p+'transactions SET status=?,paid_date=? WHERE id=?',[s,s==='paid'?new Date().toISOString().slice(0,10):null,id]);return {}}
+    if(name==='transaction:status'){
+      const id=Number(a.id||0),newStatus=['paid','pending','overdue'].includes(a.status)?a.status:null;if(!id||!newStatus)throw new Error('Dados inválidos.');
+      await conn.beginTransaction();
+      try{
+        const [rows]=await conn.execute('SELECT id,account_id,type,amount,status,COALESCE(balance_applied,0) balance_applied,description FROM '+p+'transactions WHERE id=? FOR UPDATE',[id]);
+        if(!rows[0])throw new Error('Lançamento não encontrado.');
+        const old=rows[0],paidDate=newStatus==='paid'?(a.paid_date||new Date().toISOString().slice(0,10)):null;
+        if(old.status!=='paid'&&newStatus==='paid'&&old.account_id){
+          await applyAccountDelta(conn,p,old.account_id,signedDelta(old.type,old.amount),user,'transaction',id,paidDate,old.description);
+          await conn.execute('UPDATE '+p+'transactions SET status=?,paid_date=?,balance_applied=1 WHERE id=?',[newStatus,paidDate,id]);
+        }else if(old.status==='paid'&&newStatus!=='paid'&&Number(old.balance_applied)===1&&old.account_id){
+          await applyAccountDelta(conn,p,old.account_id,-signedDelta(old.type,old.amount),user,'transaction_reverse',id,new Date().toISOString().slice(0,10),'Reabertura: '+old.description);
+          await conn.execute('UPDATE '+p+'transactions SET status=?,paid_date=NULL,balance_applied=0 WHERE id=?',[newStatus,id]);
+        }else{
+          await conn.execute('UPDATE '+p+'transactions SET status=?,paid_date=? WHERE id=?',[newStatus,paidDate,id]);
+        }
+        await conn.commit();
+      }catch(e){await conn.rollback();throw e}
+      return {};
+    }
 
     if(name==='account:save'){const id=Number(a.id||0),n=String(a.name||'').trim();if(!n)throw new Error('Informe o nome da conta.');const vals=[Number(a.person_id||0)||null,n,String(a.type||'checking'),money(a.initial_balance),money(a.current_balance),String(a.bank_code||'other')];if(id)await conn.execute('UPDATE '+p+'accounts SET person_id=?,name=?,type=?,initial_balance=?,current_balance=?,bank_code=? WHERE id=?',vals.concat([id]));else await conn.execute('INSERT INTO '+p+'accounts(person_id,name,type,initial_balance,current_balance,active,bank_code) VALUES(?,?,?,?,?,1,?)',vals);return {message:'Conta salva.'}}
 
@@ -89,9 +165,37 @@ async function runAction(name,a,user){
     }
 
     if(name==='invoice:pay'||name==='invoice:reopen'){
-      const cardId=Number(a.card_id||0),m=monthOk(a.month);if(!cardId)throw new Error('Cartão inválido.');const [ir]=await conn.execute("SELECT id FROM "+p+"card_invoices WHERE card_id=? AND DATE_FORMAT(reference_month,'%Y-%m')=? LIMIT 1",[cardId,m]);
-      if(name==='invoice:reopen'){if(!ir[0])throw new Error('Fatura não encontrada.');await conn.execute("UPDATE "+p+"card_invoices SET status='open',paid_date=NULL WHERE id=?",[ir[0].id]);return {}}
-      const paid=dateOk(a.paid_date||new Date().toISOString().slice(0,10)),[[card]]=await conn.execute('SELECT due_day FROM '+p+'cards WHERE id=?',[cardId]),[[sum]]=await conn.execute("SELECT COALESCE(SUM(amount),0) total FROM "+p+"card_purchases WHERE card_id=? AND DATE_FORMAT(due_date,'%Y-%m')=?",[cardId,m]),dueDate=invoiceDue(m,card?card.due_day:10),total=Number(sum.total||0);if(ir[0])await conn.execute("UPDATE "+p+"card_invoices SET amount=?,due_date=?,status='paid',paid_date=? WHERE id=?",[total,dueDate,paid,ir[0].id]);else await conn.execute("INSERT INTO "+p+"card_invoices(card_id,reference_month,due_date,amount,status,paid_date) VALUES(?,?,?,?, 'paid',?)",[cardId,m+'-01',dueDate,total,paid]);return {};
+      const cardId=Number(a.card_id||0),m=monthOk(a.month);if(!cardId)throw new Error('Cartão inválido.');
+      await conn.beginTransaction();
+      try{
+        const [ir]=await conn.execute("SELECT id,amount,status,paid_account_id,COALESCE(balance_applied,0) balance_applied FROM "+p+"card_invoices WHERE card_id=? AND DATE_FORMAT(reference_month,'%Y-%m')=? LIMIT 1 FOR UPDATE",[cardId,m]);
+        if(name==='invoice:reopen'){
+          if(!ir[0])throw new Error('Fatura não encontrada.');
+          const inv=ir[0];
+          if(Number(inv.balance_applied)===1&&inv.paid_account_id){
+            await applyAccountDelta(conn,p,inv.paid_account_id,Number(inv.amount||0),user,'card_invoice_reverse',inv.id,new Date().toISOString().slice(0,10),'Reabertura de fatura');
+          }
+          await conn.execute("UPDATE "+p+"card_invoices SET status='open',paid_date=NULL,paid_account_id=NULL,balance_applied=0 WHERE id=?",[inv.id]);
+          await conn.commit();return {};
+        }
+        const paid=dateOk(a.paid_date||new Date().toISOString().slice(0,10)),accountId=Number(a.account_id||0)||null;
+        const [[card]]=await conn.execute('SELECT due_day FROM '+p+'cards WHERE id=?',[cardId]);
+        const [[sum]]=await conn.execute("SELECT COALESCE(SUM(amount),0) total FROM "+p+"card_purchases WHERE card_id=? AND DATE_FORMAT(due_date,'%Y-%m')=?",[cardId,m]);
+        const dueDate=invoiceDue(m,card?card.due_day:10),total=Number(sum.total||0);
+        let invoiceId=ir[0]?Number(ir[0].id):0;
+        if(ir[0]&&ir[0].status==='paid'){await conn.rollback();return {message:'Fatura já estava paga.'}}
+        if(ir[0]){
+          await conn.execute("UPDATE "+p+"card_invoices SET amount=?,due_date=?,status='paid',paid_date=?,paid_account_id=?,balance_applied=0 WHERE id=?",[total,dueDate,paid,accountId,invoiceId]);
+        }else{
+          const [ins]=await conn.execute("INSERT INTO "+p+"card_invoices(card_id,reference_month,due_date,amount,status,paid_date,paid_account_id,balance_applied) VALUES(?,?,?,?, 'paid',?,?,0)",[cardId,m+'-01',dueDate,total,paid,accountId]);
+          invoiceId=Number(ins.insertId||0);
+        }
+        if(accountId){
+          await applyAccountDelta(conn,p,accountId,-total,user,'card_invoice',invoiceId,paid,'Pagamento de fatura');
+          await conn.execute('UPDATE '+p+'card_invoices SET balance_applied=1 WHERE id=?',[invoiceId]);
+        }
+        await conn.commit();return {};
+      }catch(e){try{await conn.rollback()}catch(_){ }throw e}
     }
 
     if(name==='financings:list'){const [rows]=await conn.query("SELECT id,name,total_amount,installment_amount,total_installments,paid_installments,active,CASE WHEN next_due_date IS NULL THEN NULL ELSE DATE_FORMAT(next_due_date,'%Y-%m-%d') END next_due_date,CASE WHEN last_paid_date IS NULL THEN NULL ELSE DATE_FORMAT(last_paid_date,'%Y-%m-%d') END last_paid_date FROM "+p+"financings ORDER BY active DESC,id DESC");return {rows}}
