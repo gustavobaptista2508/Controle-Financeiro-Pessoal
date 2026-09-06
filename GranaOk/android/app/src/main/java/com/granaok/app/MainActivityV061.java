@@ -113,7 +113,7 @@ public class MainActivityV061 extends MainActivityV060 {
                     c.setConnectTimeout(10000);c.setReadTimeout(30000);c.setRequestMethod("GET");
                     c.setRequestProperty("User-Agent","GranaOk-Android/"+BuildConfig.VERSION_NAME);
                     int code=c.getResponseCode();if(code<200||code>=300)throw new IllegalStateException("Download retornou HTTP "+code+".");
-                    long len=c.getContentLengthLong();if(len>200L*1024L*1024L)throw new IllegalStateException("APK maior que o limite permitido.");
+                    long len=c.getContentLength();if(len>200L*1024L*1024L)throw new IllegalStateException("APK maior que o limite permitido.");
                     MessageDigest md=MessageDigest.getInstance("SHA-256");
                     try(InputStream in=c.getInputStream();FileOutputStream out=new FileOutputStream(apk)){
                         byte[] buf=new byte[32768];int n;long total=0;
