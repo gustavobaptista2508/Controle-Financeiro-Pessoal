@@ -118,6 +118,9 @@ app.post('/api/users/:id/toggle',authRequired,adminRequired,webClientRequired,as
   catch(e){res.status(400).json({ok:false,error:String(e.message||e)})}
 });
 
+const releaseDir=process.env.GRANAOK_APK_RELEASE_DIR || '/opt/granaok-releases';
+app.use('/apk',express.static(releaseDir,{index:false,maxAge:'5m',fallthrough:true}));
+
 const publicDir=path.join(__dirname,'public');
 app.use(express.static(publicDir,{index:false,maxAge:'1h'}));
 app.use((req,res,next)=>{if(req.method!=='GET')return next();res.sendFile(path.join(publicDir,'index.html'))});
