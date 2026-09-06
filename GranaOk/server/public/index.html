@@ -7,15 +7,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="GranaOk">
-<link rel="manifest" href="/manifest.json?v=0412">
-<link rel="stylesheet" href="/styles.css?v=0412">
+<link rel="manifest" href="/manifest.json?v=042">
+<link rel="stylesheet" href="/styles.css?v=042">
 <title>GranaOk</title>
 </head>
 <body>
 
 <section id="login" class="login hidden">
   <form id="login-form" class="login-card">
-    <div class="logo">Grana<span>Ok</span><small>WEB 0.4.1</small></div>
+    <div class="logo">Grana<span>Ok</span><small>WEB 0.4.2</small></div>
     <h1>Entrar no GranaOk</h1>
     <p class="muted">Seu financeiro, em qualquer dispositivo.</p>
     <label>Usuário</label>
@@ -29,7 +29,7 @@
 
 <div id="app" class="shell hidden">
   <aside class="sidebar">
-    <div class="logo side-logo">Grana<span>Ok</span><small>WEB 0.4.1</small></div>
+    <div class="logo side-logo">Grana<span>Ok</span><small>WEB 0.4.2</small></div>
 
     <nav class="desktop-nav">
       <button data-view="dashboard" class="active">⌂ <span>Visão geral</span></button>
@@ -76,6 +76,20 @@
     <button data-view="financings">▥<span>Financ.</span></button>
     <button data-view="more">•••<span>Mais</span></button>
   </nav>
+
+  <button id="ai-fab" class="ai-fab" aria-label="Perguntar à Grana IA" title="Perguntar à Grana IA">✦</button>
+  <section id="ai-float-panel" class="ai-float-panel hidden" aria-label="Grana IA">
+    <header class="ai-float-head">
+      <div><b>✦ Grana IA</b><small>Pergunte de qualquer tela</small></div>
+      <button id="ai-float-close" class="ghost" aria-label="Fechar">×</button>
+    </header>
+    <div id="ai-float-messages" class="ai-float-messages"></div>
+    <div class="ai-float-compose">
+      <textarea id="ai-float-input" rows="2" placeholder="Ex.: qual minha previsão para o próximo mês?"></textarea>
+      <button id="ai-float-send" class="primary">Enviar</button>
+    </div>
+    <button class="ai-open-full ghost" data-view="assistant">Abrir painel completo da Grana IA</button>
+  </section>
 </div>
 
 <div id="modal" class="modal hidden">
@@ -85,6 +99,6 @@
   </div>
 </div>
 
-<script src="/app.js?v=0412"></script>
+<script src="/app.js?v=042"></script>
 </body>
 </html>
