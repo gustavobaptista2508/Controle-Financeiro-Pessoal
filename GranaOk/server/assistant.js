@@ -430,6 +430,10 @@ async function assistantAsk(question,month,user,history){
     const f=await forecastAnswer(base,count,user);
     return Object.assign(f,{mode:'local-contextual-forecast',base_month:base});
   }
+  if(temporal.kind==='single' && temporal.month===shiftMonth(base,1) && /previs|projecao|futur|saldo|sobrar|sobra/.test(n)){
+    const f=await forecastAnswer(base,1,user);
+    return Object.assign(f,{mode:'local-contextual-forecast',base_month:base,target_month:temporal.month});
+  }
   const target=temporal.kind==='single'?temporal.month:base;
   const s=await snapshot(target,user);
   return {answer:answerQuestion(question,s,history),snapshot:s,mode:'local-contextual',target_month:target};
