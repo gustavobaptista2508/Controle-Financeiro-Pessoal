@@ -39,7 +39,7 @@ jobs:
           end=datetime.date.today(); start=end-datetime.timedelta(days=60)
           q=urllib.parse.urlencode({'formato':'json','dataInicial':start.strftime('%d/%m/%Y'),'dataFinal':end.strftime('%d/%m/%Y')})
           url='https://api.bcb.gov.br/dados/serie/bcdata.sgs.1178/dados?'+q
-          req=urllib.request.Request(url,headers={'User-Agent':'GranaOk-CI/0.6.0'})
+          req=urllib.request.Request(url,headers={'User-Agent':'GranaOk-CI/0.6.1'})
           with urllib.request.urlopen(req,timeout=12) as r:
               data=json.load(r)
           assert data, 'BCB Selic returned no rows'
@@ -75,18 +75,20 @@ jobs:
           grep -q 'ACTION_PAY_CURRENT' GranaOk/android/app/src/main/java/com/granaok/app/FinancingLifecycleService.java
           grep -q 'real_balance_plus_pending' GranaOk/android/app/src/main/java/com/granaok/app/PlanningService.java
 
-      - name: Verify beta 0.6.0 invoice payment
+      - name: Verify beta 0.6.1 IA and VPS updates
         shell: bash
         run: |
-          grep -q 'MainActivityV060' GranaOk/android/app/src/main/AndroidManifest.xml
+          grep -q 'MainActivityV061' GranaOk/android/app/src/main/AndroidManifest.xml
           grep -q 'CardInvoicePaymentService' GranaOk/android/app/src/main/AndroidManifest.xml
-          grep -q 'ACTION_PAY' GranaOk/android/app/src/main/java/com/granaok/app/CardInvoicePaymentService.java
-          grep -q "status='paid'" GranaOk/android/app/src/main/java/com/granaok/app/CardInvoicePaymentService.java
-          grep -q 'paid_date' GranaOk/android/app/src/main/java/com/granaok/app/CardInvoicePaymentService.java
-          grep -q 'Marcar fatura como paga' GranaOk/android/app/src/main/assets/www/invoice-payment-060.js
-          grep -q 'invoice-payment-060.js' GranaOk/android/app/src/main/assets/www/index.html
-          grep -q "BETA 0.6.0" GranaOk/android/app/src/main/assets/www/safe-version.js
-          grep -q "versionName '0.6.0-beta'" GranaOk/android/app/build.gradle
+          grep -q 'GranaServerAI' GranaOk/android/app/src/main/java/com/granaok/app/MainActivityV061.java
+          grep -q 'GranaUpdater' GranaOk/android/app/src/main/java/com/granaok/app/MainActivityV061.java
+          grep -q 'https://granaok.com.br' GranaOk/android/app/src/main/java/com/granaok/app/MainActivityV061.java
+          grep -q 'REQUEST_INSTALL_PACKAGES' GranaOk/android/app/src/main/AndroidManifest.xml
+          grep -q 'update-061.js' GranaOk/android/app/src/main/assets/www/index.html
+          grep -q 'GranaServerAI' GranaOk/android/app/src/main/assets/www/assistant-050.js
+          grep -q "BETA 0.6.1" GranaOk/android/app/src/main/assets/www/safe-version.js
+          grep -q "versionName '0.6.1-beta'" GranaOk/android/app/build.gradle
+          grep -q 'GRANAOK_KEYSTORE_PATH' GranaOk/android/app/build.gradle
           if grep -q 'MutationObserver' GranaOk/android/app/src/main/assets/www/safe-version.js; then
             echo 'Recursive version observer must not be present'
             exit 1
@@ -128,17 +130,30 @@ jobs:
         with:
           gradle-version: '8.7'
 
-      - name: Build GranaOk beta
-        run: gradle -p GranaOk/android :app:assembleDebug --stacktrace
+      - name: Build GranaOk beta and unsigned release
+        run: gradle -p GranaOk/android :app:assembleDebug :app:assembleRelease --stacktrace
 
-      - name: Rename APK
-        run: cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.6.0.apk
+      - name: Rename APKs
+        shell: bash
+        run: |
+          cp GranaOk/android/app/build/outputs/apk/debug/app-debug.apk GranaOk-Beta-v0.6.1.apk
+          RELEASE_APK="$(find GranaOk/android/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f | head -n1)"
+          test -n "$RELEASE_APK"
+          cp "$RELEASE_APK" GranaOk-Release-v0.6.1-UNSIGNED.apk
 
       - name: Upload beta APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOk-Beta-v0.6.0
-          path: GranaOk-Beta-v0.6.0.apk
+          name: GranaOk-Beta-v0.6.1
+          path: GranaOk-Beta-v0.6.1.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload unsigned release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GranaOk-Release-v0.6.1-UNSIGNED
+          path: GranaOk-Release-v0.6.1-UNSIGNED.apk
           if-no-files-found: error
           retention-days: 30
 
