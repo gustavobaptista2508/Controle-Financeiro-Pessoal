@@ -6,3 +6,17 @@
 .ai-server-off-061{background:#f8fafc;color:#475569;border:1px solid #e2e8f0}
 .ai-server-off-061 button{padding:7px 10px}
 .ai-server-link-061{background:transparent;color:#047857;padding:4px 6px;font-size:11px}
+
+.gk-ai-fab-061{position:fixed;right:18px;bottom:82px;width:54px;height:54px;border:0;border-radius:50%;background:linear-gradient(135deg,#059669,#047857);color:#fff;font-size:24px;box-shadow:0 14px 30px rgba(4,120,87,.35);z-index:9997}
+.gk-ai-panel-061{position:fixed;left:12px;right:12px;bottom:146px;max-height:62vh;background:#fff;border:1px solid #e2e8f0;border-radius:18px;box-shadow:0 24px 60px rgba(15,23,42,.25);z-index:9998;display:flex;flex-direction:column;overflow:hidden}
+.gk-ai-panel-061.hidden{display:none}
+.gk-ai-head-061{display:flex;align-items:center;padding:12px 14px;border-bottom:1px solid #e2e8f0}
+.gk-ai-head-061>div{flex:1}.gk-ai-head-061 small{display:block;color:#64748b}
+.gk-ai-close-061{background:transparent;border:0;font-size:22px}
+.gk-ai-msgs-061{padding:12px;overflow:auto;display:grid;gap:8px;background:#f8fafc;min-height:160px}
+.gk-ai-msg-061{padding:10px 12px;border-radius:13px;max-width:90%;font-size:13px;white-space:pre-wrap}
+.gk-ai-msg-061.user{margin-left:auto;background:#e2e8f0}.gk-ai-msg-061.bot{background:#ecfdf5;border:1px solid #bbf7d0}
+.gk-ai-compose-061{display:grid;grid-template-columns:1fr auto;gap:8px;padding:10px;border-top:1px solid #e2e8f0}
+.gk-ai-compose-061 input{margin:0}.gk-ai-compose-061 button{padding:0 14px}
+.gk-update-card-061{margin-top:12px}.gk-update-out-061{margin-top:8px;font-size:12px}
+@media(min-width:700px){.gk-ai-panel-061{left:auto;width:390px;right:20px;bottom:88px}.gk-ai-fab-061{bottom:20px}}
