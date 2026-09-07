@@ -1,0 +1,33 @@
+name: GranaOK Native Source Snapshot
+
+on:
+  push:
+    branches:
+      - build/granaok-native-v02-apk
+    paths:
+      - '.github/workflows/granaok-native-source-snapshot.yml'
+  workflow_dispatch:
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reconstruct and patch source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .build-native-v02/source.b64.* | base64 --decode > /tmp/native.zip
+          rm -rf native-build
+          mkdir -p native-build
+          unzip -q /tmp/native.zip -d native-build
+          python3 .build-native-v02/patch_native.py
+          cd native-build
+          zip -qr ../GranaOK-Native-Patched-Source.zip GranaOK_Android_Native_v0_2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GranaOK-Native-Patched-Source
+          path: GranaOK-Native-Patched-Source.zip
+          if-no-files-found: error
+          retention-days: 7
