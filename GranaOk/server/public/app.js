@@ -5,6 +5,21 @@ const money=v=>Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'B
 const today=()=>new Date().toISOString().slice(0,10);
 const mlabel=m=>new Date(m+'-01T12:00:00').toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
 const shift=(m,n)=>{const d=new Date(m+'-01T12:00:00');d.setMonth(d.getMonth()+n);return d.toISOString().slice(0,7)};
+const shiftDate=(iso,frequency,n)=>{
+  const parts=String(iso||'').split('-').map(Number);
+  if(parts.length!==3||parts.some(Number.isNaN))return iso;
+  const [y,m,d]=parts;
+  if(frequency==='weekly'){
+    const dt=new Date(Date.UTC(y,m-1,d+(7*n)));
+    return dt.toISOString().slice(0,10);
+  }
+  const months=(frequency==='yearly'?12:1)*n;
+  const target=new Date(Date.UTC(y,m-1+months,1));
+  const lastDay=new Date(Date.UTC(target.getUTCFullYear(),target.getUTCMonth()+1,0)).getUTCDate();
+  target.setUTCDate(Math.min(d,lastDay));
+  return target.toISOString().slice(0,10);
+};
+const recurrenceLabel=f=>({weekly:'semanal',monthly:'mensal',yearly:'anual'}[f]||'mensal');
 const br=d=>d?new Date(d+'T12:00:00').toLocaleDateString('pt-BR'):'—';
 let month=today().slice(0,7),user=null,ctx={accounts:[],cards:[],people:[],categories:[]},view='dashboard';
 
@@ -76,33 +91,124 @@ async function transactions(){
     '<div><label>Status</label><select id="ts"><option value="">Todos</option><option value="pending">Pendentes</option><option value="paid">Pagos</option><option value="overdue">Atrasados</option></select></div>'+
     '<div><label>Descrição</label><input id="tq" placeholder="Buscar"></div>'+
     '<div class="filter-action"><button class="secondary" id="tf">Filtrar</button></div>'+
-  '</div><div id="tl" style="margin-top:16px"></div>';
+  '</div>'+
+  '<div id="txsum" class="tx-summary" aria-live="polite"></div>'+
+  '<div id="tl" style="margin-top:12px"></div>';
   $('#tf').onclick=()=>{month=$('#tm').value||month;loadTx()};
   $('#txnew').onclick=transactionForm;
+  ['tm','ta','tt','ts'].forEach(id=>{const el=$('#'+id);if(el)el.onchange=()=>{if(id==='tm')month=el.value||month;loadTx()}});
+  if($('#tq'))$('#tq').onkeydown=e=>{if(e.key==='Enter')loadTx()};
   loadTx();
 }
+function renderTxSummary(rows){
+  const el=$('#txsum');if(!el)return;
+  const totals=(rows||[]).reduce((acc,r)=>{
+    const value=Number(r.amount||0);
+    if(r.type==='income')acc.income+=value;
+    else if(r.type==='expense')acc.expense+=value;
+    acc.count++;
+    return acc;
+  },{income:0,expense:0,count:0});
+  const balance=totals.income-totals.expense;
+  el.innerHTML=
+    '<div class="tx-summary-card income"><small>Entradas filtradas</small><b>'+money(totals.income)+'</b></div>'+
+    '<div class="tx-summary-card expense"><small>Despesas filtradas</small><b>'+money(totals.expense)+'</b></div>'+
+    '<div class="tx-summary-card balance '+(balance<0?'negative':'')+'"><small>Saldo do filtro</small><b>'+money(balance)+'</b></div>'+
+    '<div class="tx-summary-card count"><small>Lançamentos</small><b>'+totals.count+'</b></div>';
+}
 async function loadTx(){
-  const el=$('#tl');el.innerHTML='<div class="empty">Carregando...</div>';
+  const el=$('#tl');if(!el)return;
+  el.innerHTML='<div class="empty">Carregando...</div>';
+  if($('#txsum'))$('#txsum').innerHTML='<div class="empty tx-summary-loading">Calculando totais...</div>';
   try{
     const d=await api('transactions',{month:$('#tm')?.value||month,account_id:Number($('#ta')?.value||0),type:$('#tt')?.value||'',status:$('#ts')?.value||'',search:$('#tq')?.value||''});
-    el.innerHTML=d.rows.length?'<div class="list">'+d.rows.map(r=>'<div class="row"><div class="main"><b>'+esc(r.description)+'</b><small>'+br(r.due_date)+' · '+esc(r.account_name||'Sem conta')+' · '+esc(r.category)+'</small><div style="margin-top:6px">'+badge(r.effective_status)+'</div></div><div class="amount '+r.type+'">'+(r.type==='expense'?'-':'')+money(r.amount)+'</div></div>').join('')+'</div>':'<div class="empty">Nenhum lançamento.</div>';
-  }catch(e){el.innerHTML=note(e.message,'err')}
+    renderTxSummary(d.rows);
+    el.innerHTML=d.rows.length?'<div class="list">'+d.rows.map(r=>'<div class="row"><div class="main"><b>'+esc(r.description)+'</b><small>'+br(r.due_date)+' · '+esc(r.account_name||'Sem conta')+' · '+esc(r.category)+'</small><div style="margin-top:6px">'+badge(r.effective_status)+'</div></div><div class="amount '+r.type+'">'+(r.type==='expense'?'-':'')+money(r.amount)+'</div></div>').join('')+'</div>':'<div class="empty">Nenhum lançamento para os filtros selecionados.</div>';
+  }catch(e){
+    if($('#txsum'))$('#txsum').innerHTML='';
+    el.innerHTML=note(e.message,'err');
+  }
 }
 function transactionForm(){
-  modal('<h2>Novo lançamento</h2><div class="form-grid">'+
+  modal('<div class="tx-form-head"><div><small>NOVO LANÇAMENTO</small><h2>Adicionar ao financeiro</h2><p class="muted">Preencha o essencial e, se quiser, transforme em pagamento recorrente.</p></div></div>'+
+  '<div class="form-grid tx-form-grid">'+
   '<div><label>Tipo</label><select id="ft"><option value="expense">Despesa</option><option value="income">Entrada</option></select></div>'+
-  '<div><label>Status</label><select id="fs"><option value="pending">Pendente</option><option value="paid">Pago</option></select></div>'+
-  '<div class="full"><label>Descrição</label><input id="fd"></div>'+
-  '<div><label>Valor</label><input id="fv" inputmode="decimal"></div>'+
-  '<div><label>Vencimento</label><input id="fdu" type="date" value="'+today()+'"></div>'+
-  '<div><label>Conta</label><select id="fa"><option value="">—</option>'+ctx.accounts.map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('')+'</select></div>'+
-  '<div><label>Pessoa/Casal</label><select id="fp"><option value="">—</option>'+ctx.people.map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select></div>'+
+  '<div><label>Status inicial</label><select id="fs"><option value="pending">Pendente</option><option value="paid">Pago</option></select></div>'+
+  '<div class="full"><label>Descrição</label><input id="fd" placeholder="Ex.: Aluguel, salário, internet"></div>'+
+  '<div class="amount-field"><label>Valor</label><input id="fv" inputmode="decimal" placeholder="0,00"></div>'+
+  '<div><label>Primeiro vencimento</label><input id="fdu" type="date" value="'+today()+'"></div>'+
+  '<div><label>Conta</label><select id="fa"><option value="">Sem conta</option>'+ctx.accounts.filter(a=>Number(a.active)!==0).map(a=>'<option value="'+a.id+'">'+esc(a.name)+'</option>').join('')+'</select></div>'+
+  '<div><label>Pessoa/Casal</label><select id="fp"><option value="">—</option>'+ctx.people.filter(p=>Number(p.active)!==0).map(p=>'<option value="'+p.id+'">'+esc(p.name)+'</option>').join('')+'</select></div>'+
   '<div class="full"><label>Categoria</label><input id="fc" value="Outros"></div>'+
-  '<div class="full"><label>Observação</label><textarea id="fo"></textarea></div>'+
-  '<div class="full"><button class="primary" id="fsv">Salvar lançamento</button><div id="fout"></div></div></div>');
-  $('#fsv').onclick=async()=>{try{await api('transaction_save',{type:$('#ft').value,status:$('#fs').value,description:$('#fd').value,amount:$('#fv').value,due_date:$('#fdu').value,account_id:Number($('#fa').value||0),person_id:Number($('#fp').value||0),category:$('#fc').value,observations:$('#fo').value});closeModal();transactions()}catch(e){$('#fout').innerHTML=note(e.message,'err')}};
+  '<div class="full recurrence-box">'+
+    '<label class="switch-line"><span><b>Pagamento recorrente</b><small>Cria lançamentos futuros sem alterar a estrutura do banco.</small></span><input id="fr" type="checkbox"></label>'+
+    '<div id="fr-options" class="recurrence-options hidden">'+
+      '<div><label>Periodicidade</label><select id="fr-frequency"><option value="monthly">Mensal</option><option value="weekly">Semanal</option><option value="yearly">Anual</option></select></div>'+
+      '<div><label>Ocorrências</label><input id="fr-count" type="number" min="2" max="60" value="12"></div>'+
+      '<div class="full recurrence-preview" id="fr-preview"></div>'+
+    '</div>'+
+  '</div>'+
+  '<div class="full"><label>Observação</label><textarea id="fo" rows="3" placeholder="Opcional"></textarea></div>'+
+  '<div class="full tx-form-actions"><button class="primary" id="fsv">Salvar lançamento</button><div id="fout"></div></div></div>');
+  const updateRecurrence=()=>{
+    const enabled=$('#fr')?.checked;
+    $('#fr-options')?.classList.toggle('hidden',!enabled);
+    if(!enabled||!$('#fr-preview'))return;
+    const count=Math.max(2,Math.min(60,Number($('#fr-count')?.value||12)));
+    const frequency=$('#fr-frequency')?.value||'monthly';
+    const first=$('#fdu')?.value||today();
+    const last=shiftDate(first,frequency,count-1);
+    $('#fr-preview').innerHTML='<b>'+count+' lançamentos · recorrência '+recurrenceLabel(frequency)+'</b><small>Primeiro: '+br(first)+' · último: '+br(last)+'. Apenas o primeiro respeita o status inicial; os próximos entram como pendentes.</small>';
+  };
+  $('#fr').onchange=updateRecurrence;
+  $('#fr-frequency').onchange=updateRecurrence;
+  $('#fr-count').oninput=updateRecurrence;
+  $('#fdu').onchange=updateRecurrence;
+  $('#fsv').onclick=async()=>{
+    const out=$('#fout'),button=$('#fsv');
+    const base={
+      type:$('#ft').value,
+      status:$('#fs').value,
+      description:$('#fd').value.trim(),
+      amount:$('#fv').value,
+      due_date:$('#fdu').value,
+      account_id:Number($('#fa').value||0),
+      person_id:Number($('#fp').value||0),
+      category:$('#fc').value.trim()||'Outros',
+      observations:$('#fo').value
+    };
+    if(!base.description){out.innerHTML=note('Informe a descrição.','err');return}
+    if(!base.due_date){out.innerHTML=note('Informe o vencimento.','err');return}
+    const recurring=$('#fr').checked;
+    const frequency=$('#fr-frequency').value||'monthly';
+    const count=recurring?Math.max(2,Math.min(60,Number($('#fr-count').value||12))):1;
+    button.disabled=true;
+    button.textContent=count>1?'Salvando 1 de '+count+'…':'Salvando…';
+    out.innerHTML='';
+    let saved=0,lastResult=null;
+    try{
+      for(let i=0;i<count;i++){
+        button.textContent=count>1?'Salvando '+(i+1)+' de '+count+'…':'Salvando…';
+        const payload=Object.assign({},base,{
+          status:i===0?base.status:'pending',
+          due_date:i===0?base.due_date:shiftDate(base.due_date,frequency,i)
+        });
+        lastResult=await api('transaction_save',payload);
+        saved++;
+      }
+      out.innerHTML=note(count>1?count+' lançamentos recorrentes salvos com sucesso.':'Lançamento salvo com sucesso.','ok');
+      setTimeout(()=>{closeModal();transactions()},350);
+    }catch(e){
+      button.disabled=saved>0;
+      button.textContent=saved>0?'Revise antes de tentar novamente':'Salvar lançamento';
+      out.innerHTML=note(saved>0
+        ? saved+' de '+count+' lançamentos foram salvos antes da falha. Revise a lista para evitar duplicidade. '+e.message
+        : e.message,'err');
+    }finally{
+      if(saved===0){button.disabled=false;button.textContent='Salvar lançamento'}
+    }
+  };
 }
-
 async function cards(){
   active('cards');setTitle('Cartões',mlabel(month));await context();
   const c=$('#content');
