@@ -91,6 +91,21 @@ jobs:
           grep -q '"transaction_save"' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/data/remote/NetworkClient.kt
           grep -q 'colorScheme = Light' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/ui/theme/Theme.kt
 
+      - name: Package patched native source
+        shell: bash
+        run: |
+          cd native-build
+          zip -qr ../GranaOK-Android-Native-v0.2.3-SOURCE.zip GranaOK_Android_Native_v0_2
+          cd ..
+
+      - name: Upload patched native source
+        uses: actions/upload-artifact@v4
+        with:
+          name: GranaOK-Android-Native-v0.2.3-SOURCE
+          path: GranaOK-Android-Native-v0.2.3-SOURCE.zip
+          if-no-files-found: error
+          retention-days: 30
+
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
         with:
