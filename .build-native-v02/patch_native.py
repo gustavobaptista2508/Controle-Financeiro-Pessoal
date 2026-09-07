@@ -177,4 +177,26 @@ stale_updater = root / 'app/src/main/java/br/com/granaok/app/update/AppUpdateMan
 if stale_updater.exists():
     stale_updater.unlink()
 
+
+# Material3 TopAppBar is experimental in the pinned compatible Compose stack.
+for rel, fn_name in [
+    ('app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionScreen.kt', 'NewTransactionScreen'),
+    ('app/src/main/java/br/com/granaok/app/ui/transactions/TransactionsScreen.kt', 'TransactionsScreen'),
+]:
+    p = root / rel
+    text_value = p.read_text()
+    if 'import androidx.compose.material3.ExperimentalMaterial3Api' not in text_value:
+        text_value = text_value.replace(
+            'import androidx.compose.material3.TopAppBar',
+            'import androidx.compose.material3.TopAppBar\nimport androidx.compose.material3.ExperimentalMaterial3Api',
+        )
+    target = '@Composable\nfun ' + fn_name
+    if '@OptIn(ExperimentalMaterial3Api::class)\n' + target not in text_value:
+        text_value = text_value.replace(
+            target,
+            '@OptIn(ExperimentalMaterial3Api::class)\n' + target,
+            1,
+        )
+    p.write_text(text_value)
+
 print('Patch applied')
