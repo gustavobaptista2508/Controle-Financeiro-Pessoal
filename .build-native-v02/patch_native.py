@@ -157,12 +157,12 @@ icon.write_text('''<?xml version="1.0" encoding="utf-8"?>
 
 # Overlay v0.2.4: Play/sideload, API 36, safe insets, cards and transaction UX.
 v024_parts = sorted(Path('.build-native-v02').glob('v024.b64.*'))
-if len(v024_parts) != 6:
-    raise SystemExit(f'Esperava 6 chunks v024, encontrei {len(v024_parts)}')
+if len(v024_parts) != 7:
+    raise SystemExit(f'Esperava 7 chunks v024, encontrei {len(v024_parts)}')
 v024_encoded = ''.join(p.read_text().strip() for p in v024_parts)
 v024_zip = Path('/tmp/v024_patch.zip')
 v024_zip.write_bytes(base64.b64decode(v024_encoded))
-v024_expected_sha = '424d5dd13b941cfbc4bd2e9fc48a8e142899f312718bee71a3ec04982208cc4c'
+v024_expected_sha = '4d12731802a876cdf0de39b463bb055a362d375836d475f0d5948a5210199b7d'
 v024_actual_sha = hashlib.sha256(v024_zip.read_bytes()).hexdigest()
 if v024_actual_sha != v024_expected_sha:
     raise SystemExit(f'SHA v024 inválido: {v024_actual_sha}')
