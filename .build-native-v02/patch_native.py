@@ -154,4 +154,27 @@ icon.write_text('''<?xml version="1.0" encoding="utf-8"?>
 </vector>
 ''')
 
+
+# Overlay v0.2.4: Play/sideload, API 36, safe insets, cards and transaction UX.
+v024_parts = sorted(Path('.build-native-v02').glob('v024.b64.*'))
+if len(v024_parts) != 6:
+    raise SystemExit(f'Esperava 6 chunks v024, encontrei {len(v024_parts)}')
+v024_encoded = ''.join(p.read_text().strip() for p in v024_parts)
+v024_zip = Path('/tmp/v024_patch.zip')
+v024_zip.write_bytes(base64.b64decode(v024_encoded))
+v024_expected_sha = '9cffd94059fc07b08a5f612d1f35d485afbc628db1f433843812084db651233f'
+v024_actual_sha = hashlib.sha256(v024_zip.read_bytes()).hexdigest()
+if v024_actual_sha != v024_expected_sha:
+    raise SystemExit(f'SHA v024 inválido: {v024_actual_sha}')
+with zipfile.ZipFile(v024_zip) as z:
+    bad = z.testzip()
+    if bad:
+        raise SystemExit(f'ZIP v024 corrompido em: {bad}')
+    z.extractall(root)
+
+# The actual updater only exists in the sideload flavor. The Play flavor contains a no-op manager.
+stale_updater = root / 'app/src/main/java/br/com/granaok/app/update/AppUpdateManager.kt'
+if stale_updater.exists():
+    stale_updater.unlink()
+
 print('Patch applied')
