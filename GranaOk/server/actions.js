@@ -43,8 +43,10 @@ async function syncInvoice(conn,p,cardId,month,dueDate){const [sum]=await conn.e
 const aliases={transactions:'transactions:list',transaction_save:'transaction:save',transaction_status:'transaction:status',account_save:'account:save',person_add:'person:add',category_add:'category:add',card_save:'card:save',card_purchase_add:'card:purchase',invoice:'invoice:get',invoice_pay:'invoice:pay',invoice_reopen:'invoice:reopen',financings:'financings:list',financing_pay:'financing:pay',assistant_summary:'assistant:summary',assistant_ask:'assistant:ask',investment_radar:'investments:radar',knowledge_rebuild:'knowledge:rebuild',knowledge_summary:'knowledge:summary',knowledge_feedback:'knowledge:feedback',account_balance_set:'account:balance:set'};
 const writeActions=new Set(['transaction:save','transaction:status','account:save','person:add','category:add','card:save','card:purchase','invoice:pay','invoice:reopen','financing:pay','account:balance:set']);
 
-async function runAction(name,a,user){
+async function runAction(name,a,user,context){
   name=aliases[name]||name;
+  context=Object.assign({},context||{});
+  const clientSource=context.client==='android'?'android':'web';
   if(writeActions.has(name)&&user&&user.role==='readonly')throw new Error('Seu usuário é somente leitura.');
   a=Object.assign({},a||{});
   if(name==='assistant:summary') return assistantSummary(a.month,user);
@@ -112,7 +114,7 @@ async function runAction(name,a,user){
           }
         }else{
           const paidDate=status==='paid'?new Date().toISOString().slice(0,10):null;
-          const [ins]=await conn.execute("INSERT INTO "+p+"transactions(person_id,account_id,category_id,type,description,amount,due_date,paid_date,status,source,observations,balance_applied) VALUES(?,?,?,?,?,?,?,?,?,'web',?,0)",[person,account,cat,type,desc,amt,due,paidDate,status,obs]);
+          const [ins]=await conn.execute("INSERT INTO "+p+"transactions(person_id,account_id,category_id,type,description,amount,due_date,paid_date,status,source,observations,balance_applied) VALUES(?,?,?,?,?,?,?,?,?,?,?,0)",[person,account,cat,type,desc,amt,due,paidDate,status,clientSource,obs]);
           const newId=Number(ins.insertId||0);
           if(status==='paid'&&account){
             await applyAccountDelta(conn,p,account,signedDelta(type,amt),user,'transaction',newId,paidDate||due,desc);
