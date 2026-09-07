@@ -71,4 +71,14 @@ for p in (root / 'app/src/main/java').rglob('*.kt'):
     if 'import androidx.compose.foundation.layout.weight\\n' in text_value:
         p.write_text(text_value.replace('import androidx.compose.foundation.layout.weight\\n', ''))
 
+
+# Robust cleanup for Compose API 35: overlay files may use different line endings.
+for p in (root / 'app/src/main/java').rglob('*.kt'):
+    text_value = p.read_text()
+    cleaned = text_value.replace('import androidx.compose.foundation.layout.weight\\r\\n', '')
+    cleaned = cleaned.replace('import androidx.compose.foundation.layout.weight\\n', '')
+    cleaned = cleaned.replace('import androidx.compose.foundation.layout.weight', '')
+    if cleaned != text_value:
+        p.write_text(cleaned)
+
 print('Patch applied')
