@@ -181,8 +181,33 @@ for p in (root / 'app/src/main/java').rglob('*.kt'):
     if cleaned != text_value:
         p.write_text(cleaned)
 
-# The actual updater only exists in the sideload flavor. The Play flavor contains a no-op manager.
+# Final SDK level for the compatible Play/internal-test toolchain.
+build = root / 'app/build.gradle.kts'
+build_text = build.read_text().replace('compileSdk = 37', 'compileSdk = 36').replace('targetSdk = 37', 'targetSdk = 36')
+build.write_text(build_text)
+
+# The real updater exists only in the sideload flavor. Play gets a no-op implementation,
+# so the Play bundle contains neither update behavior nor REQUEST_INSTALL_PACKAGES.
 stale_updater = root / 'app/src/main/java/br/com/granaok/app/update/AppUpdateManager.kt'
+sideload_updater = root / 'app/src/sideload/java/br/com/granaok/app/update/AppUpdateManager.kt'
+play_updater = root / 'app/src/play/java/br/com/granaok/app/update/AppUpdateManager.kt'
+sideload_updater.parent.mkdir(parents=True, exist_ok=True)
+play_updater.parent.mkdir(parents=True, exist_ok=True)
+if stale_updater.exists():
+    sideload_updater.write_text(stale_updater.read_text())
+elif Path('.build-native-v02/AppUpdateManager.kt').exists():
+    sideload_updater.write_text(Path('.build-native-v02/AppUpdateManager.kt').read_text())
+else:
+    raise SystemExit('Updater sideload não encontrado.')
+play_updater.write_text('''package br.com.granaok.app.update
+
+import androidx.fragment.app.FragmentActivity
+
+class AppUpdateManager(private val activity: FragmentActivity) {
+    fun checkAtStartup() = Unit
+    fun onResume() = Unit
+}
+''')
 if stale_updater.exists():
     stale_updater.unlink()
 
