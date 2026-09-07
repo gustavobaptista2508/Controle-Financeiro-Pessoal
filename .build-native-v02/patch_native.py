@@ -10,7 +10,7 @@ network.write_text(s)
 
 build = root / 'app/build.gradle.kts'
 s = build.read_text()
-s = s.replace('versionCode = 2\n        versionName = "0.2.0-native-api"', 'versionCode = 3\n        versionName = "0.2.1-native"')
+s = s.replace('versionCode = 2\n        versionName = "0.2.0-native-api"', 'versionCode = 4\n        versionName = "0.2.2-native"')
 api_line = '        buildConfigField("String", "GRANAOK_API_BASE_URL", "\\\"${config("GRANAOK_API_BASE_URL", "https://granaok.com.br/")}\\\"")'
 if api_line not in s:
     raise SystemExit('API BuildConfig line not found')
@@ -44,15 +44,16 @@ src = Path('.build-native-v02/AppUpdateManager.kt')
 dst = root / 'app/src/main/java/br/com/granaok/app/update/AppUpdateManager.kt'
 dst.parent.mkdir(parents=True, exist_ok=True)
 dst.write_text(src.read_text())
+
+# Overlay da v0.2.2: Grana IA nativa, leitura compatível com VPS antiga e UI refinada.
+import zipfile
+with zipfile.ZipFile('.build-native-v02/v022_patch.zip') as z:
+    z.extractall(root)
+
 # Compose API 35 compatibility: weight is a scoped Row/Column extension and must not be imported directly.
-for rel in [
-    'app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt',
-    'app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionScreen.kt',
-    'app/src/main/java/br/com/granaok/app/ui/transactions/TransactionsScreen.kt',
-]:
-    p = root / rel
+for p in (root / 'app/src/main/java').rglob('*.kt'):
     text_value = p.read_text()
-    text_value = text_value.replace('import androidx.compose.foundation.layout.weight\n', '')
-    p.write_text(text_value)
+    if 'import androidx.compose.foundation.layout.weight\\n' in text_value:
+        p.write_text(text_value.replace('import androidx.compose.foundation.layout.weight\\n', ''))
 
 print('Patch applied')
