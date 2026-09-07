@@ -61,7 +61,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gradle -p native-build/GranaOK_Android_Native_v0_2 :app:assembleDebug --stacktrace
+          gradle -Pandroid.newDsl=false -p native-build/GranaOK_Android_Native_v0_2 :app:assembleDebug --stacktrace
           APK='native-build/GranaOK_Android_Native_v0_2/app/build/outputs/apk/debug/app-debug.apk'
           test -f "$APK"
           cp "$APK" GranaOK-Android-Native-v0.2.0.apk
