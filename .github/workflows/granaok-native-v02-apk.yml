@@ -97,7 +97,9 @@ jobs:
           APK="$(find native-build/GranaOK_Android_Native_v0_2/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f | head -n1)"
           test -n "$APK"
           cp "$APK" GranaOK-Android-Native-v0.2.1-UNSIGNED.apk
-          ls -lh GranaOK-Android-Native-v0.2.1-UNSIGNED.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f -v 4 GranaOK-Android-Native-v0.2.1-UNSIGNED.apk GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED.apk
+          ls -lh GranaOK-Android-Native-v0.2.1-UNSIGNED.apk GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED.apk
 
       - name: Package Android signing tools
         shell: bash
@@ -113,8 +115,8 @@ jobs:
       - name: Upload unsigned native APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOK-Android-Native-v0.2.1-UNSIGNED
-          path: GranaOK-Android-Native-v0.2.1-UNSIGNED.apk
+          name: GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED
+          path: GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED.apk
           if-no-files-found: error
           retention-days: 30
 
