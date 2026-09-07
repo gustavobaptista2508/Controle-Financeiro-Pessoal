@@ -83,7 +83,7 @@ jobs:
 
           grep -q 'compileSdk = 36' "$ROOT/app/build.gradle.kts"
           grep -q 'targetSdk = 36' "$ROOT/app/build.gradle.kts"
-          grep -q 'versionName = "0.2.4"' "$ROOT/app/build.gradle.kts"
+          grep -q 'versionName = "0.2.4-native"' "$ROOT/app/build.gradle.kts"
           grep -q 'create("sideload")' "$ROOT/app/build.gradle.kts"
           grep -q 'create("play")' "$ROOT/app/build.gradle.kts"
 
@@ -96,9 +96,10 @@ jobs:
           ! grep -q 'FLAG_SECURE' "$ROOT/app/src/main/java/br/com/granaok/app/MainActivity.kt"
           grep -q 'Cartões' "$ROOT/app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt"
           grep -q 'Salvar lançamento' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionScreen.kt"
-          grep -q 'Lançamento salvo no banco pela API' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionViewModel.kt"
+          grep -q 'TransactionSaveResult' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionViewModel.kt"
           grep -q 'WindowInsets.safeDrawing' "$ROOT/app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt"
-          grep -q '@mipmap/ic_launcher' "$ROOT/app/src/main/AndroidManifest.xml"
+          grep -q '@drawable/ic_granaok' "$ROOT/app/src/main/AndroidManifest.xml"
+          grep -q 'ENABLE_SELF_UPDATE' "$ROOT/app/src/main/java/br/com/granaok/app/MainActivity.kt"
 
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
