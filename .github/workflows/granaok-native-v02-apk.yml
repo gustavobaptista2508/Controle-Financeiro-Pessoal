@@ -1,4 +1,4 @@
-name: GranaOK Native v0.2.1 APK
+name: GranaOK Native v0.2.2 APK
 
 on:
   push:
@@ -76,13 +76,16 @@ jobs:
           grep -E 'compileSdk|targetSdk' "$APP"
           sed -n '1,18p' "$CATALOG"
 
-      - name: Apply native v0.2.1 patch
+      - name: Apply native v0.2.2 patch
         shell: bash
         run: |
           python3 .build-native-v02/patch_native.py
           grep -R 'X-GranaOk-Client", "android"' native-build/GranaOK_Android_Native_v0_2/app/src/main/java
           grep -q 'AppUpdateManager' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/MainActivity.kt
           grep -q 'REQUEST_INSTALL_PACKAGES' native-build/GranaOK_Android_Native_v0_2/app/src/main/AndroidManifest.xml
+          grep -q 'assistant_ask' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/data/repository/AssistantRepository.kt
+          grep -q 'legacyReadActions' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/data/remote/NetworkClient.kt
+          grep -q 'Grana IA' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt
 
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
@@ -96,10 +99,10 @@ jobs:
           gradle -Pandroid.newDsl=false -p native-build/GranaOK_Android_Native_v0_2 :app:assembleRelease --stacktrace
           APK="$(find native-build/GranaOK_Android_Native_v0_2/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f | head -n1)"
           test -n "$APK"
-          cp "$APK" GranaOK-Android-Native-v0.2.1-UNSIGNED.apk
-          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f -v 4 GranaOK-Android-Native-v0.2.1-UNSIGNED.apk GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED.apk
-          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED.apk
-          ls -lh GranaOK-Android-Native-v0.2.1-UNSIGNED.apk GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED.apk
+          cp "$APK" GranaOK-Android-Native-v0.2.2-UNSIGNED.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f -v 4 GranaOK-Android-Native-v0.2.2-UNSIGNED.apk GranaOK-Android-Native-v0.2.2-ALIGNED-UNSIGNED.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 GranaOK-Android-Native-v0.2.2-ALIGNED-UNSIGNED.apk
+          ls -lh GranaOK-Android-Native-v0.2.2-UNSIGNED.apk GranaOK-Android-Native-v0.2.2-ALIGNED-UNSIGNED.apk
 
       - name: Package Android signing tools
         shell: bash
@@ -115,8 +118,8 @@ jobs:
       - name: Upload unsigned native APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED
-          path: GranaOK-Android-Native-v0.2.1-ALIGNED-UNSIGNED.apk
+          name: GranaOK-Android-Native-v0.2.2-ALIGNED-UNSIGNED
+          path: GranaOK-Android-Native-v0.2.2-ALIGNED-UNSIGNED.apk
           if-no-files-found: error
           retention-days: 30
 
