@@ -162,7 +162,7 @@ if len(v024_parts) != 6:
 v024_encoded = ''.join(p.read_text().strip() for p in v024_parts)
 v024_zip = Path('/tmp/v024_patch.zip')
 v024_zip.write_bytes(base64.b64decode(v024_encoded))
-v024_expected_sha = '9cffd94059fc07b08a5f612d1f35d485afbc628db1f433843812084db651233f'
+v024_expected_sha = '424d5dd13b941cfbc4bd2e9fc48a8e142899f312718bee71a3ec04982208cc4c'
 v024_actual_sha = hashlib.sha256(v024_zip.read_bytes()).hexdigest()
 if v024_actual_sha != v024_expected_sha:
     raise SystemExit(f'SHA v024 inválido: {v024_actual_sha}')
@@ -171,6 +171,15 @@ with zipfile.ZipFile(v024_zip) as z:
     if bad:
         raise SystemExit(f'ZIP v024 corrompido em: {bad}')
     z.extractall(root)
+
+# Reapply Compose compatibility cleanup after the v0.2.4 overlay.
+for p in (root / 'app/src/main/java').rglob('*.kt'):
+    text_value = p.read_text()
+    cleaned = text_value.replace('import androidx.compose.foundation.layout.weight\\r\\n', '')
+    cleaned = cleaned.replace('import androidx.compose.foundation.layout.weight\\n', '')
+    cleaned = cleaned.replace('import androidx.compose.foundation.layout.weight', '')
+    if cleaned != text_value:
+        p.write_text(cleaned)
 
 # The actual updater only exists in the sideload flavor. The Play flavor contains a no-op manager.
 stale_updater = root / 'app/src/main/java/br/com/granaok/app/update/AppUpdateManager.kt'
