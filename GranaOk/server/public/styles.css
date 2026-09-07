@@ -70,12 +70,16 @@ input:focus,select:focus,textarea:focus{border-color:#86efac;box-shadow:0 0 0 3p
 .modal-close{position:absolute;top:12px;right:12px;background:#f1f5f9;font-size:20px}
 
 @media(max-width:1100px){
+  .tx-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
   .kpis{grid-template-columns:repeat(2,1fr)}
   .card-grid{grid-template-columns:repeat(2,1fr)}
   .two{grid-template-columns:1fr}
   .filters{grid-template-columns:repeat(3,1fr)}
 }
 @media(max-width:860px){
+  .tx-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.tx-summary-card{padding:12px;border-radius:14px}.tx-summary-card b{font-size:17px}.tx-summary-card small{font-size:9.5px}
+  .recurrence-options{grid-template-columns:1fr}.recurrence-options .full{grid-column:auto}
+  .tx-form-head{padding-right:36px}
   body{background:#f5f7f9}
   .shell{display:block;min-height:100dvh}
   .sidebar{display:none}
@@ -157,3 +161,28 @@ input:focus,select:focus,textarea:focus{border-color:#86efac;box-shadow:0 0 0 3p
     height:min(520px,calc(100dvh - 190px));border-radius:18px
   }
 }
+
+/* v0.4.3 — lançamentos recorrentes e totais filtrados */
+.tx-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px}
+.tx-summary-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:var(--shadow)}
+.tx-summary-card small{display:block;color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.tx-summary-card b{display:block;margin-top:6px;font-size:22px;line-height:1.15}
+.tx-summary-card.income b{color:var(--green2)}
+.tx-summary-card.expense b,.tx-summary-card.balance.negative b{color:var(--red)}
+.tx-summary-card.balance b{color:var(--ink)}
+.tx-summary-card.count b{color:var(--muted)}
+.tx-summary-loading{grid-column:1/-1;padding:18px}
+.tx-form-head{padding-right:42px;margin-bottom:18px}.tx-form-head small{color:var(--green2);font-size:11px;font-weight:900;letter-spacing:.08em}
+.tx-form-head h2{margin:4px 0 4px}.tx-form-head p{margin:0}
+.tx-form-grid{gap:12px}.tx-form-grid .amount-field input{font-size:20px;font-weight:850}
+.recurrence-box{border:1px solid var(--line);background:#f8fafc;border-radius:16px;padding:14px}
+.switch-line{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0;cursor:pointer}
+.switch-line span{display:block}.switch-line b{display:block}.switch-line small{display:block;color:var(--muted);font-weight:500;margin-top:3px}
+.switch-line input[type=checkbox]{width:22px;height:22px;flex:0 0 auto;accent-color:var(--green2)}
+.recurrence-options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.recurrence-options .full{grid-column:1/-1}
+.recurrence-preview{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:10px 12px;color:#065f46}
+.recurrence-preview b,.recurrence-preview small{display:block}.recurrence-preview small{margin-top:3px;line-height:1.4}
+.tx-form-actions{position:sticky;bottom:-24px;background:#fff;padding:12px 0 0;z-index:2}
+.tx-form-actions .primary{width:100%;min-height:46px}
+button:disabled{opacity:.6;cursor:not-allowed}
