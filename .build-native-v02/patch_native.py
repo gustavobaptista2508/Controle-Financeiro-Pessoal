@@ -46,8 +46,23 @@ dst.parent.mkdir(parents=True, exist_ok=True)
 dst.write_text(src.read_text())
 
 # Overlay da v0.2.2: Grana IA nativa, leitura compatível com VPS antiga e UI refinada.
+import base64
+import hashlib
 import zipfile
-with zipfile.ZipFile('.build-native-v02/v022_patch.zip') as z:
+parts = sorted(Path('.build-native-v02').glob('v022.b64.*'))
+if len(parts) != 4:
+    raise SystemExit(f'Esperava 4 chunks v022, encontrei {len(parts)}')
+encoded = ''.join(p.read_text().strip() for p in parts)
+patch_zip = Path('/tmp/v022_patch.zip')
+patch_zip.write_bytes(base64.b64decode(encoded))
+expected_sha = '374c118b0f8b74d617b2ee4bc1e63ce51d3b4d9bc424c2d832af843d92c94b97'
+actual_sha = hashlib.sha256(patch_zip.read_bytes()).hexdigest()
+if actual_sha != expected_sha:
+    raise SystemExit(f'SHA v022 inválido: {actual_sha}')
+with zipfile.ZipFile(patch_zip) as z:
+    bad = z.testzip()
+    if bad:
+        raise SystemExit(f'ZIP v022 corrompido em: {bad}')
     z.extractall(root)
 
 # Compose API 35 compatibility: weight is a scoped Row/Column extension and must not be imported directly.
