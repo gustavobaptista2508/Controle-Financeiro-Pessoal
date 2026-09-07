@@ -44,4 +44,15 @@ src = Path('.build-native-v02/AppUpdateManager.kt')
 dst = root / 'app/src/main/java/br/com/granaok/app/update/AppUpdateManager.kt'
 dst.parent.mkdir(parents=True, exist_ok=True)
 dst.write_text(src.read_text())
+# Compose API 35 compatibility: weight is a scoped Row/Column extension and must not be imported directly.
+for rel in [
+    'app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt',
+    'app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionScreen.kt',
+    'app/src/main/java/br/com/granaok/app/ui/transactions/TransactionsScreen.kt',
+]:
+    p = root / rel
+    text_value = p.read_text()
+    text_value = text_value.replace('import androidx.compose.foundation.layout.weight\n', '')
+    p.write_text(text_value)
+
 print('Patch applied')
