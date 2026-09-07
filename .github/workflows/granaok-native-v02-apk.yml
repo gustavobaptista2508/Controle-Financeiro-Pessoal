@@ -100,6 +100,11 @@ jobs:
           grep -q 'WindowInsets.safeDrawing' "$ROOT/app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt"
           grep -q '@drawable/ic_granaok' "$ROOT/app/src/main/AndroidManifest.xml"
           grep -q 'ENABLE_SELF_UPDATE' "$ROOT/app/src/main/java/br/com/granaok/app/MainActivity.kt"
+          grep -q 'Pagamento recorrente' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionScreen.kt"
+          grep -q 'occurrences' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionViewModel.kt"
+          grep -q 'Total do filtro' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/TransactionsScreen.kt"
+          grep -q 'TransactionTotals' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/TransactionsViewModel.kt"
+          grep -q 'changeMonth' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/TransactionsViewModel.kt"
 
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
