@@ -95,6 +95,7 @@ async function runAction(name,a,user,context){
 
     if(name==='transaction:save'){
       const id=Number(a.id||0),type=a.type==='income'?'income':'expense',desc=String(a.description||'').trim(),amt=money(a.amount),due=dateOk(a.due_date),status=['paid','pending','overdue'].includes(a.status)?a.status:'pending',obs=String(a.observations||''),person=Number(a.person_id||0)||null,account=Number(a.account_id||0)||null,cat=await categoryId(conn,p,a.category||'Outros',type);if(!desc||amt<=0)throw new Error('Informe descrição e valor.');
+      let savedId=id||0;
       await conn.beginTransaction();
       try{
         if(id){
@@ -116,6 +117,7 @@ async function runAction(name,a,user,context){
           const paidDate=status==='paid'?new Date().toISOString().slice(0,10):null;
           const [ins]=await conn.execute("INSERT INTO "+p+"transactions(person_id,account_id,category_id,type,description,amount,due_date,paid_date,status,source,observations,balance_applied) VALUES(?,?,?,?,?,?,?,?,?,?,?,0)",[person,account,cat,type,desc,amt,due,paidDate,status,clientSource,obs]);
           const newId=Number(ins.insertId||0);
+          savedId=newId;
           if(status==='paid'&&account){
             await applyAccountDelta(conn,p,account,signedDelta(type,amt),user,'transaction',newId,paidDate||due,desc);
             await conn.execute('UPDATE '+p+'transactions SET balance_applied=1 WHERE id=?',[newId]);
@@ -123,7 +125,7 @@ async function runAction(name,a,user,context){
         }
         await conn.commit();
       }catch(e){await conn.rollback();throw e}
-      return {message:id?'Lançamento atualizado.':'Lançamento criado.'};
+      return {message:id?'Lançamento atualizado.':'Lançamento criado.',id:savedId,source:clientSource};
     }
 
     if(name==='transaction:status'){
