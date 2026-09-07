@@ -1,4 +1,4 @@
-name: GranaOK Native v0.2.3 APK
+name: GranaOK Native v0.2.4 APK + Play AAB
 
 on:
   push:
@@ -12,7 +12,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 35
 
     steps:
       - name: Checkout
@@ -39,11 +39,11 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
 
-      - name: Install Android SDK 37
+      - name: Install Android SDK 36
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
+          sdkmanager 'platform-tools' 'platforms;android-36' 'build-tools;35.0.0'
 
       - name: Configure compatible Android stack
         shell: bash
@@ -52,8 +52,8 @@ jobs:
           APP='native-build/GranaOK_Android_Native_v0_2/app/build.gradle.kts'
           CATALOG='native-build/GranaOK_Android_Native_v0_2/gradle/libs.versions.toml'
           PROPS='native-build/GranaOK_Android_Native_v0_2/gradle.properties'
-          sed -i 's/compileSdk = 37/compileSdk = 35/' "$APP"
-          sed -i 's/targetSdk = 37/targetSdk = 35/' "$APP"
+          sed -i 's/compileSdk = 37/compileSdk = 36/' "$APP"
+          sed -i 's/targetSdk = 37/targetSdk = 36/' "$APP"
           python3 - <<'PY'
           from pathlib import Path
           p=Path('native-build/GranaOK_Android_Native_v0_2/gradle/libs.versions.toml')
@@ -73,55 +73,58 @@ jobs:
           p.write_text(s)
           PY
           printf '\nandroid.newDsl=false\n' >> "$PROPS"
-          grep -E 'compileSdk|targetSdk' "$APP"
-          sed -n '1,18p' "$CATALOG"
 
-      - name: Apply native v0.2.3 patch
+      - name: Apply native v0.2.4 patch
         shell: bash
         run: |
+          set -euo pipefail
+          ROOT='native-build/GranaOK_Android_Native_v0_2'
           python3 .build-native-v02/patch_native.py
-          grep -R 'X-GranaOk-Client", "android"' native-build/GranaOK_Android_Native_v0_2/app/src/main/java
-          grep -q 'AppUpdateManager' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/MainActivity.kt
-          grep -q 'REQUEST_INSTALL_PACKAGES' native-build/GranaOK_Android_Native_v0_2/app/src/main/AndroidManifest.xml
-          grep -q 'assistant_ask' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/data/repository/AssistantRepository.kt
-          grep -q 'legacyReadActions' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/data/remote/NetworkClient.kt
-          grep -q 'Grana IA' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt
-          grep -q 'android:icon="@drawable/ic_granaok"' native-build/GranaOK_Android_Native_v0_2/app/src/main/AndroidManifest.xml
-          grep -q 'window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/MainActivity.kt
-          grep -q '"transaction_save"' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/data/remote/NetworkClient.kt
-          grep -q 'colorScheme = Light' native-build/GranaOK_Android_Native_v0_2/app/src/main/java/br/com/granaok/app/ui/theme/Theme.kt
 
-      - name: Package patched native source
-        shell: bash
-        run: |
-          cd native-build
-          zip -qr ../GranaOK-Android-Native-v0.2.3-SOURCE.zip GranaOK_Android_Native_v0_2
-          cd ..
+          grep -q 'compileSdk = 36' "$ROOT/app/build.gradle.kts"
+          grep -q 'targetSdk = 36' "$ROOT/app/build.gradle.kts"
+          grep -q 'versionName = "0.2.4"' "$ROOT/app/build.gradle.kts"
+          grep -q 'create("sideload")' "$ROOT/app/build.gradle.kts"
+          grep -q 'create("play")' "$ROOT/app/build.gradle.kts"
 
-      - name: Upload patched native source
-        uses: actions/upload-artifact@v4
-        with:
-          name: GranaOK-Android-Native-v0.2.3-SOURCE
-          path: GranaOK-Android-Native-v0.2.3-SOURCE.zip
-          if-no-files-found: error
-          retention-days: 30
+          ! grep -q 'REQUEST_INSTALL_PACKAGES' "$ROOT/app/src/main/AndroidManifest.xml"
+          grep -q 'REQUEST_INSTALL_PACKAGES' "$ROOT/app/src/sideload/AndroidManifest.xml"
+          test -f "$ROOT/app/src/sideload/java/br/com/granaok/app/update/AppUpdateManager.kt"
+          test -f "$ROOT/app/src/play/java/br/com/granaok/app/update/AppUpdateManager.kt"
+          test ! -f "$ROOT/app/src/main/java/br/com/granaok/app/update/AppUpdateManager.kt"
+
+          ! grep -q 'FLAG_SECURE' "$ROOT/app/src/main/java/br/com/granaok/app/MainActivity.kt"
+          grep -q 'Cartões' "$ROOT/app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt"
+          grep -q 'Salvar lançamento' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionScreen.kt"
+          grep -q 'Lançamento salvo no banco pela API' "$ROOT/app/src/main/java/br/com/granaok/app/ui/transactions/NewTransactionViewModel.kt"
+          grep -q 'WindowInsets.safeDrawing' "$ROOT/app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt"
+          grep -q '@mipmap/ic_launcher' "$ROOT/app/src/main/AndroidManifest.xml"
 
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.5.0'
 
-      - name: Build unsigned release APK
+      - name: Build sideload APK and Play AAB
         shell: bash
         run: |
           set -euo pipefail
-          gradle -Pandroid.newDsl=false -p native-build/GranaOK_Android_Native_v0_2 :app:assembleRelease --stacktrace
-          APK="$(find native-build/GranaOK_Android_Native_v0_2/app/build/outputs/apk/release -maxdepth 1 -name '*.apk' -type f | head -n1)"
+          ROOT='native-build/GranaOK_Android_Native_v0_2'
+          gradle -Pandroid.newDsl=false -p "$ROOT" :app:assembleSideloadRelease :app:bundlePlayRelease --stacktrace
+
+          APK="$(find "$ROOT/app/build/outputs/apk/sideload/release" -maxdepth 1 -name '*.apk' -type f | head -n1)"
+          AAB="$(find "$ROOT/app/build/outputs/bundle/playRelease" -maxdepth 1 -name '*.aab' -type f | head -n1)"
           test -n "$APK"
-          cp "$APK" GranaOK-Android-Native-v0.2.3-UNSIGNED.apk
-          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f -v 4 GranaOK-Android-Native-v0.2.3-UNSIGNED.apk GranaOK-Android-Native-v0.2.3-ALIGNED-UNSIGNED.apk
-          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4 GranaOK-Android-Native-v0.2.3-ALIGNED-UNSIGNED.apk
-          ls -lh GranaOK-Android-Native-v0.2.3-UNSIGNED.apk GranaOK-Android-Native-v0.2.3-ALIGNED-UNSIGNED.apk
+          test -n "$AAB"
+
+          cp "$APK" GranaOK-Android-Native-v0.2.4-SIDELOAD-UNSIGNED.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -f -v 4             GranaOK-Android-Native-v0.2.4-SIDELOAD-UNSIGNED.apk             GranaOK-Android-Native-v0.2.4-SIDELOAD-ALIGNED-UNSIGNED.apk
+          "$ANDROID_HOME/build-tools/35.0.0/zipalign" -c -v 4             GranaOK-Android-Native-v0.2.4-SIDELOAD-ALIGNED-UNSIGNED.apk
+
+          cp "$AAB" GranaOK-Android-Native-v0.2.4-PLAY-UNSIGNED.aab
+
+          unzip -t GranaOK-Android-Native-v0.2.4-PLAY-UNSIGNED.aab
+          ls -lh GranaOK-Android-Native-v0.2.4-SIDELOAD-ALIGNED-UNSIGNED.apk                  GranaOK-Android-Native-v0.2.4-PLAY-UNSIGNED.aab
 
       - name: Package Android signing tools
         shell: bash
@@ -134,11 +137,19 @@ jobs:
           chmod +x android-signing-tools/apksigner android-signing-tools/zipalign
           tar -czf android-signing-tools-35.0.0.tar.gz android-signing-tools
 
-      - name: Upload unsigned native APK
+      - name: Upload sideload APK
         uses: actions/upload-artifact@v4
         with:
-          name: GranaOK-Android-Native-v0.2.3-ALIGNED-UNSIGNED
-          path: GranaOK-Android-Native-v0.2.3-ALIGNED-UNSIGNED.apk
+          name: GranaOK-Android-Native-v0.2.4-SIDELOAD-ALIGNED-UNSIGNED
+          path: GranaOK-Android-Native-v0.2.4-SIDELOAD-ALIGNED-UNSIGNED.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Play AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: GranaOK-Android-Native-v0.2.4-PLAY-UNSIGNED
+          path: GranaOK-Android-Native-v0.2.4-PLAY-UNSIGNED.aab
           if-no-files-found: error
           retention-days: 30
 
