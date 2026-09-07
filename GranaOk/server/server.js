@@ -55,8 +55,15 @@ function adminRequired(req,res,next){
   if(!req.user||req.user.role!=='admin')return res.status(403).json({ok:false,error:'Acesso restrito ao administrador.'});
   next();
 }
+function appClientRequired(req,res,next){
+  const client=String(req.headers['x-granaok-client']||'').trim().toLowerCase();
+  if(!['web','android'].includes(client))return res.status(403).json({ok:false,error:'Cliente inválido.'});
+  req.granaOkClient=client;
+  next();
+}
 function webClientRequired(req,res,next){
-  if(String(req.headers['x-granaok-client']||'')!=='web')return res.status(403).json({ok:false,error:'Cliente inválido.'});
+  if(String(req.headers['x-granaok-client']||'').trim().toLowerCase()!=='web')return res.status(403).json({ok:false,error:'Cliente inválido.'});
+  req.granaOkClient='web';
   next();
 }
 
@@ -91,12 +98,12 @@ app.post('/api/logout',authRequired,async(req,res)=>{
   res.json({ok:true});
 });
 
-app.post('/api/action',authRequired,webClientRequired,async(req,res)=>{
+app.post('/api/action',authRequired,appClientRequired,async(req,res)=>{
   try{
     const action=String((req.body&&req.body.action)||'');
     const allowed=new Set(['dashboard','context','transactions','transaction_save','transaction_status','account_save','person_add','category_add','card_save','card_purchase_add','invoice','invoice_pay','invoice_reopen','financings','financing_pay','assistant_summary','assistant_ask','investment_radar','knowledge_rebuild','knowledge_summary','knowledge_feedback','account_balance_set']);
     if(!allowed.has(action))return res.status(403).json({ok:false,error:'Operação não permitida.'});
-    const result=await runAction(action,(req.body&&req.body.payload)||{},req.user);
+    const result=await runAction(action,(req.body&&req.body.payload)||{},req.user,{client:req.granaOkClient});
     res.json(Object.assign({ok:true},result||{}));
   }catch(e){res.status(400).json({ok:false,error:String(e&&e.message?e.message:e)})}
 });
