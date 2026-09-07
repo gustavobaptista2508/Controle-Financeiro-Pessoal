@@ -10,7 +10,7 @@ network.write_text(s)
 
 build = root / 'app/build.gradle.kts'
 s = build.read_text()
-s = s.replace('versionCode = 2\n        versionName = "0.2.0-native-api"', 'versionCode = 4\n        versionName = "0.2.2-native"')
+s = s.replace('versionCode = 2\n        versionName = "0.2.0-native-api"', 'versionCode = 5\n        versionName = "0.2.3-native"')
 api_line = '        buildConfigField("String", "GRANAOK_API_BASE_URL", "\\\"${config("GRANAOK_API_BASE_URL", "https://granaok.com.br/")}\\\"")'
 if api_line not in s:
     raise SystemExit('API BuildConfig line not found')
@@ -80,5 +80,78 @@ for p in (root / 'app/src/main/java').rglob('*.kt'):
     cleaned = cleaned.replace('import androidx.compose.foundation.layout.weight', '')
     if cleaned != text_value:
         p.write_text(cleaned)
+
+
+# v0.2.3: contraste consistente, gravação compatível, screenshots e ícone da marca.
+theme = root / 'app/src/main/java/br/com/granaok/app/ui/theme/Theme.kt'
+theme_text = theme.read_text()
+theme_text = theme_text.replace(
+    'colorScheme = if (isSystemInDarkTheme()) Dark else Light',
+    'colorScheme = Light',
+)
+theme.write_text(theme_text)
+
+network = root / 'app/src/main/java/br/com/granaok/app/data/remote/NetworkClient.kt'
+network_text = network.read_text()
+network_text = network_text.replace(
+    '"knowledge_summary",\n    )',
+    '"knowledge_summary",\n        "transaction_save",\n        "transaction_status",\n    )',
+)
+network_text = network_text.replace(
+    'Somente ações de leitura/IA\n * podem repetir uma vez como \`web\` quando o servidor responde explicitamente\n * "Cliente inválido". Escritas nunca usam fallback, para não registrar source=web.',
+    'Ações de leitura/IA e lançamentos podem repetir uma vez como \`web\` quando o servidor\n * antigo responde explicitamente "Cliente inválido". No backend novo, Android é usado direto.',
+)
+network.write_text(network_text)
+
+dash = root / 'app/src/main/java/br/com/granaok/app/ui/dashboard/DashboardScreen.kt'
+dash_text = dash.read_text()
+dash_text = dash_text.replace(
+    'Leitura e Grana IA estão usando o cliente Web temporariamente. Novos lançamentos Android só sincronizam depois da atualização do backend na VPS.',
+    'A VPS ainda está no backend anterior. Leitura, Grana IA e lançamentos usam compatibilidade temporária; após atualizar o backend, a origem volta automaticamente para Android.',
+)
+dash.write_text(dash_text)
+
+main = root / 'app/src/main/java/br/com/granaok/app/MainActivity.kt'
+main_text = main.read_text()
+if 'import android.view.WindowManager' not in main_text:
+    main_text = main_text.replace('import android.os.Bundle', 'import android.os.Bundle\nimport android.view.WindowManager')
+if 'window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)' not in main_text:
+    main_text = main_text.replace(
+        'super.onCreate(savedInstanceState)',
+        'super.onCreate(savedInstanceState)\n        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)',
+        1,
+    )
+main.write_text(main_text)
+
+manifest = root / 'app/src/main/AndroidManifest.xml'
+manifest_text = manifest.read_text()
+if 'android:icon="@drawable/ic_granaok"' not in manifest_text:
+    manifest_text = manifest_text.replace(
+        '<application',
+        '<application\n        android:icon="@drawable/ic_granaok"\n        android:roundIcon="@drawable/ic_granaok"',
+        1,
+    )
+manifest.write_text(manifest_text)
+
+icon = root / 'app/src/main/res/drawable/ic_granaok.xml'
+icon.parent.mkdir(parents=True, exist_ok=True)
+icon.write_text('''<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#17A673"
+        android:pathData="M18,4H90C97.7,4 104,10.3 104,18V90C104,97.7 97.7,104 90,104H18C10.3,104 4,97.7 4,90V18C4,10.3 10.3,4 18,4Z" />
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="9"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:pathData="M29,56 L47,73 L80,36" />
+</vector>
+''')
 
 print('Patch applied')
