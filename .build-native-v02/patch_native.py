@@ -50,8 +50,8 @@ import base64
 import hashlib
 import zipfile
 parts = sorted(Path('.build-native-v02').glob('v022.b64.*'))
-if len(parts) != 4:
-    raise SystemExit(f'Esperava 4 chunks v022, encontrei {len(parts)}')
+if len(parts) != 5:
+    raise SystemExit(f'Esperava 5 chunks v022, encontrei {len(parts)}')
 encoded = ''.join(p.read_text().strip() for p in parts)
 patch_zip = Path('/tmp/v022_patch.zip')
 patch_zip.write_bytes(base64.b64decode(encoded))
