@@ -43,14 +43,38 @@ jobs:
         shell: bash
         run: |
           yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --channel=3 'platform-tools' 'platforms;android-37' 'build-tools;36.0.0'
+          sdkmanager 'platform-tools' 'platforms;android-35' 'build-tools;35.0.0'
 
-      - name: Configure Kotlin compatibility
+      - name: Configure compatible Android stack
         shell: bash
         run: |
-          printf '\nandroid.newDsl=false\n' >> native-build/GranaOK_Android_Native_v0_2/gradle.properties
-          grep -E 'compileSdk|targetSdk' native-build/GranaOK_Android_Native_v0_2/app/build.gradle.kts
-          tail -n 3 native-build/GranaOK_Android_Native_v0_2/gradle.properties
+          set -euo pipefail
+          APP='native-build/GranaOK_Android_Native_v0_2/app/build.gradle.kts'
+          CATALOG='native-build/GranaOK_Android_Native_v0_2/gradle/libs.versions.toml'
+          PROPS='native-build/GranaOK_Android_Native_v0_2/gradle.properties'
+          sed -i 's/compileSdk = 37/compileSdk = 35/' "$APP"
+          sed -i 's/targetSdk = 37/targetSdk = 35/' "$APP"
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('native-build/GranaOK_Android_Native_v0_2/gradle/libs.versions.toml')
+          s=p.read_text()
+          repl={
+            'composeBom = "2026.08.00"':'composeBom = "2025.05.01"',
+            'activity = "1.13.0"':'activity = "1.10.1"',
+            'lifecycle = "2.11.0"':'lifecycle = "2.9.0"',
+            'navigation = "2.10.0"':'navigation = "2.9.0"',
+            'room = "2.8.4"':'room = "2.7.1"',
+            'datastore = "1.2.1"':'datastore = "1.1.7"',
+            'fragment = "1.9.0"':'fragment = "1.8.8"',
+            'core = "1.18.0"':'core = "1.16.0"',
+          }
+          for a,b in repl.items():
+              s=s.replace(a,b)
+          p.write_text(s)
+          PY
+          printf '\nandroid.newDsl=false\n' >> "$PROPS"
+          grep -E 'compileSdk|targetSdk' "$APP"
+          sed -n '1,18p' "$CATALOG"
 
       - name: Set up Gradle 9.5
         uses: gradle/actions/setup-gradle@v4
