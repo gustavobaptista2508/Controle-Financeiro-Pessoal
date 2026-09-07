@@ -1,0 +1,76 @@
+name: GranaOK Native v0.2 APK
+
+on:
+  push:
+    branches:
+      - build/granaok-native-v02-apk
+    paths:
+      - '.build-native-v02/**'
+      - '.github/workflows/granaok-native-v02-apk.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Reconstruct native source
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .build-native-v02/source.b64.* | base64 --decode > /tmp/GranaOK_Android_Native_v0_2.zip
+          unzip -t /tmp/GranaOK_Android_Native_v0_2.zip
+          rm -rf native-build
+          mkdir -p native-build
+          unzip -q /tmp/GranaOK_Android_Native_v0_2.zip -d native-build
+          test -f native-build/GranaOK_Android_Native_v0_2/settings.gradle.kts
+          test -f native-build/GranaOK_Android_Native_v0_2/app/build.gradle.kts
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK 37
+        shell: bash
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager 'platform-tools' 'platforms;android-37' 'build-tools;36.0.0'
+
+      - name: Set up Gradle 9.5
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.5.0'
+
+      - name: Build installable debug APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          gradle -p native-build/GranaOK_Android_Native_v0_2 :app:assembleDebug --stacktrace
+          APK='native-build/GranaOK_Android_Native_v0_2/app/build/outputs/apk/debug/app-debug.apk'
+          test -f "$APK"
+          cp "$APK" GranaOK-Android-Native-v0.2.0.apk
+          ls -lh GranaOK-Android-Native-v0.2.0.apk
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n1)"
+          "$APKSIGNER" verify --verbose GranaOK-Android-Native-v0.2.0.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: GranaOK-Android-Native-v0.2.0
+          path: GranaOK-Android-Native-v0.2.0.apk
+          if-no-files-found: error
+          retention-days: 30
