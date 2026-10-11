@@ -98,4 +98,13 @@ As ferramentas abaixo são **candidatas à adoção**, não dependências instal
 7. **ReceiptLine:** homologar comandos, largura de papel, codificação e drivers de cada impressora.
 8. **XYFlow/GrapesJS:** representações visuais não devem permitir execução de código ou processos administrativos sem validação e autorização.
 
-**Status geral: 30 tecnologias documentadas como referências, sem instalação, integração ou implantação automática.**
+
+## 31. EbookFoundation — Biblioteca de aprendizagem
+
+- **Repositório:** https://github.com/EbookFoundation/free-programming-books
+- **Categoria:** documentação, livros, cursos e capacitação técnica (não é dependência de software).
+- **Uso recomendado:** consulta de materiais gratuitos sobre Python, PostgreSQL, algoritmos, APIs, segurança, infraestrutura e engenharia de software; apoio à capacitação da equipe e aos projetos JOMAD, GranaOK e AutoLog.
+- **Cuidados:** os materiais são links de terceiros; conferir disponibilidade, idioma, licença e direitos de cada publicação antes de baixar, compartilhar ou reutilizar conteúdo. Não copiar obras para os sistemas nem distribuir materiais sem licença adequada.
+- **Status:** catalogado como fonte de conhecimento; não instalado.
+
+**Status geral: 31 referências catalogadas (30 ferramentas/projetos técnicos + 1 biblioteca educacional), sem instalação automática.**
