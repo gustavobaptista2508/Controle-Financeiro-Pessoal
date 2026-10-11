@@ -70,4 +70,32 @@ As ferramentas abaixo são **candidatas à adoção**, não dependências instal
 5. Para Glide Data Grid, React Grid Layout e bibliotecas React, validar compatibilidade com o frontend efetivamente existente; não migrar stack apenas para adotar biblioteca.
 6. Gerar SDKs com OpenAPI Generator somente com contratos versionados; revisar diff e testar integração contra homologação.
 
-**Status geral: 20 tecnologias documentadas; nenhuma implementação adicional está implícita nesta atualização do catálogo.**
+**Status do lote anterior: 20 tecnologias documentadas; nenhuma implementação adicional está implícita.**
+
+
+## Lote 3 — 10 bibliotecas adicionais (11/10/2026)
+
+| Tecnologia / Fonte | Finalidade | Aplicações candidatas |
+|---|---|---|
+| [pdfme](https://github.com/pdfme/pdfme) | Templates e geração programática de PDF | OS de oficina, relatórios de frota, documentos timbrados, comprovantes e GranaOK |
+| [GrapesJS](https://github.com/GrapesJS/grapesjs) | Editor visual de páginas e modelos HTML | Templates de comunicação, páginas internas e formulários, com publicação controlada |
+| [FullCalendar](https://github.com/fullcalendar/fullcalendar) | Agendas e calendários interativos | Oficina Hub, manutenções preventivas, Center e planejamento de tarefas |
+| [Presidio](https://github.com/data-privacy-stack/presidio) | Detecção e anonimização de informações pessoais | Dados de motoristas e colaboradores, relatórios e IA documental; revisar reconhecedores para CPF/CNPJ |
+| [Yjs](https://github.com/yjs/yjs) | Sincronização colaborativa/CRDT em tempo real | Documentos e edições colaborativas no JOMAD Drive; autenticação e permissões no servidor |
+| [XYFlow](https://github.com/xyflow/xyflow) | Editor visual de nós, conexões e fluxos | Desenho de processos e integrações no Center; execução separada e autorizada |
+| [Uppy](https://github.com/transloadit/uppy) | Interface de upload de arquivos, incluindo uploads retomáveis | XML/PDF/ZIP no NFes Hub; fotos de manutenção; arquivos do Drive e AutoLog |
+| [Playwright](https://github.com/microsoft/playwright) | Testes end-to-end de interfaces web | Regressão de JOMAD Center, Fuel Hub, NFes Hub, Drive e GranaOK |
+| [ReceiptLine](https://github.com/receiptline/receiptline) | Geração de layouts de cupons para impressoras térmicas | Recibos dos postos internos e comprovantes do Fuel Hub; verificar modelo/impressora |
+| [Motion Canvas](https://github.com/motion-canvas/motion-canvas) | Animação em vídeo por código | Treinamentos internos, tutoriais e apresentações, não ferramenta essencial de produção |
+
+### Critérios de adoção do lote 3
+1. **Licenças:** confirmar versão, licença atual e condições específicas de distribuição comercial de cada biblioteca e dos recursos associados antes de incorporar; não presumir que tudo é livre de restrições.
+2. **PDFs e conteúdo editável:** tratar PDFs, HTML e arquivos enviados como entradas não confiáveis; validar esquemas, sanitizar conteúdos e restringir permissões.
+3. **Presidio:** a detecção não garante anonimização completa; usar testes com padrões brasileiros (CPF, CNPJ, placas), revisão de falsos negativos e controles LGPD.
+4. **Yjs:** sincronização não substitui autorização, isolamento por documento, trilha de alterações e backups.
+5. **Uppy:** validar tipo, tamanho, conteúdo, antivírus conforme risco, autenticação e armazenamento seguro; uploads resumíveis exigem backend adequado.
+6. **Playwright:** usar preferencialmente em homologação, com credenciais de teste e sem automatizar ações destrutivas em produção.
+7. **ReceiptLine:** homologar comandos, largura de papel, codificação e drivers de cada impressora.
+8. **XYFlow/GrapesJS:** representações visuais não devem permitir execução de código ou processos administrativos sem validação e autorização.
+
+**Status geral: 30 tecnologias documentadas como referências, sem instalação, integração ou implantação automática.**
