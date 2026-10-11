@@ -107,4 +107,13 @@ As ferramentas abaixo são **candidatas à adoção**, não dependências instal
 - **Cuidados:** os materiais são links de terceiros; conferir disponibilidade, idioma, licença e direitos de cada publicação antes de baixar, compartilhar ou reutilizar conteúdo. Não copiar obras para os sistemas nem distribuir materiais sem licença adequada.
 - **Status:** catalogado como fonte de conhecimento; não instalado.
 
-**Status geral: 31 referências catalogadas (30 ferramentas/projetos técnicos + 1 biblioteca educacional), sem instalação automática.**
+
+## 32. Public APIs — Diretório de APIs públicas
+
+- **Repositório:** https://github.com/public-apis/public-apis
+- **Categoria:** catálogo de APIs externas para pesquisa e integração; não é SDK nem API hospedada pelo repositório.
+- **Aplicações candidatas:** descobrir serviços de mapas, geocodificação, previsão meteorológica, dados governamentais e outras integrações eventualmente úteis ao JOMAD Center, Fuel Hub, Data Hub, Pedágio Hub, GranaOK e AutoLog.
+- **Avaliação obrigatória antes de integrar:** verificar se a API permanece ativa, autenticação, limites e custos, condições comerciais, licenças e termos, privacidade/LGPD, confiabilidade, disponibilidade, documentação e tratamento de falhas. A classificação como 'free' não assegura gratuidade irrestrita ou adequação para produção.
+- **Status:** fonte de descoberta catalogada; nenhuma API externa instalada ou conectada automaticamente.
+
+**Status geral: 32 referências catalogadas (30 ferramentas/projetos técnicos + EbookFoundation + Public APIs), sem instalação automática.**
