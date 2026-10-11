@@ -125,4 +125,14 @@ As ferramentas abaixo são **candidatas à adoção**, não dependências instal
 - **Cuidados:** o próprio projeto esclarece que os exemplos são destinados a desenvolvimento local e **não devem ser implantados diretamente em produção**. Adaptar imagens, versões, segredos, rede, persistência, healthchecks, backup, segurança e observabilidade. Não substituir stacks atuais sem inventário, backup, homologação e plano de reversão.
 - **Status:** referência catalogada, sem instalação nem alteração em servidores.
 
-**Status geral: 33 referências catalogadas (30 ferramentas/projetos técnicos + EbookFoundation + Public APIs + Awesome Compose), sem instalação automática.**
+
+## 34. TheAlgorithms — Algoritmos e estruturas de dados
+
+- **Organização:** https://github.com/TheAlgorithms
+- **Referência principal:** https://github.com/TheAlgorithms/Python
+- **Categoria:** biblioteca educacional de algoritmos, estruturas de dados e exemplos de implementação em diferentes linguagens.
+- **Uso recomendado:** estudo e comparação de algoritmos de busca, ordenação, grafos, otimização e processamento de dados; prototipagem e testes de desempenho para JOMAD Center, Data Hub, Fuel Hub, NFes Hub, GranaOK e AutoLog, quando pertinente.
+- **Cuidados:** exemplos didáticos não são automaticamente adequados à produção; conferir licença do repositório e arquivos utilizados, correção, complexidade, segurança, testes, manutenção e benchmarking com dados reais. Evitar introduzir algoritmos personalizados quando bibliotecas maduras ou consultas ao banco forem melhores.
+- **Status:** referência de conhecimento catalogada; nenhum código copiado ou instalado.
+
+**Status geral: 34 referências catalogadas, sem instalação automática.**
