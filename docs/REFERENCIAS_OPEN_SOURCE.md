@@ -116,4 +116,13 @@ As ferramentas abaixo são **candidatas à adoção**, não dependências instal
 - **Avaliação obrigatória antes de integrar:** verificar se a API permanece ativa, autenticação, limites e custos, condições comerciais, licenças e termos, privacidade/LGPD, confiabilidade, disponibilidade, documentação e tratamento de falhas. A classificação como 'free' não assegura gratuidade irrestrita ou adequação para produção.
 - **Status:** fonte de descoberta catalogada; nenhuma API externa instalada ou conectada automaticamente.
 
-**Status geral: 32 referências catalogadas (30 ferramentas/projetos técnicos + EbookFoundation + Public APIs), sem instalação automática.**
+
+## 33. Awesome Compose — Exemplos de orquestração Docker
+
+- **Repositório:** https://github.com/docker/awesome-compose
+- **Categoria:** infraestrutura, DevOps e exemplos de ambientes com Docker Compose.
+- **Aplicações candidatas:** referência para ambientes de desenvolvimento e homologação do JOMAD Center, Fuel Hub, NFes Hub, GranaOK e outros serviços; avaliar exemplos de PostgreSQL/pgAdmin, proxies reversos, Redis e observabilidade conforme a arquitetura real.
+- **Cuidados:** o próprio projeto esclarece que os exemplos são destinados a desenvolvimento local e **não devem ser implantados diretamente em produção**. Adaptar imagens, versões, segredos, rede, persistência, healthchecks, backup, segurança e observabilidade. Não substituir stacks atuais sem inventário, backup, homologação e plano de reversão.
+- **Status:** referência catalogada, sem instalação nem alteração em servidores.
+
+**Status geral: 33 referências catalogadas (30 ferramentas/projetos técnicos + EbookFoundation + Public APIs + Awesome Compose), sem instalação automática.**
