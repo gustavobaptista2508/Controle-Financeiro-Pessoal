@@ -34,3 +34,40 @@ Este documento registra bibliotecas candidatas para uso **seletivo**, conforme n
 - LifeOS: Frappe Gantt para planejamento; WebLLM e whisper.cpp opcionais conforme caso de uso.
 
 **Status:** referências técnicas catalogadas; integração de runtime pendente de implementação e validação por projeto.
+
+## Complemento — tecnologias 11 a 20 (11/10/2026)
+
+As ferramentas abaixo são **candidatas à adoção**, não dependências instaladas.
+
+| Tecnologia | Repositório oficial | Uso indicado |
+|---|---|---|
+| Haystack | https://github.com/deepset-ai/haystack | RAG/busca semântica em documentos internos, com autorização e indexação segura |
+| Sherpa-ONNX | https://github.com/k2-fsa/sherpa-onnx | Reconhecimento e síntese de voz offline, conforme modelos/dispositivos compatíveis |
+| Mediabunny | https://github.com/Vanilagy/mediabunny | Processamento/transcodificação de mídia no navegador; validar suporte de codecs e plataforma |
+| React PDF Highlighter | https://github.com/agentcooper/react-pdf-highlighter | Marcações e comentários sobre PDFs, persistidos no backend com permissões |
+| React Grid Layout | https://github.com/react-grid-layout/react-grid-layout | Dashboards responsivos com widgets reposicionáveis |
+| Annotorious | https://github.com/annotorious/annotorious | Anotações e áreas de interesse em imagens, como recortes de câmera |
+| IfcOpenShell | https://github.com/IfcOpenShell/IfcOpenShell | Leitura/análise de modelos IFC/BIM quando existir projeto de engenharia compatível |
+| Gitleaks | https://github.com/gitleaks/gitleaks | Varredura preventiva de senhas, tokens e segredos em código e pipelines CI |
+| Glide Data Grid | https://github.com/glideapps/glide-data-grid | Tabelas com muitas linhas e edição de células, conforme requisitos do frontend |
+| OpenAPI Generator | https://github.com/OpenAPITools/openapi-generator | Geração de SDKs/clientes/servidores a partir de contratos OpenAPI validados |
+
+### Aplicações preferenciais
+- **JOMAD Center e dashboards dos Hubs:** React Grid Layout, Glide Data Grid e Gitleaks nos pipelines de desenvolvimento; OpenAPI Generator se houver especificações OpenAPI mantidas.
+- **NFes Hub:** React PDF Highlighter para notas/documentos; Glide Data Grid para listagens; Haystack apenas como consulta contextual com controle de acesso, sem substituir XML/documento oficial.
+- **Oficina Hub:** React PDF Highlighter para ordens digitalizadas; Haystack para manuais autorizados; Sherpa-ONNX opcional para registro por voz; Frappe Gantt para planejamento.
+- **CFTV JOMAD:** Mediabunny para mídia web quando suportada e Annotorious para revisar recortes/placas; manter pipeline OpenCV + OCR para detecção. Exigir retenção, permissões e auditoria.
+- **JOMAD Drive:** Haystack para documentos indexados por ACL, anotações em PDF e rclone para backups; não indexar dados privados sem regras de acesso.
+- **Fuel Hub / Data Hub / Pedágio Hub:** Glide Data Grid para tabelas volumosas, React Grid Layout para painéis e OpenAPI Generator onde contratos forem estáveis.
+- **GranaOK / Controle Financeiro Pessoal / LifeOS:** dashboards configuráveis, tabelas e eventual consulta de documentos; minimizar coleta e processamento de dados pessoais.
+- **Engenharia / obras:** IfcOpenShell só quando houver arquivos IFC/BIM e demanda real; desenhos simples 2D não exigem BIM.
+
+### Controles adicionais antes de integrar
+1. Verificar licença **do repositório e dos componentes/modelos/codecs utilizados**, inclusive uso comercial e distribuição.
+2. Priorizar **Gitleaks em CI e no pré-commit**; caso detecte segredo exposto, revogar/rotacionar credenciais, não somente apagar do Git.
+3. Para Haystack, garantir isolamento por empresa/usuário, ACL no momento da busca, trilhas de auditoria e política de indexação/desindexação.
+4. Para voz, mídia e anotações, obter autorização e respeitar LGPD, limites de hardware e formatos suportados.
+5. Para Glide Data Grid, React Grid Layout e bibliotecas React, validar compatibilidade com o frontend efetivamente existente; não migrar stack apenas para adotar biblioteca.
+6. Gerar SDKs com OpenAPI Generator somente com contratos versionados; revisar diff e testar integração contra homologação.
+
+**Status geral: 20 tecnologias documentadas; nenhuma implementação adicional está implícita nesta atualização do catálogo.**
