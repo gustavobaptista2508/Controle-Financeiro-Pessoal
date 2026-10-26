@@ -101,7 +101,7 @@ jobs:
         run: |
           git config user.name 'tse-audit-bot'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add eleicoes2026/data/ufs eleicoes2026/data/auditoria17h_2026_2t.json
+          git add -A eleicoes2026/data
           if git diff --cached --quiet; then
             echo 'Sem alterações de dados.'
           else
