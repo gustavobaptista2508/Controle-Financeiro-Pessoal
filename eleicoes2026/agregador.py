@@ -47,6 +47,13 @@ def merge(root:Path,output:Path):
           'votacoes_apos_17':sum(x['after'] for x in rows),
           'municipalities':rows}
     output.parent.mkdir(parents=True,exist_ok=True)
+    if output.exists():
+        try:
+            previous=json.loads(output.read_text(encoding='utf-8'))
+            comparable={k:v for k,v in previous.items() if k!='generated_at'}
+            incoming={k:v for k,v in data.items() if k!='generated_at'}
+            if comparable==incoming: return previous  # Evita commit diário sem mudanças
+        except (ValueError,OSError):pass
     output.write_text(json.dumps(data,ensure_ascii=False,separators=(',',':')),encoding='utf-8')
     return data
 
