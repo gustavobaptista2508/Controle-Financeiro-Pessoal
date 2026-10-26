@@ -205,7 +205,7 @@ def collect(uf:str,out:Path,local_zip:Path|None=None,limit:int|None=None) -> dic
     logs=[info for info in infos if info.filename.lower().endswith(('-log.jez','.logjez'))]
     if not logs:raise ValueError('Nenhum log encontrado no ZIP (não publicar zeros)')
     if limit:logs=logs[:limit]
-    rows={};failures=[]; duplicates=0; fuso_fallback=0
+    rows={};failures=[];duplicates=0; duplicate_keys=set();fuso_fallback=0
     mun_names=download_name_map() if not local_zip else {}
     for index,info in enumerate(logs,1):
         filename=info.filename.split('/')[-1]
@@ -214,10 +214,10 @@ def collect(uf:str,out:Path,local_zip:Path|None=None,limit:int|None=None) -> dic
             failures.append({'filename':filename,'error':'identificação de seção inválida'});continue
         cd,zona,secao=match.groups()
         key=(cd,zona,secao)
-        if key in rows:
+        if key in rows or key in duplicate_keys:
             failures.append({'filename':filename,'error':'duplicata da mesma seção'});duplicates+=1
-            # Não contam duas vezes; também exclui a anterior.
-            rows.pop(key,None);continue
+            # Não contam duas vezes; também exclui todos os registros conflitantes.
+            rows.pop(key,None);duplicate_keys.add(key);continue
         try:
             p=parse_log(get(info),uf)
         except Exception as ex:
