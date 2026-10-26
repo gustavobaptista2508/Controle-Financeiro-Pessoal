@@ -19,6 +19,7 @@ import requests
 TSE_URL = 'https://cdn.tse.jus.br/estatistica/sead/odsele/votacao_candidato_munzona/votacao_candidato_munzona_2026.zip'
 CROSSWALK_URL = 'https://raw.githubusercontent.com/betafcc/Municipios-Brasileiros-TSE/master/municipios_brasileiros_tse.csv'
 GEOCODE_URL = 'https://raw.githubusercontent.com/kelvins/municipios-brasileiros/main/csv/municipios.csv'
+FALLBACK_2T_URL = 'https://nopolitica.com.br/dados/2026/presidente-2-turno-municipios.csv'  # dados derivados da totalização TSE, atribuição obrigatória
 REGIONS = {'AC':'Norte','AP':'Norte','AM':'Norte','PA':'Norte','RO':'Norte','RR':'Norte','TO':'Norte',
            'AL':'Nordeste','BA':'Nordeste','CE':'Nordeste','MA':'Nordeste','PB':'Nordeste','PE':'Nordeste','PI':'Nordeste','RN':'Nordeste','SE':'Nordeste',
            'DF':'Centro-Oeste','GO':'Centro-Oeste','MT':'Centro-Oeste','MS':'Centro-Oeste',
@@ -44,13 +45,15 @@ def geo_lookup(session):
     by_ibge={str(x['codigo_ibge']): (float(x['latitude']),float(x['longitude'])) for x in coord}
     by_tse={}
     by_name={}
+    ibge_to_tse={}
     for x in tse:
         uf=x['uf'].strip().upper(); key=(uf,str(int(x['codigo_tse'])))
         p=by_ibge.get(x['codigo_ibge'].strip())
         if p:
             by_tse[key]=p
+            ibge_to_tse[str(x['codigo_ibge']).strip()]=key
             by_name[(uf,normal_name(x['nome_municipio']))]=p
-    return by_tse,by_name
+    return by_tse,by_name,ibge_to_tse
 
 
 def fetch_zip(session,destination):
@@ -120,6 +123,40 @@ def read_tse_archive(path):
         return votes,labels,{'csv_members':selected,'processed_rows':processed}
 
 
+
+def merge_second_round_from_derived_csv(votes,labels,session,ibge_to_tse):
+    """Plano B: CSV do NOPolitica derivado de totalização TSE, apenas quando o ZIP oficial ainda não contém o 2º turno.
+    A origem secundária fica expressa no metadado. Exige cobertura e conferência de totais.
+    """
+    rows=read_remote_csv(FALLBACK_2T_URL,session)
+    if not rows:raise ValueError('CSV secundário de 2º turno está vazio.')
+    first=set(rows[0])
+    required={'codigo_ibge','numero','votos'}
+    if not required<=first:raise ValueError(f'CSV secundário sem campos mínimos {required}. Cabeçalho observado: {sorted(first)}')
+    count=0;sum_candidates=defaultdict(int)
+    for row in rows:
+        ibge=str(row['codigo_ibge']).strip()
+        municipal_key=ibge_to_tse.get(ibge)
+        if municipal_key is None:continue
+        number=str(row['numero']).strip()
+        if not number.isdigit():continue
+        number=str(int(number))
+        v=str(row['votos']).strip()
+        if not v.isdigit():continue
+        votos=int(v)
+        if number not in FINALISTS:continue
+        if 'turno' in row and str(row['turno']).strip() not in ('2','2º','2o'):continue
+        if 'eleicao' in row and row['eleicao'] and '2026' not in row['eleicao']:continue
+        votes[(municipal_key,'2')][number]+=votos
+        sum_candidates[number]+=votos
+        count+=1
+    total1,total2=sum_candidates['13'],sum_candidates['22']
+    # Os totais municipais excluem o exterior, portanto ficam ligeiramente abaixo dos totais brasileiros do TSE.
+    official={'13':64256232,'22':59826041}
+    if not (official['13']*.97<total1<=official['13'] and official['22']*.97<total2<=official['22']):
+        raise ValueError(f'CSV secundário reprovado na conferência com o TSE: Lula={total1:,} Flávio={total2:,}.')
+    return {'source_url':FALLBACK_2T_URL,'processed_rows':count,'second_round_votes_by_candidate':dict(sum_candidates),'method':'CSV municipal derivado da totalização oficial TSE por NOPolitica, quando ZIP TSE ainda traz apenas o primeiro turno'}
+
 def winner(votes):
     if not votes:return None
     ranked=sorted(votes.items(),key=lambda x:-x[1]);
@@ -173,19 +210,25 @@ def aggregate(rows):
 
 
 def build_dataset(zip_path,session):
-    by_tse,by_name=geo_lookup(session)
+    by_tse,by_name,ibge_to_tse=geo_lookup(session)
     votes,labels,meta=read_tse_archive(zip_path)
     n1=len({key for key,t in votes if t=='1'})
     n2=len({key for key,t in votes if t=='2'})
+    secondary=None
+    if n1>=5000 and n2<5000:
+        secondary=merge_second_round_from_derived_csv(votes,labels,session,ibge_to_tse)
+        n2=len({key for key,t in votes if t=='2'})
     if n1<5000 or n2<5000:raise ValueError(f'Dados incompletos: 1º turno {n1} municípios, 2º turno {n2}. Não publicar parcial como total final.')
     rows,issues=build_rows(votes,labels,by_tse,by_name)
     if len(rows)<5000:raise ValueError(f'Consolidação incompleta: {len(rows)} municípios; publicação suspensa.')
     result={'schema':'viradas-municipais-2026-v1','source':'TSE_RESULTADOS_2026','generated_at':datetime.now(timezone.utc).isoformat(),
             'elections':{'first':'2026-10-04','second':'2026-10-25'},
             'source_url':TSE_URL,'coordinates_source':[CROSSWALK_URL,GEOCODE_URL],
+            'second_round_source':FALLBACK_2T_URL if secondary else TSE_URL,
+            'second_round_republished_by':'NOPolitica' if secondary else None,
             'methodology':'Virada_geral: líder entre todos os candidatos no 1º turno contra líder no 2º. Virada_finalistas: líder entre 13 e 22 em cada turno. Empates excluídos.',
             'coverage':{'municipalities_first':n1,'municipalities_second':n2,'municipalities_compared':len(rows),**issues},
-            'count':aggregate(rows),'municipios':rows,'meta':meta}
+            'count':aggregate(rows),'municipios':rows,'meta':{**meta,'secondary_fallback':secondary}}
     return result
 
 
