@@ -50,6 +50,10 @@ jobs:
         uf: [AC, AL, AM, AP, BA, CE, DF, ES, GO, MA, MG, MS, MT, PA, PB, PE, PI, PR, RJ, RN, RO, RR, RS, SC, SE, SP, TO]
     steps:
       - uses: actions/checkout@v4
+      - name: Testar processamento e reconciliação antes da coleta
+        if: matrix.uf == 'ES'
+        working-directory: eleicoes2026
+        run: python -m unittest discover -s tests -v
       - name: Reutilizar estado já processado
         id: cache
         shell: bash
